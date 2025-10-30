@@ -1,0 +1,77 @@
+import 'package:flutter/material.dart';
+import 'package:jawarapbl/modules/auth/pages/login.dart';
+import 'package:jawarapbl/modules/dashboard/pages/dashboard_tabs_page.dart';
+import 'package:jawarapbl/modules/data-warga-rumah/pages/index.dart';
+import 'package:jawarapbl/modules/channel-transfer/pages/channel_transfer.dart';
+import 'package:jawarapbl/modules/kegiatan-broadcast/pages/index.dart';
+import 'package:jawarapbl/modules/lainnya/pages/lainnya.dart';
+import 'package:jawarapbl/modules/pemasukan/pages/index.dart';
+import 'package:jawarapbl/modules/pengeluaran/pages/pegeluaran_tabs_page.dart';
+import 'package:jawarapbl/modules/pesan-warga/pages/pesanwarga_tabs_page.dart';
+import 'package:jawarapbl/modules/penerimaan-warga/pages/penerimaanwarga_tabs_page.dart';
+import 'package:jawarapbl/modules/laporan-keuangan/pages/laporankeuangan_tabs_page.dart';
+import 'package:jawarapbl/shared/layouts/main_layout.dart';
+import 'package:jawarapbl/modules/dashboard/pages/mutasi_keluarga_tabs_page.dart';
+import 'package:jawarapbl/modules/dashboard/pages/log_aktivitas_dashboard_content.dart';
+import 'package:jawarapbl/modules/dashboard/pages/manajemen_pengguna_tabs_page.dart';
+import 'package:jawarapbl/modules/auth/pages/register.dart';
+
+void main() => runApp(
+  MaterialApp(
+    debugShowCheckedModeBanner: false,
+    title: 'Jawara Pintar',
+    theme: ThemeData(
+      cardTheme: CardThemeData(color: Colors.white),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.deepPurple,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.deepPurple,
+          side: const BorderSide(color: Colors.deepPurple),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      scaffoldBackgroundColor: Colors.grey[100],
+      primarySwatch: Colors.deepPurple,
+    ),
+    initialRoute: '/lainnya',
+    routes: {
+      // Auth Routes
+      '/login': (context) => const LoginPage(),
+      '/register': (context) => const RegisterPage(),
+      '/home': (context) =>
+          const MainLayout(body: DashboardPage(), currentIndex: 0),
+      // Data Warga Rumah Routes
+      '/data-warga-rumah': (context) =>
+          const MainLayout(body: DataWargaRumahPage()),
+      // Pemasukan Routes
+      '/pemasukan': (context) =>
+          const MainLayout(body: PemasukanKategoriIuranPage(), currentIndex: 1),
+      '/kegiatan-broadcast': (context) =>
+          const MainLayout(body: KegiatanBroadcastPage(), currentIndex: 3),
+      '/channel-transfer': (context) =>
+          const MainLayout(body: ChannelTransferPage(), currentIndex: 3),
+      // Pengeluaran Routes
+      '/pengeluaran': (context) =>
+          const MainLayout(body: PengeluaranTabsPage(), currentIndex: 2),
+      '/laporan-keuangan': (context) =>
+          const MainLayout(body: LaporanKeuanganTabsPage()),
+      '/pesan-warga': (context) => const MainLayout(body: PesanWargaTabsPage()),
+      '/penerimaan-warga': (context) =>
+          const MainLayout(body: PenerimaanWargaMasterPage()),
+      '/mutasi-keluarga': (context) =>
+          const MainLayout(body: MutasiKeluargaTabsPage()),
+      '/log-aktivitas': (context) =>
+          const MainLayout(body: LogAktivitasDashboardContent()),
+      '/manajemen-pengguna': (context) =>
+          const MainLayout(body: ManajemenPenggunaTabsPage()),
+      '/lainnya': (context) =>
+          const MainLayout(body: LainnyaPage(), currentIndex: 3),
+    },
+  ),
+);
