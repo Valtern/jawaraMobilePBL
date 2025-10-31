@@ -40,25 +40,25 @@ class _LoginFormState extends State<LoginForm> {
       // Login successful, navigate based on the role
       switch (userRole) {
         case 'admin':
-          Navigator.pushReplacementNamed(context, '/admin_dashboard');
+          Navigator.pushReplacementNamed(context, '/home');
           break;
         case 'rw':
-          Navigator.pushReplacementNamed(context, '/rw_dashboard');
+          Navigator.pushReplacementNamed(context, '/home');
           break;
         case 'rt':
-          Navigator.pushReplacementNamed(context, '/rt_dashboard');
+          Navigator.pushReplacementNamed(context, '/home');
           break;
         case 'bendahara':
-          Navigator.pushReplacementNamed(context, '/bendahara_dashboard');
+          Navigator.pushReplacementNamed(context, '/home');
           break;
         case 'sekretaris':
-          Navigator.pushReplacementNamed(context, '/sekretaris_dashboard');
+          Navigator.pushReplacementNamed(context, '/home');
           break;
         case 'warga':
-          Navigator.pushReplacementNamed(context, '/warga_dashboard');
+          Navigator.pushReplacementNamed(context, '/home');
           break;
         default:
-          Navigator.pushReplacementNamed(context, '/warga_dashboard');
+          Navigator.pushReplacementNamed(context, '/home');
       }
     } else if (context.mounted) {
       // Login failed, show an error message
