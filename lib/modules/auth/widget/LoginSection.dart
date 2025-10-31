@@ -1,5 +1,6 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:jawarapbl/modules/auth/pages/register.dart';
+import 'package:jawarapbl/services/auth_services.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -9,20 +10,61 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
+  // Controllers to get text from TextFields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
 
-  void _handleLogin() {
-    final email = _emailController.text;
-    final password = _passwordController.text;
+  bool _isLoading = false;
 
-    if (email == 'a' && password == 'p') {
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
+  // This function handles the login button tap
+  void _handleLogin() async {
+    // Show a loading indicator
+    setState(() {
+      _isLoading = true;
+    });
+
+    String email = _emailController.text;
+    String password = _passwordController.text;
+
+    // Call your API
+    String? userRole = await _authService.login(email, password);
+
+    // Hide loading indicator
+    setState(() {
+      _isLoading = false;
+    });
+
+    // Check if login was successful
+    if (userRole != null && context.mounted) {
+      // Login successful, navigate based on the role
+      switch (userRole) {
+        case 'admin':
+          Navigator.pushReplacementNamed(context, '/admin_dashboard');
+          break;
+        case 'rw':
+          Navigator.pushReplacementNamed(context, '/rw_dashboard');
+          break;
+        case 'rt':
+          Navigator.pushReplacementNamed(context, '/rt_dashboard');
+          break;
+        case 'bendahara':
+          Navigator.pushReplacementNamed(context, '/bendahara_dashboard');
+          break;
+        case 'sekretaris':
+          Navigator.pushReplacementNamed(context, '/sekretaris_dashboard');
+          break;
+        case 'warga':
+          Navigator.pushReplacementNamed(context, '/warga_dashboard');
+          break;
+        default:
+          Navigator.pushReplacementNamed(context, '/warga_dashboard');
+      }
+    } else if (context.mounted) {
+      // Login failed, show an error message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Email atau Password salah.'),
-          backgroundColor: Colors.red,
+          content: Text('Login Failed. Please check email and password.'),
         ),
       );
     }
@@ -30,6 +72,7 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   void dispose() {
+    // Clean up controllers
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -37,75 +80,44 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    // Replace this with your actual UI.
+    // This is just an example.
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Selamat Datang',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Login untuk mengakses sistem.',
-            style: TextStyle(color: Colors.grey, fontSize: 16),
-          ),
-          const SizedBox(height: 32),
-          TextFormField(
+          TextField(
             controller: _emailController,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              prefixIcon: Icon(Icons.email_outlined),
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'Email'),
+            keyboardType: TextInputType.emailAddress,
           ),
-          const SizedBox(height: 20),
-          TextFormField(
+          const SizedBox(height: 16),
+          TextField(
             controller: _passwordController,
+            decoration: const InputDecoration(labelText: 'Password'),
             obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Password',
-              prefixIcon: Icon(Icons.lock_outline),
-              border: OutlineInputBorder(),
-            ),
           ),
           const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: _handleLogin,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
-              minimumSize: const Size.fromHeight(50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'Login',
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: RichText(
-              text: TextSpan(
-                style: const TextStyle(color: Colors.black, fontSize: 14),
-                children: <TextSpan>[
-                  const TextSpan(text: 'Belum punya akun? '),
-                  TextSpan(
-                    text: 'Daftar',
-                    style: const TextStyle(
-                      color: Colors.deepPurple,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () {
-                        Navigator.pushNamed(context, '/register');
-                      },
-                  ),
-                ],
-              ),
-            ),
+
+          // Show a progress indicator or the login button
+          _isLoading
+              ? const CircularProgressIndicator()
+              : ElevatedButton(
+                  onPressed: _handleLogin, // Call the login function
+                  child: const Text('Login'),
+                ),
+
+          const SizedBox(height: 16), // Spacer
+          // --- ADDED THE REGISTER BUTTON BACK ---
+          TextButton(
+            onPressed: () {
+              // Navigate to your RegisterPage
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const RegisterPage()),
+              );
+            },
+            child: const Text("Don't have an account? Register"),
           ),
         ],
       ),

@@ -40,7 +40,7 @@ void main() => runApp(
       scaffoldBackgroundColor: Colors.grey[100],
       primarySwatch: Colors.deepPurple,
     ),
-    initialRoute: '/lainnya',
+    initialRoute: '/login',
     routes: {
       // Auth Routes
       '/login': (context) => const LoginPage(),
