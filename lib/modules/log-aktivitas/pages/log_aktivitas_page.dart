@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:jawarapbl/modules/log-aktivitas/widgets/log_aktivitas_card.dart';
 
-// Widget utama Log Aktivitas
-class LogAktivitasDashboardContent extends StatelessWidget {
-  const LogAktivitasDashboardContent({super.key});
+class LogAktivitasPage extends StatelessWidget {
+  const LogAktivitasPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,18 @@ class LogAktivitasDashboardContent extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
-      appBar: AppBar(title: const Text('Log Aktivitas')),
+      appBar: AppBar(
+        title: const Text('Log Aktivitas'),
+        backgroundColor: Colors.white,
+        elevation: 2,
+        iconTheme: const IconThemeData(color: Colors.deepPurple),
+        titleTextStyle: const TextStyle(
+          color: Colors.deepPurple,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
+        automaticallyImplyLeading: false,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -52,7 +63,7 @@ class LogAktivitasDashboardContent extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Log Aktivitas',
+                  'Daftar Log Aktivitas',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -97,73 +108,6 @@ class LogAktivitasDashboardContent extends StatelessWidget {
                   );
                 },
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// 🔸 Widget Card untuk menampilkan aktivitas individual
-class LogAktivitasCard extends StatelessWidget {
-  final String deskripsi;
-  final String aktor;
-  final String tanggal;
-
-  const LogAktivitasCard({
-    super.key,
-    required this.deskripsi,
-    required this.aktor,
-    required this.tanggal,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 3,
-      shadowColor: Colors.deepPurple.withOpacity(0.1),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            // Ikon aktivitas
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.history, color: Colors.deepPurple),
-            ),
-            const SizedBox(width: 16),
-
-            // Detail aktivitas
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    deskripsi,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    "Aktor: $aktor",
-                    style: const TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-
-            // Tanggal aktivitas
-            Text(
-              tanggal,
-              style: const TextStyle(color: Colors.grey, fontSize: 13),
             ),
           ],
         ),

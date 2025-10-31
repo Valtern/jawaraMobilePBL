@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jawarapbl/modules/dashboard/pages/mutasi_keluarga_dashboard_content.dart';
-import 'package:jawarapbl/modules/dashboard/pages/tambah_mutasi_page.dart';
+import 'package:jawarapbl/modules/mutasi-keluarga/pages/daftar_mutasi_page.dart';
+import 'package:jawarapbl/modules/mutasi-keluarga/pages/tambah_mutasi_page.dart';
 
 class MutasiKeluargaTabsPage extends StatelessWidget {
   const MutasiKeluargaTabsPage({super.key});
@@ -22,7 +22,7 @@ class MutasiKeluargaTabsPage extends StatelessWidget {
           ),
           Expanded(
             child: TabBarView(
-              children: [MutasiKeluargaDashboardContent(), TambahMutasiPage()],
+              children: [DaftarMutasiPage(), TambahMutasiPage()],
             ),
           ),
         ],

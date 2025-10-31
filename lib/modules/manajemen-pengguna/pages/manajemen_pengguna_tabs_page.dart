@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jawarapbl/modules/dashboard/pages/manejemen_pengguna_dashboard_content.dart';
-import 'package:jawarapbl/modules/dashboard/pages/tambah_pengguna_page.dart';
+import 'package:jawarapbl/modules/manajemen-pengguna/pages/daftar_pengguna_page.dart';
+import 'package:jawarapbl/modules/manajemen-pengguna/pages/tambah_pengguna_page.dart';
 
 class ManajemenPenggunaTabsPage extends StatelessWidget {
   const ManajemenPenggunaTabsPage({super.key});
@@ -22,10 +22,7 @@ class ManajemenPenggunaTabsPage extends StatelessWidget {
           ),
           Expanded(
             child: TabBarView(
-              children: [
-                ManejemenPenggunaDashboardContent(),
-                TambahPenggunaPage(),
-              ],
+              children: [DaftarPenggunaPage(), TambahPenggunaPage()],
             ),
           ),
         ],

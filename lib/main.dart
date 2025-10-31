@@ -11,9 +11,10 @@ import 'package:jawarapbl/modules/pesan-warga/pages/pesanwarga_tabs_page.dart';
 import 'package:jawarapbl/modules/penerimaan-warga/pages/penerimaanwarga_tabs_page.dart';
 import 'package:jawarapbl/modules/laporan-keuangan/pages/laporankeuangan_tabs_page.dart';
 import 'package:jawarapbl/shared/layouts/main_layout.dart';
-import 'package:jawarapbl/modules/dashboard/pages/mutasi_keluarga_tabs_page.dart';
-import 'package:jawarapbl/modules/dashboard/pages/log_aktivitas_dashboard_content.dart';
-import 'package:jawarapbl/modules/dashboard/pages/manajemen_pengguna_tabs_page.dart';
+import 'package:jawarapbl/modules/mutasi-keluarga/pages/mutasi_keluarga_tabs_page.dart';
+import 'package:jawarapbl/modules/log-aktivitas/pages/log_aktivitas_page.dart';
+// Import updated from dashboard to manajemen-pengguna
+import 'package:jawarapbl/modules/manajemen-pengguna/pages/manajemen_pengguna_tabs_page.dart';
 import 'package:jawarapbl/modules/auth/pages/register.dart';
 
 void main() => runApp(
@@ -66,8 +67,8 @@ void main() => runApp(
           const MainLayout(body: PenerimaanWargaMasterPage()),
       '/mutasi-keluarga': (context) =>
           const MainLayout(body: MutasiKeluargaTabsPage()),
-      '/log-aktivitas': (context) =>
-          const MainLayout(body: LogAktivitasDashboardContent()),
+      '/log-aktivitas': (context) => const MainLayout(body: LogAktivitasPage()),
+      // Route updated to use the new ManajemenPenggunaTabsPage
       '/manajemen-pengguna': (context) =>
           const MainLayout(body: ManajemenPenggunaTabsPage()),
       '/lainnya': (context) =>

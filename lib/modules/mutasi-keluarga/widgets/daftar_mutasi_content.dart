@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class MutasiKeluargaDashboardContent extends StatelessWidget {
-  const MutasiKeluargaDashboardContent({super.key});
+class DaftarMutasiContent extends StatelessWidget {
+  const DaftarMutasiContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -10,7 +10,7 @@ class MutasiKeluargaDashboardContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔹 Judul halaman
+          // Judul halaman
           const Text(
             'Daftar Mutasi Keluarga',
             style: TextStyle(
@@ -21,7 +21,7 @@ class MutasiKeluargaDashboardContent extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // 🔹 Tabel data dalam card full width
+          // Tabel data dalam card full width
           Expanded(
             child: Card(
               elevation: 3,
@@ -31,11 +31,10 @@ class MutasiKeluargaDashboardContent extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16.0),
-                // 🟣 Perbaikan di sini
                 child: SingleChildScrollView(
                   scrollDirection: Axis.vertical,
                   child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal, // 👉 scroll ke samping
+                    scrollDirection: Axis.horizontal, // scroll ke samping
                     child: DataTable(
                       headingRowColor: WidgetStateProperty.all(
                         Colors.deepPurple.shade50,
