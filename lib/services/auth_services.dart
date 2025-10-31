@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   // Use 10.0.2.2 for Android Emulator to connect to your computer's localhost
-  final String _baseUrl = 'http://10.0.2.2:8000/api';
+  final String _baseUrl = 'http://192.168.100.14/jawara_api/api';
 
   Future<String?> login(String email, String password) async {
     try {
