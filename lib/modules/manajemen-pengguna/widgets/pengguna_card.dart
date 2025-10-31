@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:jawarapbl/shared/widgets/base_list_card.dart';
 
-// A simple model for the card data
 class PenggunaData {
   final String nama;
   final String email;
@@ -36,31 +36,16 @@ class PenggunaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final roleColor = _getRoleColor(item.role);
 
-    return Container(
+    return BaseListCard(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            spreadRadius: 1,
-            blurRadius: 5,
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade200),
-      ),
       child: Row(
         children: [
-          // Icon
           CircleAvatar(
             radius: 24,
             backgroundColor: roleColor.withOpacity(0.1),
             child: Icon(item.icon, color: roleColor),
           ),
           const SizedBox(width: 16),
-
-          // Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,8 +72,6 @@ class PenggunaCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // Menu Aksi
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.grey),
             onSelected: (value) {

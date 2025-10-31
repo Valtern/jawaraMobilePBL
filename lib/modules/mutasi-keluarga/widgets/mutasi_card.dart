@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jawarapbl/shared/widgets/base_list_card.dart';
 
 class MutasiData {
   final String nama;
@@ -18,24 +19,10 @@ class MutasiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            spreadRadius: 1,
-            blurRadius: 5,
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade200),
-      ),
+    return BaseListCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Baris Judul (Nama) dan Menu Aksi
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +39,7 @@ class MutasiCard extends StatelessWidget {
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, color: Colors.grey),
                 onSelected: (value) {
-                  // Handle actions like 'Detail', 'Edit', 'Hapus'
+                  // Handle actions
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                   const PopupMenuItem<String>(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jawarapbl/shared/widgets/base_list_card.dart';
 
 class Pengeluaran {
   final int id;
@@ -16,7 +17,6 @@ class Pengeluaran {
   });
 }
 
-/// A reusable card widget to display expense details.
 class PengeluaranCard extends StatelessWidget {
   final Pengeluaran item;
 
@@ -24,20 +24,7 @@ class PengeluaranCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            spreadRadius: 1,
-            blurRadius: 5,
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade200),
-      ),
+    return BaseListCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
