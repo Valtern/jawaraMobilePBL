@@ -1,136 +1,104 @@
 import 'package:flutter/material.dart';
 import 'package:jawarapbl/modules/manajemen-pengguna/pages/tambah_pengguna_page.dart';
+import 'package:jawarapbl/modules/manajemen-pengguna/widgets/pengguna_card.dart';
 
 class DaftarPenggunaContent extends StatelessWidget {
   const DaftarPenggunaContent({super.key});
 
+  // Dummy data for the list
+  final List<PenggunaData> penggunaList = const [
+    PenggunaData(
+      nama: 'Admin Jawara',
+      email: 'admin@mail.com',
+      role: 'Admin',
+      icon: Icons.admin_panel_settings,
+    ),
+    PenggunaData(
+      nama: 'Petugas A',
+      email: 'petugas_a@mail.com',
+      role: 'Petugas',
+      icon: Icons.support_agent,
+    ),
+    PenggunaData(
+      nama: 'Warga Budi',
+      email: 'budi@mail.com',
+      role: 'Warga',
+      icon: Icons.person,
+    ),
+    PenggunaData(
+      nama: 'Warga Siti',
+      email: 'siti@mail.com',
+      role: 'Warga',
+      icon: Icons.person,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 4,
-        color: Colors.white,
-        child: SizedBox(
-          width: double.infinity,
-          height: double.infinity,
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 🔹 Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        "Manajemen Pengguna",
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.deepPurple,
-                        ),
-                        overflow:
-                            TextOverflow.ellipsis, // mencegah teks keluar layar
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        // Note: This button might be redundant if using tabs,
-                        // but we keep the logic from the original file.
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const TambahPenggunaPage(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text("Tambah Pengguna"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurple,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ],
+      padding: const EdgeInsets.all(16.0), // Use padding consistent with list
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 🔹 Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Text(
+                  "Manajemen Pengguna",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 24),
-
-                // 🔹 Tabel daftar pengguna
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey.shade200,
-                        width: 1.5,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
+              ),
+              // This button is redundant when using tabs, but kept as per original
+              // You might want to remove this button later
+              ElevatedButton.icon(
+                onPressed: () {
+                  // This logic is problematic in a tab view.
+                  // It's better to just switch tabs.
+                  // For now, it pushes a new page as per original code.
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const TambahPenggunaPage(),
                     ),
-                    child: ListView(
-                      children: [
-                        DataTable(
-                          headingRowColor: WidgetStateProperty.all(
-                            Colors.deepPurple[50],
-                          ),
-                          columns: const [
-                            DataColumn(label: Text("No")),
-                            DataColumn(label: Text("Nama")),
-                            DataColumn(label: Text("Email")),
-                            DataColumn(label: Text("Role")),
-                            DataColumn(label: Text("Aksi")),
-                          ],
-                          rows: List.generate(
-                            5,
-                            (index) => DataRow(
-                              cells: [
-                                DataCell(Text("${index + 1}")),
-                                DataCell(Text("Pengguna ${index + 1}")),
-                                DataCell(Text("user${index + 1}@mail.com")),
-                                DataCell(
-                                  Text(index == 0 ? "Admin" : "Pengguna"),
-                                ),
-                                DataCell(
-                                  Row(
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.edit,
-                                          color: Colors.orange,
-                                        ),
-                                        onPressed: () {},
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
-                                        ),
-                                        onPressed: () {},
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text("Tambah"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // 🔹 Daftar card-based list
+          Expanded(
+            child: ListView.separated(
+              itemCount: penggunaList.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final item = penggunaList[index];
+                return PenggunaCard(item: item);
+              },
             ),
           ),
-        ),
+        ],
       ),
     );
   }

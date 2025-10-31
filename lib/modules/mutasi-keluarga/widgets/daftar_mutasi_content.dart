@@ -1,7 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:jawarapbl/modules/mutasi-keluarga/widgets/mutasi_card.dart';
 
 class DaftarMutasiContent extends StatelessWidget {
   const DaftarMutasiContent({super.key});
+
+  // Dummy data for the list
+  final List<MutasiData> mutasiList = const [
+    MutasiData(
+      nama: 'Budi Santoso',
+      tanggal: '12 Oktober 2025',
+      jenis: 'Pindah Datang',
+    ),
+    MutasiData(
+      nama: 'Keluarga Andi',
+      tanggal: '10 Oktober 2025',
+      jenis: 'Pindah Keluar',
+    ),
+    MutasiData(
+      nama: 'Siti Aminah',
+      tanggal: '08 Oktober 2025',
+      jenis: 'Kematian',
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -21,73 +41,15 @@ class DaftarMutasiContent extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Tabel data dalam card full width
+          // Daftar card-based list
           Expanded(
-            child: Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal, // scroll ke samping
-                    child: DataTable(
-                      headingRowColor: WidgetStateProperty.all(
-                        Colors.deepPurple.shade50,
-                      ),
-                      dataRowColor: WidgetStateProperty.all(
-                        Colors.grey.shade50,
-                      ),
-                      headingTextStyle: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
-                      ),
-                      dataTextStyle: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
-                      columnSpacing: 50,
-                      horizontalMargin: 24,
-                      columns: const [
-                        DataColumn(label: Text('No')),
-                        DataColumn(label: Text('Nama Kepala Keluarga')),
-                        DataColumn(label: Text('Tanggal Mutasi')),
-                        DataColumn(label: Text('Jenis Mutasi')),
-                        DataColumn(label: Text('Aksi')),
-                      ],
-                      rows: [
-                        DataRow(
-                          cells: [
-                            const DataCell(Text('1')),
-                            const DataCell(Text('Budi Santoso')),
-                            const DataCell(Text('12 Oktober 2025')),
-                            const DataCell(Text('Pindah Datang')),
-                            DataCell(
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.visibility,
-                                      color: Colors.black,
-                                    ),
-                                    tooltip: 'Lihat Detail',
-                                    onPressed: () {},
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+            child: ListView.separated(
+              itemCount: mutasiList.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final item = mutasiList[index];
+                return MutasiCard(item: item);
+              },
             ),
           ),
         ],
