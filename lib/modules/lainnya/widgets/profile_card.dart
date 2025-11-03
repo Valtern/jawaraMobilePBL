@@ -1,35 +1,77 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ProfileCard extends StatelessWidget {
-  const ProfileCard({super.key});
+  final String name;
+  final String email;
+  final String? imageUrl; 
+
+  const ProfileCard({
+    super.key,
+    required this.name,
+    required this.email,
+    this.imageUrl, 
+  });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
-        padding: EdgeInsets.only(top: 12, bottom: 12, left: 12, right: 12),
+        padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: Colors.white,
-              radius: 32,
-              backgroundImage: AssetImage(
-                'assets/images/profile-placeholder.png',
-              ),
+              radius: 30,
+              backgroundColor: Colors.grey[200],
+              child: (imageUrl != null && imageUrl!.isNotEmpty)
+                  ? ClipOval(
+                      child: Image.network(
+                        imageUrl!,
+                        fit: BoxFit.cover,
+                        width: 60,
+                        height: 60,
+                        loadingBuilder: (context, child, progress) {
+                          return progress == null
+                              ? child
+                              : const CircularProgressIndicator();
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            CupertinoIcons.person_alt_circle,
+                            size: 40,
+                            color: Colors.grey[600],
+                          );
+                        },
+                      ),
+                    )
+                  : Icon(
+                      CupertinoIcons.person_alt_circle,
+                      size: 40,
+                      color: Colors.grey[600],
+                    ),
             ),
-            SizedBox(width: 14),
+            const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Admin Jawara Pintar',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                SizedBox(height: 1),
+                const SizedBox(height: 4),
                 Text(
-                  'admin1@gmail.com',
-                  style: TextStyle(color: Colors.grey[600]),
+                  email,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
                 ),
               ],
             ),
