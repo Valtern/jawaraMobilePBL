@@ -2,21 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:jawarapbl/shared/models/mutasi_keluarga_model.dart';
 import 'package:jawarapbl/services/mutasi_keluarga_service.dart';
 
-class TambahMutasiForm extends StatefulWidget {
-  const TambahMutasiForm({super.key});
+class EditMutasiPage extends StatefulWidget {
+  final MutasiKeluarga mutasi;
+
+  const EditMutasiPage({super.key, required this.mutasi});
 
   @override
-  State<TambahMutasiForm> createState() => _TambahMutasiFormState();
+  State<EditMutasiPage> createState() => _EditMutasiPageState();
 }
 
-class _TambahMutasiFormState extends State<TambahMutasiForm> {
+class _EditMutasiPageState extends State<EditMutasiPage> {
   final MutasiKeluargaService _service = MutasiKeluargaService();
   final _formKey = GlobalKey<FormState>();
   
   late TextEditingController _keteranganController;
   late DateTime _selectedDate;
   late String _selectedJenisMutasi;
-  Keluarga? _selectedKeluarga;
+  late Keluarga _selectedKeluarga;
   
   List<Keluarga> _keluargaList = [];
   bool _isLoading = false;
@@ -36,10 +38,10 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
   }
 
   void _initializeData() {
-    _keteranganController = TextEditingController();
-    _selectedDate = DateTime.now();
-    _selectedJenisMutasi = _jenisMutasiOptions.first;
-    _selectedKeluarga = null;
+    _keteranganController = TextEditingController(text: widget.mutasi.keterangan ?? '');
+    _selectedDate = widget.mutasi.tanggalMutasi;
+    _selectedJenisMutasi = widget.mutasi.jenisMutasi;
+    _selectedKeluarga = widget.mutasi.keluarga ?? Keluarga(id: 0, namaKeluarga: '', nomorKk: '');
   }
 
   Future<void> _fetchKeluargaList() async {
@@ -47,7 +49,7 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
     setState(() {
       _keluargaList = keluargaList;
       _isFetchingData = false;
-      if (_selectedKeluarga == null && keluargaList.isNotEmpty) {
+      if (_selectedKeluarga.id == 0 && keluargaList.isNotEmpty) {
         _selectedKeluarga = keluargaList.first;
       }
     });
@@ -61,6 +63,27 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Edit Mutasi Keluarga',
+          style: TextStyle(
+            color: Colors.deepPurple,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 2,
+        iconTheme: const IconThemeData(color: Colors.deepPurple),
+      ),
+      backgroundColor: const Color(0xFFF8F9FB),
+      body: _isFetchingData
+          ? const Center(child: CircularProgressIndicator())
+          : _buildForm(),
+    );
+  }
+
+  Widget _buildForm() {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Card(
@@ -70,70 +93,64 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
           padding: const EdgeInsets.all(20),
           child: Form(
             key: _formKey,
-            child: _isFetchingData
-                ? const Center(child: CircularProgressIndicator())
-                : _keluargaList.isEmpty
-                    ? Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'Data keluarga tidak tersedia.',
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          OutlinedButton.icon(
-                            onPressed: _fetchKeluargaList,
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Muat Ulang'),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Pastikan server API dapat diakses dari perangkat dan base URL sudah benar.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                        ],
-                      )
-                    : ListView(
-                        children: [
-                          const Text(
-                            'Formulir Pendaftaran Mutasi Keluarga',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
+            child: ListView(
+              children: [
+                const Text(
+                  'Edit Data Mutasi Keluarga',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
+                ),
+                const SizedBox(height: 20),
 
-                          _buildKeluargaDropdown(),
-                          _buildJenisMutasiDropdown(),
-                          _buildDateField(),
-                          _buildKeteranganField(),
+                _buildKeluargaDropdown(),
+                _buildJenisMutasiDropdown(),
+                _buildDateField(),
+                _buildKeteranganField(),
 
-                          const SizedBox(height: 30),
-                          ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _saveMutasi,
-                            icon: _isLoading
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.save),
-                            label: Text(_isLoading ? 'Menyimpan...' : 'Simpan'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
+                const SizedBox(height: 30),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _isLoading ? null : () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ],
+                        ),
+                        child: const Text('Batal'),
                       ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _isLoading ? null : _updateMutasi,
+                        icon: _isLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.save),
+                        label: Text(_isLoading ? 'Menyimpan...' : 'Simpan'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -150,10 +167,9 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        hint: const Text('Pilih keluarga'),
-        value: _keluargaList.any((k) => _selectedKeluarga?.id == k.id)
-            ? _selectedKeluarga
-            : null,
+        value: _keluargaList.any((k) => k.id == _selectedKeluarga.id)
+            ? _keluargaList.firstWhere((k) => k.id == _selectedKeluarga.id)
+            : (_keluargaList.isNotEmpty ? _keluargaList.first : null),
         isExpanded: true,
         selectedItemBuilder: (context) => _keluargaList
             .map((k) => Text(
@@ -180,7 +196,7 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
         }).toList(),
         onChanged: (value) {
           setState(() {
-            _selectedKeluarga = value;
+            _selectedKeluarga = value!;
           });
         },
         validator: (value) => value == null ? 'Harap pilih keluarga' : null,
@@ -196,7 +212,7 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
           labelText: 'Jenis Mutasi',
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        initialValue: _selectedJenisMutasi,
+        value: _selectedJenisMutasi,
         items: _jenisMutasiOptions.map((jenis) {
           return DropdownMenuItem(value: jenis, child: Text(jenis));
         }).toList(),
@@ -268,20 +284,14 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
     return months[month - 1];
   }
 
-  Future<void> _saveMutasi() async {
+  Future<void> _updateMutasi() async {
     if (!_formKey.currentState!.validate()) return;
-    
-    if (_selectedKeluarga == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Harap pilih keluarga')),
-      );
-      return;
-    }
 
     setState(() => _isLoading = true);
 
-    final mutasi = MutasiKeluarga(
-      keluargaId: _selectedKeluarga!.id,
+    final updatedMutasi = MutasiKeluarga(
+      id: widget.mutasi.id,
+      keluargaId: _selectedKeluarga.id,
       jenisMutasi: _selectedJenisMutasi,
       tanggalMutasi: _selectedDate,
       keterangan: _keteranganController.text.trim().isEmpty 
@@ -289,19 +299,18 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
           : _keteranganController.text.trim(),
     );
 
-    final success = await _service.createMutasiKeluarga(mutasi);
+    final success = await _service.updateMutasiKeluarga(updatedMutasi);
 
     setState(() => _isLoading = false);
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data mutasi berhasil ditambahkan')),
+        const SnackBar(content: Text('Data mutasi berhasil diperbarui')),
       );
-      _formKey.currentState?.reset();
-      _initializeData();
+      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal menambahkan data mutasi')),
+        const SnackBar(content: Text('Gagal memperbarui data mutasi')),
       );
     }
   }

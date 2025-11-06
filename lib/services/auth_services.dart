@@ -1,21 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jawarapbl/shared/models/user_model.dart';
 
 class AuthService {
-  // Use your ipv4 address or domain name here
-  final String _baseUrl = 'http://192.168.100.14:8000/api';
-  final String _storageUrl = 'http://192.168.100.14:8000/storage';
-
-  String get storageUrl => _storageUrl;
+  // Fixed to user's running server host
+  String get baseUrl => 'http://192.168.1.8:8000/api';
+  String get storageUrl => 'http://192.168.1.8:8000/storage';
 
   Future<String?> login(String email, String password) async {
-
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/login'),
+        Uri.parse('$baseUrl/login'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -51,7 +49,7 @@ class AuthService {
     required File? fotoIdentitas,
   }) async {
     try {
-      var uri = Uri.parse('$_baseUrl/register');
+      var uri = Uri.parse('$baseUrl/register');
       var request = http.MultipartRequest('POST', uri)
         ..headers['Accept'] = 'application/json';
 
@@ -99,7 +97,7 @@ class AuthService {
       }
 
       final response = await http.get(
-        Uri.parse('$_baseUrl/profile'),
+        Uri.parse('$baseUrl/profile'),
         headers: {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token', // Send the auth token
