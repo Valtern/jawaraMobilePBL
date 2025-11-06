@@ -12,6 +12,7 @@ class MutasiKeluargaService {
     return prefs.getString('token');
   }
 
+  // This helper function builds the required headers, including the token
   Future<Map<String, String>> _getHeaders() async {
     final token = await _getToken();
     return {
@@ -23,7 +24,7 @@ class MutasiKeluargaService {
 
   Future<List<MutasiKeluarga>> getMutasiKeluarga() async {
     try {
-      final headers = await _getHeaders();
+      final headers = await _getHeaders(); // Use auth headers
       final response = await http.get(
         Uri.parse('$_baseUrl/mutasi-keluarga'),
         headers: headers,
@@ -45,7 +46,7 @@ class MutasiKeluargaService {
 
   Future<MutasiKeluarga?> getMutasiKeluargaById(int id) async {
     try {
-      final headers = await _getHeaders();
+      final headers = await _getHeaders(); // Use auth headers
       final response = await http.get(
         Uri.parse('$_baseUrl/mutasi-keluarga/$id'),
         headers: headers,
@@ -66,7 +67,7 @@ class MutasiKeluargaService {
 
   Future<bool> createMutasiKeluarga(MutasiKeluarga mutasi) async {
     try {
-      final headers = await _getHeaders();
+      final headers = await _getHeaders(); 
       final response = await http.post(
         Uri.parse('$_baseUrl/mutasi-keluarga'),
         headers: headers,
@@ -87,7 +88,7 @@ class MutasiKeluargaService {
 
   Future<bool> updateMutasiKeluarga(MutasiKeluarga mutasi) async {
     try {
-      final headers = await _getHeaders();
+      final headers = await _getHeaders(); // FIX: Use auth headers
       final response = await http.put(
         Uri.parse('$_baseUrl/mutasi-keluarga/${mutasi.id}'),
         headers: headers,
@@ -108,7 +109,7 @@ class MutasiKeluargaService {
 
   Future<bool> deleteMutasiKeluarga(int id) async {
     try {
-      final headers = await _getHeaders();
+      final headers = await _getHeaders(); // FIX: Use auth headers
       final response = await http.delete(
         Uri.parse('$_baseUrl/mutasi-keluarga/$id'),
         headers: headers,
@@ -128,7 +129,7 @@ class MutasiKeluargaService {
 
   Future<List<Keluarga>> getKeluargaList() async {
     try {
-      final headers = await _getHeaders();
+      final headers = await _getHeaders(); // Use auth headers
       final response = await http.get(
         Uri.parse('$_baseUrl/keluarga-list'),
         headers: headers,

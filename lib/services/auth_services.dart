@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jawarapbl/shared/models/user_model.dart';
 
 class AuthService {
-  // Fixed to user's running server host
-  String get baseUrl => 'http://192.168.1.8:8000/api';
-  String get storageUrl => 'http://192.168.1.8:8000/storage';
+  // change to your local ipv4 address and the port to any unused port
+  String get baseUrl => 'http://192.168.100.14:8000/api';
+  String get storageUrl => 'http://192.168.100.14:8000/storage';
 
   Future<String?> login(String email, String password) async {
     try {
