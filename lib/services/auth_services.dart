@@ -21,6 +21,7 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'bypass-tunnel-reminder': 'true'
         },
         body: jsonEncode({'email': email, 'password': password}),
       );
