@@ -5,12 +5,14 @@ class LogAktivitasCard extends StatelessWidget {
   final String deskripsi;
   final String aktor;
   final String tanggal;
+  final String kategori;
 
   const LogAktivitasCard({
     super.key,
     required this.deskripsi,
     required this.aktor,
     required this.tanggal,
+    required this.kategori,
   });
 
   @override
@@ -42,6 +44,22 @@ class LogAktivitasCard extends StatelessWidget {
                 Text(
                   "Aktor: $aktor",
                   style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    kategori,
+                    style: const TextStyle(
+                      color: Colors.deepPurple,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ],
             ),

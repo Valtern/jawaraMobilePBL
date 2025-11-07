@@ -1,43 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:jawarapbl/modules/log-aktivitas/widgets/log_aktivitas_card.dart';
+import 'package:jawarapbl/services/log_aktivitas_service.dart';
+import 'package:jawarapbl/shared/models/log_aktivitas_model.dart';
 
-class LogAktivitasPage extends StatelessWidget {
+class LogAktivitasPage extends StatefulWidget {
   const LogAktivitasPage({super.key});
 
   @override
+  State<LogAktivitasPage> createState() => _LogAktivitasPageState();
+}
+
+class _LogAktivitasPageState extends State<LogAktivitasPage> {
+  final LogAktivitasService _service = LogAktivitasService();
+  List<LogAktivitas> _logList = [];
+  List<LogAktivitas> _filteredLogList = [];
+  List<String> _kategoriList = [];
+  bool _isLoading = true;
+  String? _selectedKategori;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    final logs = await _service.getLogAktivitas();
+    final kategoris = await _service.getKategoriList();
+    setState(() {
+      _logList = logs;
+      _filteredLogList = logs;
+      _kategoriList = kategoris;
+      _isLoading = false;
+    });
+  }
+
+  void _applyFilter(String? kategori) {
+    setState(() {
+      _selectedKategori = kategori;
+      if (kategori == null || kategori.isEmpty) {
+        _filteredLogList = _logList;
+      } else {
+        _filteredLogList = _logList.where((log) => log.kategori == kategori).toList();
+      }
+    });
+  }
+
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Filter Log Aktivitas'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Pilih Kategori:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            DropdownButton<String?>(
+              isExpanded: true,
+              value: _selectedKategori,
+              hint: const Text('Semua Kategori'),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Semua Kategori'),
+                ),
+                ..._kategoriList.map((k) => DropdownMenuItem<String?>(
+                  value: k,
+                  child: Text(k),
+                )),
+              ],
+              onChanged: (value) {
+                Navigator.of(ctx).pop();
+                _applyFilter(value);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> aktivitasList = [
-      {
-        'deskripsi': 'Menambahkan transfer channel baru: Bank Mega',
-        'aktor': 'Admin Jawara',
-        'tanggal': '15 Oktober 2025',
-      },
-      {
-        'deskripsi': 'Memperbarui transfer channel: 234234',
-        'aktor': 'Admin Jawara',
-        'tanggal': '15 Oktober 2025',
-      },
-      {
-        'deskripsi': 'Mendownload laporan keuangan',
-        'aktor': 'Admin Jawara',
-        'tanggal': '14 Oktober 2025',
-      },
-      {
-        'deskripsi': 'Mengubah iuran: Agustusan',
-        'aktor': 'Admin Jawara',
-        'tanggal': '14 Oktober 2025',
-      },
-      {
-        'deskripsi': 'Menambah data warga baru: Budi Santoso',
-        'aktor': 'Admin Jawara',
-        'tanggal': '13 Oktober 2025',
-      },
-      {
-        'deskripsi': 'Menghapus data iuran lama',
-        'aktor': 'Admin Jawara',
-        'tanggal': '12 Oktober 2025',
-      },
-    ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -71,9 +123,7 @@ class LogAktivitasPage extends StatelessWidget {
                   ),
                 ),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: tambahkan filter logika di sini
-                  },
+                  onPressed: _showFilterDialog,
                   icon: const Icon(Icons.filter_alt_outlined),
                   label: const Text("Filter"),
                   style: ElevatedButton.styleFrom(
@@ -95,19 +145,31 @@ class LogAktivitasPage extends StatelessWidget {
 
             // 🔹 Daftar aktivitas dalam bentuk card
             Expanded(
-              child: ListView.separated(
-                itemCount: aktivitasList.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final item = aktivitasList[index];
-                  return LogAktivitasCard(
-                    deskripsi: item['deskripsi']!,
-                    aktor: item['aktor']!,
-                    tanggal: item['tanggal']!,
-                  );
-                },
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _filteredLogList.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'Belum ada log aktivitas',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _fetchData,
+                          child: ListView.separated(
+                            itemCount: _filteredLogList.length,
+                            separatorBuilder: (context, index) => const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final log = _filteredLogList[index];
+                              return LogAktivitasCard(
+                                deskripsi: log.deskripsi,
+                                aktor: log.userName,
+                                tanggal: log.tanggal,
+                                kategori: log.kategori,
+                              );
+                            },
+                          ),
+                        ),
             ),
           ],
         ),
