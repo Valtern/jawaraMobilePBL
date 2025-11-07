@@ -8,6 +8,13 @@ class User {
   final String role;
   final String status;
 
+  final String? tempatLahir;
+  final String? tanggalLahir; // Stored as String (YYYY-MM-DD)
+  final String? jenisKelamin;
+  final String? agama;
+  final String? statusPerkawinan;
+  final String? pekerjaan;
+
   User({
     required this.id,
     required this.name,
@@ -17,9 +24,19 @@ class User {
     this.fotoIdentitas,
     required this.role,
     required this.status,
+    // Add to constructor
+    this.tempatLahir,
+    this.tanggalLahir,
+    this.jenisKelamin,
+    this.agama,
+    this.statusPerkawinan,
+    this.pekerjaan,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // Check if 'warga' data exists
+    final wargaData = json['warga'] as Map<String, dynamic>?;
+
     return User(
       id: json['id'],
       name: json['name'],
@@ -29,6 +46,14 @@ class User {
       fotoIdentitas: json['foto_identitas'],
       role: json['role'],
       status: json['status'],
+      
+      // Use data from the nested 'warga' object if it exists
+      tempatLahir: wargaData?['tempat_lahir'],
+      tanggalLahir: wargaData?['tanggal_lahir'],
+      jenisKelamin: wargaData?['jenis_kelamin'],
+      agama: wargaData?['agama'],
+      statusPerkawinan: wargaData?['status_perkawinan'],
+      pekerjaan: wargaData?['pekerjaan'],
     );
   }
 }

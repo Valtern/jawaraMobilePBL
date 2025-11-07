@@ -1,27 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:jawarapbl/services/auth_services.dart';
+// Import the new page
+import 'package:jawarapbl/modules/lainnya/pages/edit_profile_page.dart';
 
 class AccountCard extends StatelessWidget {
   const AccountCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final AuthService authService = AuthService();
+
     final List<ListTile> accountItems = [
-      const ListTile(
-        leading: Icon(Icons.settings),
-        title: Text('Pengaturan'),
-        trailing: Icon(Icons.chevron_right),
-      ),
       ListTile(
-        iconColor: Colors.red,
-        textColor: Colors.red,
-        leading: const Icon(Icons.logout),
-        title: const Text('Keluar'),
+        leading: const Icon(Icons.settings), // <-- Kept your original icon
+        title: const Text('Pengaturan'),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
-          Navigator.of(
+          // MODIFIED: Changed this to navigate to the new page
+          Navigator.push(
             context,
-            rootNavigator: true,
-          ).pushNamedAndRemoveUntil('/login', (Route<dynamic> route) => false);
+            MaterialPageRoute(builder: (context) => const EditProfilePage()),
+          );
+        },
+      ),
+      ListTile(
+        leading: const Icon(Icons.logout), // <-- Kept your original icon
+        title: const Text('Keluar'),
+        textColor: Colors.red,
+        iconColor: Colors.red,
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () async {
+          await authService.logout();
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/login', (route) => false);
         },
       ),
     ];

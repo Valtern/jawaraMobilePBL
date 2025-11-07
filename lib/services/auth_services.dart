@@ -112,6 +112,123 @@ class AuthService {
     }
   }
 
+
+  // Returns null on success, or an error message string on failure.
+  Future<String?> updateProfile({
+    required String name,
+    required String phone,
+    required String? tempatLahir,
+    required DateTime? tanggalLahir,
+    required String? jenisKelamin,
+    required String? agama,
+    required String? statusPerkawinan,
+    required String? pekerjaan,
+    required File? fotoProfil, // This is the new 'foto_identitas'
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) {
+        return 'Anda tidak login.';
+      }
+
+      var uri = Uri.parse('$baseUrl/profile/update');
+      var request = http.MultipartRequest('POST', uri)
+        ..headers['Accept'] = 'application/json'
+        ..headers['Authorization'] = 'Bearer $token'; // Add auth token
+
+      // Add text fields
+      request.fields['name'] = name;
+      request.fields['phone'] = phone;
+      if (tempatLahir != null) request.fields['tempat_lahir'] = tempatLahir;
+      if (tanggalLahir != null) {
+        request.fields['tanggal_lahir'] = tanggalLahir.toIso8601String().split('T').first; // Format as YYYY-MM-DD
+      }
+      if (jenisKelamin != null) request.fields['jenis_kelamin'] = jenisKelamin;
+      if (agama != null) request.fields['agama'] = agama;
+      if (statusPerkawinan != null) request.fields['status_perkawinan'] = statusPerkawinan;
+      if (pekerjaan != null) request.fields['pekerjaan'] = pekerjaan;
+      
+      // Add profile picture file (optional)
+      if (fotoProfil != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'foto_identitas',
+            fotoProfil.path,
+          ),
+        );
+      }
+
+      var response = await request.send();
+      final respStr = await response.stream.bytesToString(); // Read response
+
+      if (response.statusCode == 200) {
+        return null; // Success
+      } else if (response.statusCode == 422) {
+        // Validation Error
+        final errors = jsonDecode(respStr) as Map<String, dynamic>;
+        final firstErrorKey = errors.keys.first;
+        final firstErrorMessage = (errors[firstErrorKey] as List).first;
+        return firstErrorMessage;
+      } else {
+        // Other errors
+        print(respStr);
+        return 'Update gagal. Terjadi kesalahan server.';
+      }
+    } catch (e) {
+      print(e.toString());
+      return 'Update gagal. Periksa koneksi internet Anda.';
+    }
+  }
+
+
+  // Returns null on success, or an error message string on failure.
+  Future<String?> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) {
+        return 'Anda tidak login.';
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/profile/change-password'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token', // Add auth token
+        },
+        body: jsonEncode({
+          'old_password': oldPassword,
+          'new_password': newPassword,
+          'new_password_confirmation': newPasswordConfirmation,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return null; // Success
+      } else if (response.statusCode == 422) {
+        // Validation Error
+        final errors = data as Map<String, dynamic>;
+        final firstErrorKey = errors.keys.first;
+        final firstErrorMessage = (errors[firstErrorKey] as List).first;
+        return firstErrorMessage;
+      } else {
+         // Other errors (e.g., 401 Wrong Password)
+        return data['message'] ?? 'Gagal mengubah password.';
+      }
+    } catch (e) {
+      print(e.toString());
+      return 'Update gagal. Periksa koneksi internet Anda.';
+    }
+  }
+
   Future<User?> getProfile() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -138,6 +255,25 @@ class AuthService {
     } catch (e) {
       print(e.toString());
       return null;
+    }
+  }
+
+  // --- NEW METHOD ADDED ---
+  Future<void> logout() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // Remove the token and role from local storage
+      await prefs.remove('token');
+      await prefs.remove('role');
+
+      // Note: A more secure implementation would also call a
+      // backend /api/logout endpoint here to invalidate the token
+      // on the server, but the provided 'routes/api.php'
+      // does not have one. This client-side logout is sufficient
+      // for the app to function.
+
+    } catch (e) {
+      print(e.toString());
     }
   }
 }
