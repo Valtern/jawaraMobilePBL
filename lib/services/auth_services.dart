@@ -6,8 +6,8 @@ import 'package:jawarapbl/shared/models/user_model.dart';
 
 class AuthService {
   // change to your local ipv4 address and the port to any unused port
-  // String get baseUrl => 'http://192.168.18.15:8000';
-  // String get storageUrl => 'http://192.168.18.15:8000';
+  // String get baseUrl => 'http://192.168.100.14:8000/api';
+  // String get storageUrl => 'http://192.168.100.14:8000/storage';
 
   // this one is the domain im running with localtunnel, change it accordingly if you made changes to the api.
   // simply comment below and uncomment the above to run on local network

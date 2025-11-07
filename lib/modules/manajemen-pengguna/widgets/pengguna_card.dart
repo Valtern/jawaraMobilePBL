@@ -39,7 +39,7 @@ class PenggunaData {
   }
 
   static IconData _iconForRole(String role) {
-    switch (role?.toLowerCase()) {
+    switch (role.toLowerCase()) {
       case 'admin':
         return Icons.admin_panel_settings;
       case 'rw':
