@@ -4,7 +4,7 @@ class User {
   final String email;
   final String? nik;
   final String? phone;
-  final String? fotoIdentitas; 
+  final String? fotoIdentitas;
   final String role;
   final String status;
 

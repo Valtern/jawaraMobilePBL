@@ -43,7 +43,8 @@ class AuthService {
     }
   }
 
-  Future<bool> register({
+  // MODIFICATION: Changed return type from Future<bool> to Future<String?>
+  Future<String?> register({
     required String name,
     required String nik,
     required String email,
@@ -51,8 +52,8 @@ class AuthService {
     required String password,
     required String passwordConfirmation,
     required String jenisKelamin,
-    required File? fotoProfil, // Updated
-    required File? fotoKtp, // Updated
+    required File? fotoProfil,
+    required File? fotoKtp,
   }) async {
     try {
       var uri = Uri.parse('$baseUrl/register');
@@ -68,17 +69,17 @@ class AuthService {
       request.fields['password_confirmation'] = passwordConfirmation;
       request.fields['jenis_kelamin'] = jenisKelamin;
 
-      // Add profile picture file
+      // Add profile picture file (optional)
       if (fotoProfil != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
-            'foto_profil',
+            'foto_identitas',
             fotoProfil.path,
           ),
         );
       }
 
-      // Add KTP file
+      // Add KTP file (optional)
       if (fotoKtp != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
@@ -89,17 +90,25 @@ class AuthService {
       }
 
       var response = await request.send();
+      final respStr = await response.stream.bytesToString(); // Read response
 
       if (response.statusCode == 201) {
-        return true;
+        return null; // Success
+      } else if (response.statusCode == 422) {
+        // Validation Error
+        final errors = jsonDecode(respStr) as Map<String, dynamic>;
+        // Get the first error message from the list
+        final firstErrorKey = errors.keys.first;
+        final firstErrorMessage = (errors[firstErrorKey] as List).first;
+        return firstErrorMessage; // e.g., "The nik has already been taken."
       } else {
-        final respStr = await response.stream.bytesToString();
+        // Other errors
         print(respStr);
-        return false;
+        return 'Pendaftaran gagal. Terjadi kesalahan server.';
       }
     } catch (e) {
       print(e.toString());
-      return false;
+      return 'Pendaftaran gagal. Periksa koneksi internet Anda.';
     }
   }
 
@@ -122,9 +131,9 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return User.fromJson(data); // Parse and return the User
+        return User.fromJson(data); 
       } else {
-        return null; // Failed to fetch
+        return null; 
       }
     } catch (e) {
       print(e.toString());

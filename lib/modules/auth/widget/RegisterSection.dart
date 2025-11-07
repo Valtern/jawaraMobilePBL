@@ -60,21 +60,12 @@ class _RegisterSectionState extends State<RegisterSection> {
         return;
       }
 
-      print('--- REGISTER DEBUG ---');
-      print('Nama: ${_namaController.text}');
-      print('NIK: ${_nikController.text}');
-      print('Email: ${_emailController.text}');
-      print('Phone: ${_phoneController.text}');
-      print('Jenis Kelamin: $_jenisKelamin');
-      print('Foto Profil Path: ${_fotoProfil?.path}');
-      print('Foto KTP Path: ${_fotoKtp?.path}');
-      print('----------------------');
-
       setState(() {
         _isLoading = true;
       });
 
-      bool success = await _authService.register(
+      // MODIFICATION: Changed logic to handle String?
+      String? errorMessage = await _authService.register(
         name: _namaController.text,
         nik: _nikController.text,
         email: _emailController.text,
@@ -90,7 +81,8 @@ class _RegisterSectionState extends State<RegisterSection> {
         _isLoading = false;
       });
 
-      if (success) {
+      if (errorMessage == null) {
+        // Success
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -98,9 +90,10 @@ class _RegisterSectionState extends State<RegisterSection> {
         );
         Navigator.pop(context); // Go back to login
       } else {
+        // Failure, show the specific error
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Pendaftaran gagal. Periksa kembali data Anda.')),
+          SnackBar(
+              content: Text(errorMessage)),
         );
       }
     }
@@ -227,7 +220,8 @@ class _RegisterSectionState extends State<RegisterSection> {
 
               // Modified KTP Upload
               _buildFileUploadField(
-                label: 'Foto Identitas (KTP/KK)',
+                // MODIFICATION: Added (Opsional)
+                label: 'Foto Identitas (KTP/KK) (Opsional)',
                 file: _fotoKtp,
                 onTap: _pickKtpImage,
                 hint: 'Upload foto KTP/KK (.png/.jpg)',

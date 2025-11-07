@@ -92,7 +92,7 @@ class MyApp extends StatelessWidget {
         '/manajemen-pengguna': (context) =>
             const MainLayout(body: ManajemenPenggunaTabsPage()),
         '/lainnya': (context) =>
-            const MainLayout(body: LainnyaPage(), currentIndex: 3),
+            MainLayout(body: LainnyaPage(), currentIndex: 3),
       },
     );
   }
