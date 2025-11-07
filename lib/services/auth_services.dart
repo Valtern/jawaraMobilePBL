@@ -6,13 +6,13 @@ import 'package:jawarapbl/shared/models/user_model.dart';
 
 class AuthService {
   // change to your local ipv4 address and the port to any unused port
-  String get baseUrl => 'http://192.168.100.14:8000/api';
-  String get storageUrl => 'http://192.168.100.14:8000/storage';
+  // String get baseUrl => 'http://192.168.100.14:8000/api';
+  // String get storageUrl => 'http://192.168.100.14:8000/storage';
 
   // this one is the domain im running with localtunnel, change it accordingly if you made changes to the api.
   // simply comment below and uncomment the above to run on local network
-  // String get baseUrl => 'https://jawara-api.loca.lt/api';
-  // String get storageUrl => 'https://jawara-api.loca.lt/storage';
+  String get baseUrl => 'https://jawara-api.loca.lt/api';
+  String get storageUrl => 'https://jawara-api.loca.lt/storage';
 
   Future<String?> login(String email, String password) async {
     try {
@@ -43,7 +43,6 @@ class AuthService {
     }
   }
 
-  // MODIFICATION: Changed return type from Future<bool> to Future<String?>
   Future<String?> register({
     required String name,
     required String nik,
@@ -90,19 +89,16 @@ class AuthService {
       }
 
       var response = await request.send();
-      final respStr = await response.stream.bytesToString(); // Read response
+      final respStr = await response.stream.bytesToString(); 
 
       if (response.statusCode == 201) {
-        return null; // Success
+        return null; 
       } else if (response.statusCode == 422) {
-        // Validation Error
         final errors = jsonDecode(respStr) as Map<String, dynamic>;
-        // Get the first error message from the list
         final firstErrorKey = errors.keys.first;
         final firstErrorMessage = (errors[firstErrorKey] as List).first;
-        return firstErrorMessage; // e.g., "The nik has already been taken."
+        return firstErrorMessage; 
       } else {
-        // Other errors
         print(respStr);
         return 'Pendaftaran gagal. Terjadi kesalahan server.';
       }
@@ -113,7 +109,6 @@ class AuthService {
   }
 
 
-  // Returns null on success, or an error message string on failure.
   Future<String?> updateProfile({
     required String name,
     required String phone,
@@ -123,7 +118,7 @@ class AuthService {
     required String? agama,
     required String? statusPerkawinan,
     required String? pekerjaan,
-    required File? fotoProfil, // This is the new 'foto_identitas'
+    required File? fotoProfil, 
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -135,9 +130,8 @@ class AuthService {
       var uri = Uri.parse('$baseUrl/profile/update');
       var request = http.MultipartRequest('POST', uri)
         ..headers['Accept'] = 'application/json'
-        ..headers['Authorization'] = 'Bearer $token'; // Add auth token
+        ..headers['Authorization'] = 'Bearer $token'; 
 
-      // Add text fields
       request.fields['name'] = name;
       request.fields['phone'] = phone;
       if (tempatLahir != null) request.fields['tempat_lahir'] = tempatLahir;
@@ -171,7 +165,6 @@ class AuthService {
         final firstErrorMessage = (errors[firstErrorKey] as List).first;
         return firstErrorMessage;
       } else {
-        // Other errors
         print(respStr);
         return 'Update gagal. Terjadi kesalahan server.';
       }
@@ -182,7 +175,6 @@ class AuthService {
   }
 
 
-  // Returns null on success, or an error message string on failure.
   Future<String?> changePassword({
     required String oldPassword,
     required String newPassword,
@@ -200,7 +192,7 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': 'Bearer $token', // Add auth token
+          'Authorization': 'Bearer $token', 
         },
         body: jsonEncode({
           'old_password': oldPassword,
@@ -220,7 +212,6 @@ class AuthService {
         final firstErrorMessage = (errors[firstErrorKey] as List).first;
         return firstErrorMessage;
       } else {
-         // Other errors (e.g., 401 Wrong Password)
         return data['message'] ?? 'Gagal mengubah password.';
       }
     } catch (e) {
@@ -258,13 +249,11 @@ class AuthService {
     }
   }
 
-  // MODIFIED: Secure logout with server-side token invalidation
   Future<bool> logout() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
-      // If there's a token, try to invalidate it on the server
       if (token != null) {
         try {
           final response = await http.post(
@@ -281,19 +270,16 @@ class AuthService {
             print('Logout response: ${response.statusCode} - ${response.body}');
           }
         } catch (e) {
-          // If server request fails, still proceed with client-side logout
           print('Server logout failed: $e');
         }
       }
 
-      // Always clear local storage regardless of server response
       await prefs.remove('token');
       await prefs.remove('role');
 
       return true;
     } catch (e) {
       print('Logout error: $e');
-      // Even if there's an error, try to clear local storage
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('token');
@@ -303,7 +289,6 @@ class AuthService {
     }
   }
 
-  // ADDED: Optional - Logout from all devices
   Future<bool> logoutAllDevices() async {
     try {
       final prefs = await SharedPreferences.getInstance();
