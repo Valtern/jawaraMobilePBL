@@ -2,7 +2,7 @@ import 'dart:io'; // Import for File
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jawarapbl/services/auth_services.dart'; 
+import 'package:jawarapbl/services/auth_services.dart';
 
 class RegisterSection extends StatefulWidget {
   const RegisterSection({super.key});
@@ -13,7 +13,7 @@ class RegisterSection extends StatefulWidget {
 
 class _RegisterSectionState extends State<RegisterSection> {
   final _formKey = GlobalKey<FormState>();
-  final _authService = AuthService(); 
+  final _authService = AuthService();
 
   final _namaController = TextEditingController();
   final _nikController = TextEditingController();
@@ -23,17 +23,28 @@ class _RegisterSectionState extends State<RegisterSection> {
   final _confirmPasswordController = TextEditingController();
 
   String? _jenisKelamin;
-  File? _fotoIdentitas;
+  File? _fotoKtp; // Renamed from _fotoIdentitas
+  File? _fotoProfil; // Added for profile picture
   bool _isLoading = false;
 
   final ImagePicker _picker = ImagePicker();
 
-  Future<void> _pickImage() async {
+  Future<void> _pickProfileImage() async {
     final XFile? pickedFile =
         await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _fotoIdentitas = File(pickedFile.path);
+        _fotoProfil = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _pickKtpImage() async {
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _fotoKtp = File(pickedFile.path);
       });
     }
   }
@@ -49,6 +60,16 @@ class _RegisterSectionState extends State<RegisterSection> {
         return;
       }
 
+      print('--- REGISTER DEBUG ---');
+      print('Nama: ${_namaController.text}');
+      print('NIK: ${_nikController.text}');
+      print('Email: ${_emailController.text}');
+      print('Phone: ${_phoneController.text}');
+      print('Jenis Kelamin: $_jenisKelamin');
+      print('Foto Profil Path: ${_fotoProfil?.path}');
+      print('Foto KTP Path: ${_fotoKtp?.path}');
+      print('----------------------');
+
       setState(() {
         _isLoading = true;
       });
@@ -61,7 +82,8 @@ class _RegisterSectionState extends State<RegisterSection> {
         password: _passwordController.text,
         passwordConfirmation: _confirmPasswordController.text,
         jenisKelamin: _jenisKelamin!,
-        fotoIdentitas: _fotoIdentitas,
+        fotoProfil: _fotoProfil, // Pass the profile picture
+        fotoKtp: _fotoKtp, // Pass the KTP picture
       );
 
       setState(() {
@@ -70,12 +92,15 @@ class _RegisterSectionState extends State<RegisterSection> {
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pendaftaran berhasil! Menunggu persetujuan admin.')),
+          const SnackBar(
+              content:
+                  Text('Pendaftaran berhasil! Menunggu persetujuan admin.')),
         );
         Navigator.pop(context); // Go back to login
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pendaftaran gagal. Periksa kembali data Anda.')),
+          const SnackBar(
+              content: Text('Pendaftaran gagal. Periksa kembali data Anda.')),
         );
       }
     }
@@ -128,28 +153,28 @@ class _RegisterSectionState extends State<RegisterSection> {
               ),
               const SizedBox(height: 16),
               _buildTextField(
-                controller: _emailController, 
+                controller: _emailController,
                 label: 'Email',
                 hint: 'Masukkan email aktif',
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
               _buildTextField(
-                controller: _phoneController, 
+                controller: _phoneController,
                 label: 'No Telepon',
                 hint: '08xxxxxxxxxx',
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 16),
               _buildTextField(
-                controller: _passwordController, 
+                controller: _passwordController,
                 label: 'Password',
                 hint: 'Masukkan password',
                 obscureText: true,
               ),
               const SizedBox(height: 16),
               _buildTextField(
-                controller: _confirmPasswordController, 
+                controller: _confirmPasswordController,
                 label: 'Konfirmasi Password',
                 hint: 'Masukkan ulang password',
                 obscureText: true,
@@ -160,7 +185,8 @@ class _RegisterSectionState extends State<RegisterSection> {
                 hint: '-- Pilih Jenis Kelamin --',
                 items: ['Laki-laki', 'Perempuan'],
                 value: _jenisKelamin, // Add value
-                onChanged: (val) { // Add onChanged
+                onChanged: (val) {
+                  // Add onChanged
                   setState(() {
                     _jenisKelamin = val;
                   });
@@ -172,13 +198,13 @@ class _RegisterSectionState extends State<RegisterSection> {
                 hint: '-- Pilih Rumah --',
                 items: ['Rumah A', 'Rumah B'],
                 onChanged: (val) {}, // Not implemented in backend yet
-                validator: null, 
+                validator: null,
               ),
               const SizedBox(height: 16),
               _buildTextField(
                 label: 'Alamat Rumah (Jika Tidak Ada di List)',
                 hint: 'Blok 5A / No. 10',
-                validator: null, 
+                validator: null,
               ),
               const SizedBox(height: 16),
               _buildDropdownField(
@@ -186,15 +212,31 @@ class _RegisterSectionState extends State<RegisterSection> {
                 hint: '-- Pilih Status --',
                 items: ['Milik Sendiri', 'Sewa'],
                 onChanged: (val) {}, // Not implemented in backend yet
-                validator: null, 
+                validator: null,
               ),
               const SizedBox(height: 16),
-              _buildFileUploadField(label: 'Foto Identitas'),
+
+              // New Profile Picture Upload
+              _buildFileUploadField(
+                label: 'Foto Profil (Opsional)',
+                file: _fotoProfil,
+                onTap: _pickProfileImage,
+                hint: 'Upload foto profil (.png/.jpg)',
+              ),
+              const SizedBox(height: 16),
+
+              // Modified KTP Upload
+              _buildFileUploadField(
+                label: 'Foto Identitas (KTP/KK)',
+                file: _fotoKtp,
+                onTap: _pickKtpImage,
+                hint: 'Upload foto KTP/KK (.png/.jpg)',
+              ),
 
               const SizedBox(height: 32),
 
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleRegister, 
+                onPressed: _isLoading ? null : _handleRegister,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   minimumSize: const Size.fromHeight(50),
@@ -211,7 +253,7 @@ class _RegisterSectionState extends State<RegisterSection> {
               ),
 
               const SizedBox(height: 24),
-               Center(
+              Center(
                 child: RichText(
                   text: TextSpan(
                     style: const TextStyle(color: Colors.black, fontSize: 14),
@@ -312,14 +354,20 @@ class _RegisterSectionState extends State<RegisterSection> {
     );
   }
 
-  Widget _buildFileUploadField({required String label}) {
+  // This widget is now generic
+  Widget _buildFileUploadField({
+    required String label,
+    required File? file,
+    required VoidCallback onTap,
+    required String hint,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         GestureDetector(
-          onTap: _pickImage,
+          onTap: onTap,
           child: Container(
             height: 120,
             width: double.infinity,
@@ -331,11 +379,11 @@ class _RegisterSectionState extends State<RegisterSection> {
                 style: BorderStyle.solid,
               ),
             ),
-            child: _fotoIdentitas != null 
+            child: file != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(8.0),
                     child: Image.file(
-                      _fotoIdentitas!,
+                      file,
                       fit: BoxFit.cover,
                     ),
                   )
@@ -349,7 +397,7 @@ class _RegisterSectionState extends State<RegisterSection> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Upload foto KK/KTP (.png/.jpg)',
+                        hint,
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                     ],
