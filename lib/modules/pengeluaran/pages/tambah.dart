@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:jawarapbl/modules/pengeluaran/widgets/widgetTambah.dart';
 
 class TambahPengeluaranPage extends StatelessWidget {
-  const TambahPengeluaranPage({super.key});
+  final VoidCallback onSuccess;
+  const TambahPengeluaranPage({super.key, required this.onSuccess});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
-        padding: EdgeInsets.only(top: 16.0),
-        child: TambahPengeluaranForm(),
+        padding: const EdgeInsets.only(top: 16.0),
+        child: TambahPengeluaranForm(
+          onSuccess: onSuccess,
+        ),
       ),
     );
   }

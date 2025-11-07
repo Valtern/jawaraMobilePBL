@@ -258,22 +258,84 @@ class AuthService {
     }
   }
 
-  // --- NEW METHOD ADDED ---
-  Future<void> logout() async {
+  // MODIFIED: Secure logout with server-side token invalidation
+  Future<bool> logout() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      // Remove the token and role from local storage
+      final token = prefs.getString('token');
+
+      // If there's a token, try to invalidate it on the server
+      if (token != null) {
+        try {
+          final response = await http.post(
+            Uri.parse('$baseUrl/logout'),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+              'bypass-tunnel-reminder': 'true'
+            },
+          );
+
+          // Log the response for debugging
+          if (response.statusCode != 200) {
+            print('Logout response: ${response.statusCode} - ${response.body}');
+          }
+        } catch (e) {
+          // If server request fails, still proceed with client-side logout
+          print('Server logout failed: $e');
+        }
+      }
+
+      // Always clear local storage regardless of server response
       await prefs.remove('token');
       await prefs.remove('role');
 
-      // Note: A more secure implementation would also call a
-      // backend /api/logout endpoint here to invalidate the token
-      // on the server, but the provided 'routes/api.php'
-      // does not have one. This client-side logout is sufficient
-      // for the app to function.
-
+      return true;
     } catch (e) {
-      print(e.toString());
+      print('Logout error: $e');
+      // Even if there's an error, try to clear local storage
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('token');
+        await prefs.remove('role');
+      } catch (_) {}
+      return false;
+    }
+  }
+
+  // ADDED: Optional - Logout from all devices
+  Future<bool> logoutAllDevices() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        return false;
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/logout-all'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'bypass-tunnel-reminder': 'true'
+        },
+      );
+
+      // Clear local storage
+      await prefs.remove('token');
+      await prefs.remove('role');
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Logout all devices error: $e');
+      // Still clear local storage
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('token');
+        await prefs.remove('role');
+      } catch (_) {}
+      return false;
     }
   }
 }

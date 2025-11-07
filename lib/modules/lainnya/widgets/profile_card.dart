@@ -1,23 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'dart:developer'; // Import this for logging
 
 class ProfileCard extends StatelessWidget {
   final String name;
   final String email;
-  final String? imageUrl; 
+  final String? imageUrl;
 
   const ProfileCard({
     super.key,
     required this.name,
     required this.email,
-    this.imageUrl, 
+    this.imageUrl,
   });
 
   @override
   Widget build(BuildContext context) {
-    log('[PROFILE_CARD] Build: Received imageUrl: $imageUrl');
-
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -39,14 +36,11 @@ class ProfileCard extends StatelessWidget {
                         height: 60,
                         loadingBuilder: (context, child, progress) {
                           if (progress == null) {
-                            log('[PROFILE_CARD] Image.network: Loading complete.');
                             return child;
                           }
-                          log('[PROFILE_CARD] Image.network: Loading in progress...');
                           return const CircularProgressIndicator();
                         },
                         errorBuilder: (context, error, stackTrace) {
-                          log('[PROFILE_CARD] Image.network: ERROR loading image! $error');
                           return Icon(
                             CupertinoIcons.person_alt_circle,
                             size: 40,
