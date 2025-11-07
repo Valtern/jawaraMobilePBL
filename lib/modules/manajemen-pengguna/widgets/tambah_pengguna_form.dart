@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jawarapbl/services/user_management_service.dart';
 
 class TambahPenggunaForm extends StatefulWidget {
   const TambahPenggunaForm({super.key});
@@ -9,7 +10,33 @@ class TambahPenggunaForm extends StatefulWidget {
 
 class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
   final _formKey = GlobalKey<FormState>();
+  final _service = UserManagementService();
+
+  // Controllers
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _nikCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _confirmPasswordCtrl = TextEditingController();
+
   String? selectedRole;
+  bool _isSubmitting = false;
+
+  final List<String> _roleOptions = const [
+    'admin', 'rw', 'rt', 'bendahara', 'sekretaris', 'warga'
+  ];
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _nikCtrl.dispose();
+    _phoneCtrl.dispose();
+    _passwordCtrl.dispose();
+    _confirmPasswordCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +74,10 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
                   _buildTextField(
                     label: 'Nama Lengkap',
                     hint: 'Masukkan nama lengkap',
+                    controller: _nameCtrl,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Nama wajib diisi'
+                        : null,
                   ),
 
                   // 🔹 Email
@@ -54,6 +85,25 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
                     label: 'Email',
                     hint: 'Masukkan email aktif',
                     keyboardType: TextInputType.emailAddress,
+                    controller: _emailCtrl,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Email wajib diisi';
+                      final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim());
+                      return ok ? null : 'Format email tidak valid';
+                    },
+                  ),
+
+                  // 🔹 NIK
+                  _buildTextField(
+                    label: 'NIK',
+                    hint: 'Masukkan NIK (16 digit)',
+                    keyboardType: TextInputType.number,
+                    controller: _nikCtrl,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'NIK wajib diisi';
+                      if (v.trim().length != 16) return 'NIK harus 16 digit';
+                      return null;
+                    },
                   ),
 
                   // 🔹 Nomor HP
@@ -61,6 +111,7 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
                     label: 'Nomor HP',
                     hint: 'Masukkan nomor HP (cth: 08xxxxxxxxxx)',
                     keyboardType: TextInputType.phone,
+                    controller: _phoneCtrl,
                   ),
 
                   // 🔹 Password
@@ -68,6 +119,10 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
                     label: 'Password',
                     hint: 'Masukkan password',
                     obscureText: true,
+                    controller: _passwordCtrl,
+                    validator: (v) => (v == null || v.length < 6)
+                        ? 'Minimal 6 karakter'
+                        : null,
                   ),
 
                   // 🔹 Konfirmasi Password
@@ -75,6 +130,10 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
                     label: 'Konfirmasi Password',
                     hint: 'Masukkan ulang password',
                     obscureText: true,
+                    controller: _confirmPasswordCtrl,
+                    validator: (v) => (v != _passwordCtrl.text)
+                        ? 'Konfirmasi password tidak cocok'
+                        : null,
                   ),
 
                   // 🔹 Dropdown Role
@@ -99,17 +158,15 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
                         horizontal: 12,
                       ),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'Admin', child: Text('Admin')),
-                      DropdownMenuItem(
-                        value: 'Petugas',
-                        child: Text('Petugas'),
-                      ),
-                      DropdownMenuItem(value: 'Warga', child: Text('Warga')),
-                    ],
+                    items: _roleOptions
+                        .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                        .toList(),
                     onChanged: (value) {
                       setState(() => selectedRole = value);
                     },
+                    validator: (v) => (v == null || v.isEmpty)
+                        ? 'Role wajib dipilih'
+                        : null,
                   ),
 
                   const SizedBox(height: 28),
@@ -118,15 +175,7 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
                   Row(
                     children: [
                       ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Data berhasil disimpan!'),
-                              ),
-                            );
-                          }
-                        },
+                        onPressed: _isSubmitting ? null : _handleSubmit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepPurple,
                           foregroundColor: Colors.white,
@@ -138,13 +187,19 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text('Simpan'),
+                        child: Text(_isSubmitting ? 'Menyimpan...' : 'Simpan'),
                       ),
                       const SizedBox(width: 12),
                       OutlinedButton(
                         onPressed: () {
                           _formKey.currentState!.reset();
                           setState(() => selectedRole = null);
+                          _nameCtrl.clear();
+                          _emailCtrl.clear();
+                          _nikCtrl.clear();
+                          _phoneCtrl.clear();
+                          _passwordCtrl.clear();
+                          _confirmPasswordCtrl.clear();
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
@@ -178,6 +233,8 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
     required String hint,
     bool obscureText = false,
     TextInputType? keyboardType,
+    TextEditingController? controller,
+    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -192,6 +249,8 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
           TextFormField(
             obscureText: obscureText,
             keyboardType: keyboardType,
+            controller: controller,
+            validator: validator,
             decoration: InputDecoration(
               hintText: hint,
               border: OutlineInputBorder(
@@ -207,5 +266,36 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleSubmit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
+    final ok = await _service.createUser(
+      name: _nameCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
+      nik: _nikCtrl.text.trim(),
+      phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+      password: _passwordCtrl.text,
+      role: selectedRole!,
+      status: 'active',
+    );
+
+    setState(() => _isSubmitting = false);
+
+    if (ok) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pengguna berhasil ditambahkan')),
+        );
+        Navigator.of(context).maybePop();
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal menambahkan pengguna')),
+        );
+      }
+    }
   }
 }

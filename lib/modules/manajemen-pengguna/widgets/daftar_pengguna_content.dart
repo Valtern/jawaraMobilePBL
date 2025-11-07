@@ -1,46 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:jawarapbl/modules/manajemen-pengguna/pages/tambah_pengguna_page.dart';
+import 'package:jawarapbl/modules/manajemen-pengguna/pages/edit_pengguna_page.dart';
 import 'package:jawarapbl/modules/manajemen-pengguna/widgets/pengguna_card.dart';
+import 'package:jawarapbl/services/user_management_service.dart';
 
-class DaftarPenggunaContent extends StatelessWidget {
+class DaftarPenggunaContent extends StatefulWidget {
   const DaftarPenggunaContent({super.key});
 
-  // Dummy data for the list
-  final List<PenggunaData> penggunaList = const [
-    PenggunaData(
-      nama: 'Admin Jawara',
-      email: 'admin@mail.com',
-      role: 'Admin',
-      icon: Icons.admin_panel_settings,
-    ),
-    PenggunaData(
-      nama: 'Petugas A',
-      email: 'petugas_a@mail.com',
-      role: 'Petugas',
-      icon: Icons.support_agent,
-    ),
-    PenggunaData(
-      nama: 'Warga Budi',
-      email: 'budi@mail.com',
-      role: 'Warga',
-      icon: Icons.person,
-    ),
-    PenggunaData(
-      nama: 'Warga Siti',
-      email: 'siti@mail.com',
-      role: 'Warga',
-      icon: Icons.person,
-    ),
-  ];
+  @override
+  State<DaftarPenggunaContent> createState() => _DaftarPenggunaContentState();
+}
+
+class _DaftarPenggunaContentState extends State<DaftarPenggunaContent> {
+  final UserManagementService _service = UserManagementService();
+  List<PenggunaData> _penggunaList = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUsers();
+  }
+
+  Future<void> _fetchUsers() async {
+    final usersJson = await _service.getUsers();
+    setState(() {
+      _penggunaList = usersJson.map((json) => PenggunaData.fromJson(json)).toList();
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _refreshUsers() async {
+    setState(() => _isLoading = true);
+    await _fetchUsers();
+  }
+
+  void _showDeleteConfirmation(PenggunaData user) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Pengguna'),
+        content: Text('Apakah Anda yakin ingin menghapus ${user.nama}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final success = await _service.deleteUser(user.id);
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Pengguna berhasil dihapus')),
+                );
+                _refreshUsers();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Gagal menghapus pengguna')),
+                );
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0), // Use padding consistent with list
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔹 Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -55,48 +90,59 @@ class DaftarPenggunaContent extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              // This button is redundant when using tabs, but kept as per original
-              // You might want to remove this button later
               ElevatedButton.icon(
                 onPressed: () {
-                  // This logic is problematic in a tab view.
-                  // It's better to just switch tabs.
-                  // For now, it pushes a new page as per original code.
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => const TambahPenggunaPage(),
                     ),
-                  );
+                  ).then((_) => _refreshUsers());
                 },
                 icon: const Icon(Icons.add),
                 label: const Text("Tambah"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-
-          // 🔹 Daftar card-based list
           Expanded(
-            child: ListView.separated(
-              itemCount: penggunaList.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final item = penggunaList[index];
-                return PenggunaCard(item: item);
-              },
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _penggunaList.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Belum ada data pengguna',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _refreshUsers,
+                        child: ListView.separated(
+                          itemCount: _penggunaList.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final user = _penggunaList[index];
+                            return PenggunaCard(
+                              item: user,
+                              onEdit: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => EditPenggunaPage(user: user),
+                                  ),
+                                ).then((_) => _refreshUsers());
+                              },
+                              onDelete: () => _showDeleteConfirmation(user),
+                            );
+                          },
+                        ),
+                      ),
           ),
         ],
       ),
