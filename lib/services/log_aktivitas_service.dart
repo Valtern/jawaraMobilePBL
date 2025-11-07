@@ -5,8 +5,7 @@ import 'package:jawarapbl/shared/models/log_aktivitas_model.dart';
 
 class LogAktivitasService {
   final String _baseUrl = AuthService().baseUrl;
-  // New: Instance of AuthService to retrieve the token
-  final AuthService _authService = AuthService();
+  final AuthService _authService = AuthService(); // Keep: Instance to get the token
 
   Future<List<LogAktivitas>> getLogAktivitas({
     String? kategori,
@@ -15,14 +14,13 @@ class LogAktivitasService {
     int? userId,
   }) async {
     try {
-      // New: 1. Get Authentication Token
+      // Keep: Token retrieval for authentication
       final token = await _authService.getToken(); 
       if (token == null) {
-        print('**LOG AKTIVITAS DEBUG**');
-        print('Error: Auth token is missing. User is likely logged out.');
+        print('Error fetching log aktivitas: Auth token is missing.');
         return [];
       }
-
+      
       var uri = Uri.parse('$_baseUrl/log-aktivitas');
       
       // Add query parameters for filtering
@@ -36,46 +34,32 @@ class LogAktivitasService {
         uri = uri.replace(queryParameters: queryParams);
       }
 
-      // 🪵 LOG: Request URL and Token Status
-      print('**LOG AKTIVITAS DEBUG**');
-      print('Status: Attempting to fetch logs.'); 
-      print('Request URL: $uri'); 
-      print('Token: Bearer $token (Sent)'); 
-
-      // New: 2. Include Authorization Header
       final response = await http.get(
         uri,
+        // Keep: Authorization header for API access
         headers: {
           'Content-Type': 'application/json', 
           'Accept': 'application/json',
-          'Authorization': 'Bearer $token', // FIX: Add the token here
+          'Authorization': 'Bearer $token',
         },
       );
 
-      // 🪵 LOG: Response Status Code
-      print('Response Status: ${response.statusCode}');
-      
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        
         if (data['success'] == true) {
           final List<dynamic> logList = data['data'];
-          // 🪵 LOG: Success and data count
-          print('Data fetched successfully. Total logs: ${logList.length}');
           return logList.map((json) => LogAktivitas.fromJson(json)).toList();
-        } else {
-          // 🪵 LOG: Logical error from API response
-          print('API responded with success: false. Full Body: ${response.body}');
-          return [];
         }
-      } else {
-        // 🪵 LOG: HTTP error (like 401)
-        print('HTTP Request Failed! Status: ${response.statusCode}, Body: ${response.body}');
-        return [];
       }
+      if (response.statusCode != 200) {
+        print('Error fetching log aktivitas: HTTP Status ${response.statusCode}');
+      } else {
+        print('Error fetching log aktivitas: API responded with success: false');
+      }
+      
+      return [];
     } catch (e) {
-      // 🪵 LOG: Network or decoding exception
-      print('Error fetching log aktivitas (Exception): $e');
+      print('Error fetching log aktivitas: $e'); 
       return [];
     }
   }
@@ -86,16 +70,16 @@ class LogAktivitasService {
     required String deskripsi,
   }) async {
     try {
-      // New: Get Token for POST request as well
+      // Keep: Token retrieval for authentication
       final token = await _authService.getToken(); 
       if (token == null) {
-        print('Error: Auth token is missing for createLog.');
+        print('Error creating log aktivitas: Auth token is missing.');
         return false;
       }
-
+      
       final response = await http.post(
         Uri.parse('$_baseUrl/log-aktivitas'),
-        // New: Include Authorization Header
+        // Keep: Authorization header for API access
         headers: {
           'Content-Type': 'application/json', 
           'Accept': 'application/json',
@@ -108,11 +92,6 @@ class LogAktivitasService {
         }),
       );
 
-      // 🪵 LOG: Create Log status
-      if (response.statusCode != 201) {
-        print('Create Log Failed. Status: ${response.statusCode}, Body: ${response.body}');
-      }
-
       return response.statusCode == 201;
     } catch (e) {
       print('Error creating log aktivitas: $e');
@@ -122,9 +101,7 @@ class LogAktivitasService {
 
   Future<List<String>> getKategoriList() async {
     try {
-      // New: Get Token for GET request as well
       final token = await _authService.getToken(); 
-      // Note: getKategoriList might be public, but adding token is safe if it's protected
       final headers = {
         'Content-Type': 'application/json', 
         'Accept': 'application/json',
