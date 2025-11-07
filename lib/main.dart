@@ -32,14 +32,18 @@ class MyApp extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.deepPurple,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.deepPurple,
             side: const BorderSide(color: Colors.deepPurple),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         ),
         scaffoldBackgroundColor: Colors.grey[100],
@@ -56,8 +60,10 @@ class MyApp extends StatelessWidget {
         '/data-warga-rumah': (context) =>
             const MainLayout(body: DataWargaRumahPage()),
         // Pemasukan Routes
-        '/pemasukan': (context) =>
-            const MainLayout(body: PemasukanKategoriIuranPage(), currentIndex: 1),
+        '/pemasukan': (context) => const MainLayout(
+          body: PemasukanKategoriIuranPage(),
+          currentIndex: 1,
+        ),
         '/kegiatan-broadcast': (context) =>
             const MainLayout(body: KegiatanBroadcastPage(), currentIndex: 3),
         '/channel-transfer': (context) =>
@@ -67,7 +73,8 @@ class MyApp extends StatelessWidget {
             const MainLayout(body: PengeluaranTabsPage(), currentIndex: 2),
         '/laporan-keuangan': (context) =>
             const MainLayout(body: LaporanKeuanganTabsPage()),
-        '/pesan-warga': (context) => const MainLayout(body: PesanWargaTabsPage()),
+        '/pesan-warga': (context) =>
+            const MainLayout(body: PesanWargaTabsPage()),
         '/penerimaan-warga': (context) =>
             const MainLayout(body: PenerimaanWargaMasterPage()),
         '/mutasi-keluarga': (context) =>
@@ -80,7 +87,8 @@ class MyApp extends StatelessWidget {
           final mutasi = ModalRoute.of(context)!.settings.arguments as dynamic;
           return EditMutasiPage(mutasi: mutasi);
         },
-        '/log-aktivitas': (context) => const MainLayout(body: LogAktivitasPage()),
+        '/log-aktivitas': (context) =>
+            const MainLayout(body: LogAktivitasPage()),
         '/manajemen-pengguna': (context) =>
             const MainLayout(body: ManajemenPenggunaTabsPage()),
         '/lainnya': (context) =>

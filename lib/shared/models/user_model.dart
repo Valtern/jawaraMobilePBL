@@ -1,8 +1,9 @@
-
 class User {
   final int id;
   final String name;
   final String email;
+  final String? nik;
+  final String? phone;
   final String? fotoIdentitas; 
   final String role;
   final String status;
@@ -11,6 +12,8 @@ class User {
     required this.id,
     required this.name,
     required this.email,
+    this.nik,
+    this.phone,
     this.fotoIdentitas,
     required this.role,
     required this.status,
@@ -21,6 +24,8 @@ class User {
       id: json['id'],
       name: json['name'],
       email: json['email'],
+      nik: json['nik'],
+      phone: json['phone'],
       fotoIdentitas: json['foto_identitas'],
       role: json['role'],
       status: json['status'],
