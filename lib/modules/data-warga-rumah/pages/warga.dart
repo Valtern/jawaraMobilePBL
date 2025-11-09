@@ -15,133 +15,203 @@ class WargaPage extends StatelessWidget {
   }
 }
 
-class WargaDaftarView extends StatelessWidget {
+class WargaDaftarView extends StatefulWidget {
   const WargaDaftarView({super.key});
+
+  @override
+  State<WargaDaftarView> createState() => _WargaDaftarViewState();
+}
+
+class _WargaDaftarViewState extends State<WargaDaftarView> {
+  final DataWargaRumahService _service = DataWargaRumahService();
+  String? _filterNama;
 
   void _showAddWargaSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 12,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        final namaController = TextEditingController();
+        final nikController = TextEditingController();
+        final tempatLahirController = TextEditingController();
+        final tanggalLahirController = TextEditingController();
+        String? jenisKelamin;
+        int? keluargaId;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 12,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Expanded(
-                      child: Text(
-                        'Tambah Data Warga',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Tambah Data Warga',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
+                    TextInput(
+                      controller: namaController,
+                      label: 'Nama Lengkap',
+                      prefixIcon: const Icon(Icons.person),
+                    ),
+                    TextInput(
+                      controller: nikController,
+                      label: 'Nomor Induk Kependudukan (NIK)',
+                      prefixIcon: const Icon(Icons.badge),
+                    ),
+                    FutureBuilder<List<dynamic>>(
+                      future: _service.getKeluargaList(),
+                      builder: (context, snapshot) {
+                        final items = snapshot.data ?? [];
+                        final dropdownItems = items.map((item) {
+                          final map = item as Map<String, dynamic>;
+                          final id = map['id'] as int?;
+                          final name = (map['nama_keluarga'] ?? map['name'] ?? map['nama'] ?? '').toString();
+                          return DropdownMenuItem<int>(
+                            value: id,
+                            child: Text(name.isEmpty ? '-' : name),
+                          );
+                        }).toList();
+                        return SelectInput<int>(
+                          label: 'Pilih Keluarga (opsional)',
+                          prefixIcon: const Icon(Icons.people),
+                          value: keluargaId,
+                          items: dropdownItems,
+                          onChanged: (value) {
+                            setModalState(() {
+                              keluargaId = value;
+                            });
+                          },
+                        );
+                      },
+                    ),
+                    SelectInput<String>(
+                      label: 'Jenis Kelamin',
+                      prefixIcon: const Icon(Icons.wc),
+                      value: jenisKelamin,
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Laki-laki',
+                          child: Text('Laki-laki'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Perempuan',
+                          child: Text('Perempuan'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setModalState(() {
+                          jenisKelamin = value;
+                        });
+                      },
+                    ),
+                    TextInput(
+                      controller: tempatLahirController,
+                      label: 'Tempat Lahir',
+                      prefixIcon: const Icon(Icons.location_city),
+                    ),
+                    TextInput(
+                      controller: tanggalLahirController,
+                      label: 'Tanggal Lahir (YYYY-MM-DD)',
+                      prefixIcon: const Icon(Icons.calendar_month),
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final nama = namaController.text.trim();
+                              final nik = nikController.text.trim();
+                              if (nama.isEmpty || nik.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Nama dan NIK wajib diisi')),
+                                );
+                                return;
+                              }
+                              final payload = <String, dynamic>{
+                                'nama_lengkap': nama,
+                                'nik': nik,
+                              };
+                              if ((jenisKelamin ?? '').isNotEmpty) payload['jenis_kelamin'] = jenisKelamin;
+                              if (tempatLahirController.text.trim().isNotEmpty) payload['tempat_lahir'] = tempatLahirController.text.trim();
+                              if (tanggalLahirController.text.trim().isNotEmpty) payload['tanggal_lahir'] = tanggalLahirController.text.trim();
+                              if (keluargaId != null) payload['keluarga_id'] = keluargaId;
+
+                              final ok = await _service.createWarga(payload);
+                              if (ok) {
+                                if (mounted) {
+                                  Navigator.of(context).pop();
+                                  setState(() {}); // refresh list
+                                  ScaffoldMessenger.of(this.context).showSnackBar(
+                                    const SnackBar(content: Text('Warga berhasil ditambahkan')),
+                                  );
+                                }
+                              } else {
+                                ScaffoldMessenger.of(this.context).showSnackBar(
+                                  const SnackBar(content: Text('Gagal menambahkan warga')),
+                                );
+                              }
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.save),
+                                SizedBox(width: 4),
+                                Text('Simpan'),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setModalState(() {
+                                namaController.clear();
+                                nikController.clear();
+                                tempatLahirController.clear();
+                                tanggalLahirController.clear();
+                                jenisKelamin = null;
+                                keluargaId = null;
+                              });
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.refresh),
+                                SizedBox(width: 4),
+                                Text('Reset'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                TextInput(
-                  label: 'Nama Lengkap',
-                  prefixIcon: const Icon(Icons.person),
-                ),
-                TextInput(
-                  label: 'Nomor Induk Kependudukan (NIK)',
-                  prefixIcon: const Icon(Icons.badge),
-                ),
-                TextInput(
-                  label: 'Nomor HP',
-                  prefixIcon: const Icon(Icons.phone),
-                ),
-                FutureBuilder<List<dynamic>>(
-                  future: DataWargaRumahService().getKeluargaList(),
-                  builder: (context, snapshot) {
-                    final items = snapshot.data ?? [];
-                    final dropdownItems = items.map((item) {
-                      final map = item as Map<String, dynamic>;
-                      final name = (map['name'] ?? map['nama'] ?? '').toString();
-                      return DropdownMenuItem<String>(
-                        value: name,
-                        child: Text(name.isEmpty ? '-' : name),
-                      );
-                    }).toList();
-                    return SelectInput<String>(
-                      label: 'Pilih Keluarga',
-                      prefixIcon: const Icon(Icons.people),
-                      items: dropdownItems,
-                      onChanged: (value) {},
-                    );
-                  },
-                ),
-                SelectInput<String>(
-                  label: 'Jenis Kelamin',
-                  prefixIcon: const Icon(Icons.wc),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Laki-laki',
-                      child: Text('Laki-laki'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Perempuan',
-                      child: Text('Perempuan'),
-                    ),
-                  ],
-                  onChanged: (value) {},
-                ),
-                TextInput(
-                  label: 'Tempat Lahir',
-                  prefixIcon: const Icon(Icons.location_city),
-                ),
-                TextInput(
-                  label: 'Tanggal Lahir',
-                  prefixIcon: const Icon(Icons.calendar_month),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.save),
-                            SizedBox(width: 4),
-                            Text('Simpan'),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {},
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.refresh),
-                            SizedBox(width: 4),
-                            Text('Reset'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -149,7 +219,7 @@ class WargaDaftarView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final service = DataWargaRumahService();
+    final service = _service;
     return Stack(
       children: [
         Column(
@@ -165,6 +235,7 @@ class WargaDaftarView extends StatelessWidget {
                     showModalBottomSheet(
                       context: context,
                       builder: (BuildContext context) {
+                        final namaCtl = TextEditingController(text: _filterNama ?? '');
                         return Container(
                           padding: const EdgeInsets.all(16),
                           width: double.infinity,
@@ -173,25 +244,9 @@ class WargaDaftarView extends StatelessWidget {
                             spacing: 12,
                             children: [
                               TextInput(
+                                controller: namaCtl,
                                 label: 'Cari berdasarkan nama...',
                                 prefixIcon: const Icon(Icons.search),
-                              ),
-                              SelectInput<String>(
-                                label: 'Pilih Jenis Kelamin',
-                                prefixIcon: const Icon(Icons.person),
-                                items: const [
-                                  DropdownMenuItem<String>(
-                                    value: 'Laki-laki',
-                                    child: Text('Laki-laki'),
-                                  ),
-                                  DropdownMenuItem<String>(
-                                    value: 'Perempuan',
-                                    child: Text('Perempuan'),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  // Handle filter change
-                                },
                               ),
                               const Spacer(),
                               Row(
@@ -199,7 +254,12 @@ class WargaDaftarView extends StatelessWidget {
                                 children: [
                                   Expanded(
                                     child: ElevatedButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        setState(() {
+                                          _filterNama = namaCtl.text.trim().isEmpty ? null : namaCtl.text.trim();
+                                        });
+                                        Navigator.of(context).pop();
+                                      },
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: const [
@@ -213,7 +273,12 @@ class WargaDaftarView extends StatelessWidget {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: OutlinedButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        setState(() {
+                                          _filterNama = null;
+                                        });
+                                        Navigator.of(context).pop();
+                                      },
                                       child: Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: const [
@@ -237,7 +302,9 @@ class WargaDaftarView extends StatelessWidget {
             ),
             Expanded(
               child: FutureBuilder<List<dynamic>>(
-                future: service.getWargaList(),
+                future: service.getWargaList(
+                  namaLengkap: _filterNama,
+                ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -255,9 +322,15 @@ class WargaDaftarView extends StatelessWidget {
                     items: items,
                     itemBuilder: (context, item) {
                       final map = item as Map<String, dynamic>;
-                      final name = (map['name'] ?? map['nama'] ?? '').toString();
+                      final name = (map['nama_lengkap'] ?? map['name'] ?? map['nama'] ?? '').toString();
                       final nik = (map['nik'] ?? '').toString();
-                      final keluargaName = (map['keluarga_name'] ?? map['keluarga'] ?? '').toString();
+                      final keluargaObj = map['keluarga'];
+                      String keluargaName = '';
+                      if (keluargaObj is Map<String, dynamic>) {
+                        keluargaName = (keluargaObj['nama_keluarga'] ?? keluargaObj['name'] ?? keluargaObj['nama'] ?? '').toString();
+                      } else {
+                        keluargaName = (map['keluarga_name'] ?? map['keluarga'] ?? '').toString();
+                      }
                       return ListTile(
                         title: Text(name.isEmpty ? '-' : name),
                         subtitle: Text([

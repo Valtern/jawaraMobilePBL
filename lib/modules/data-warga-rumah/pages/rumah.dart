@@ -15,106 +15,149 @@ class RumahPage extends StatelessWidget {
   }
 }
 
-class RumahListView extends StatelessWidget {
+class RumahListView extends StatefulWidget {
   const RumahListView({super.key});
+
+  @override
+  State<RumahListView> createState() => _RumahListViewState();
+}
+
+class _RumahListViewState extends State<RumahListView> {
+  final DataWargaRumahService _service = DataWargaRumahService();
+  String? _filterAlamat;
+  String? _filterStatusHunian;
 
   void _showAddRumahSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 12,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        final addressController = TextEditingController();
+        String? statusHunian;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 12,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Expanded(
-                      child: Text(
-                        'Tambah Data Rumah',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Tambah Data Rumah',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
+                    TextInput(
+                      controller: addressController,
+                      label: 'Alamat Rumah',
+                      prefixIcon: const Icon(Icons.home),
+                    ),
+                    SelectInput<String>(
+                      label: 'Status Hunian',
+                      prefixIcon: const Icon(Icons.home_work),
+                      value: statusHunian,
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Dihuni',
+                          child: Text('Dihuni'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Kosong',
+                          child: Text('Kosong'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setModalState(() {
+                          statusHunian = value;
+                        });
+                      },
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final alamat = addressController.text.trim();
+                              final status = (statusHunian ?? '').trim();
+                              if (alamat.isEmpty || status.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Alamat dan Status Hunian wajib diisi')), 
+                                );
+                                return;
+                              }
+                              final ok = await _service.createRumah({
+                                'alamat': alamat,
+                                'status_hunian': status,
+                              });
+                              if (ok) {
+                                if (mounted) {
+                                  Navigator.of(context).pop();
+                                  setState(() {}); // refresh list
+                                  ScaffoldMessenger.of(this.context).showSnackBar(
+                                    const SnackBar(content: Text('Rumah berhasil ditambahkan')), 
+                                  );
+                                }
+                              } else {
+                                ScaffoldMessenger.of(this.context).showSnackBar(
+                                  const SnackBar(content: Text('Gagal menambahkan rumah')), 
+                                );
+                              }
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.save),
+                                SizedBox(width: 4),
+                                Text('Simpan'),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setModalState(() {
+                                addressController.clear();
+                                statusHunian = null;
+                              });
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.refresh),
+                                SizedBox(width: 4),
+                                Text('Reset'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                TextInput(
-                  label: 'Alamat Rumah',
-                  prefixIcon: const Icon(Icons.home),
-                ),
-                SelectInput<String>(
-                  label: 'Status Hunian',
-                  prefixIcon: const Icon(Icons.home_work),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Dihuni',
-                      child: Text('Dihuni'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Kosong',
-                      child: Text('Kosong'),
-                    ),
-                  ],
-                  onChanged: (value) {},
-                ),
-                TextInput(
-                  label: 'Penanggung Jawab / Kepala Keluarga',
-                  prefixIcon: const Icon(Icons.person),
-                ),
-                TextInput(
-                  label: 'Catatan Tambahan',
-                  prefixIcon: const Icon(Icons.notes),
-                  maxLines: 3,
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.save),
-                            SizedBox(width: 4),
-                            Text('Simpan'),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {},
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.refresh),
-                            SizedBox(width: 4),
-                            Text('Reset'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -122,7 +165,7 @@ class RumahListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final service = DataWargaRumahService();
+    final service = _service;
     return Stack(
       children: [
         Column(
@@ -138,68 +181,90 @@ class RumahListView extends StatelessWidget {
                     showModalBottomSheet(
                       context: context,
                       builder: (BuildContext context) {
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          width: double.infinity,
-                          color: Colors.white,
-                          child: Column(
-                            spacing: 12,
-                            children: [
-                              TextInput(
-                                label: 'Cari alamat rumah...',
-                                prefixIcon: const Icon(Icons.search),
-                              ),
-                              SelectInput<String>(
-                                label: 'Status Hunian',
-                                prefixIcon: const Icon(Icons.home_work),
-                                items: const [
-                                  DropdownMenuItem<String>(
-                                    value: 'Dihuni',
-                                    child: Text('Dihuni'),
-                                  ),
-                                  DropdownMenuItem<String>(
-                                    value: 'Kosong',
-                                    child: Text('Kosong'),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  // Handle filter change
-                                },
-                              ),
-                              const Spacer(),
-                              Row(
+                        final alamatCtl = TextEditingController(text: _filterAlamat ?? '');
+                        String? statusVal = _filterStatusHunian;
+                        return StatefulBuilder(
+                          builder: (context, setModalState) {
+                            return Container(
+                              padding: const EdgeInsets.all(16),
+                              width: double.infinity,
+                              color: Colors.white,
+                              child: Column(
+                                spacing: 12,
                                 children: [
-                                  Expanded(
-                                    child: ElevatedButton(
-                                      onPressed: () {},
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: const [
-                                          Icon(Icons.check),
-                                          SizedBox(width: 4),
-                                          Text('Terapkan'),
-                                        ],
-                                      ),
-                                    ),
+                                  TextInput(
+                                    controller: alamatCtl,
+                                    label: 'Cari alamat rumah...',
+                                    prefixIcon: const Icon(Icons.search),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {},
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: const [
-                                          Icon(Icons.refresh),
-                                          SizedBox(width: 4),
-                                          Text('Reset'),
-                                        ],
+                                  SelectInput<String>(
+                                    label: 'Status Hunian',
+                                    prefixIcon: const Icon(Icons.home_work),
+                                    value: statusVal,
+                                    items: const [
+                                      DropdownMenuItem<String>(
+                                        value: 'Dihuni',
+                                        child: Text('Dihuni'),
                                       ),
-                                    ),
+                                      DropdownMenuItem<String>(
+                                        value: 'Kosong',
+                                        child: Text('Kosong'),
+                                      ),
+                                    ],
+                                    onChanged: (value) {
+                                      setModalState(() {
+                                        statusVal = value;
+                                      });
+                                    },
+                                  ),
+                                  const Spacer(),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              _filterAlamat = alamatCtl.text.trim().isEmpty ? null : alamatCtl.text.trim();
+                                              _filterStatusHunian = (statusVal ?? '').isEmpty ? null : statusVal;
+                                            });
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: const [
+                                              Icon(Icons.check),
+                                              SizedBox(width: 4),
+                                              Text('Terapkan'),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              _filterAlamat = null;
+                                              _filterStatusHunian = null;
+                                            });
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: const [
+                                              Icon(Icons.refresh),
+                                              SizedBox(width: 4),
+                                              Text('Reset'),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
+                            );
+                          },
                         );
                       },
                     );
@@ -209,7 +274,10 @@ class RumahListView extends StatelessWidget {
             ),
             Expanded(
               child: FutureBuilder<List<dynamic>>(
-                future: service.getRumahList(),
+                future: service.getRumahList(
+                  alamat: _filterAlamat,
+                  statusHunian: _filterStatusHunian,
+                ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
