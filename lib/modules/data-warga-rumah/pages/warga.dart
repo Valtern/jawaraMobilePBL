@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:jawarapbl/modules/data-warga-rumah/data/sample_data.dart';
-import 'package:jawarapbl/modules/data-warga-rumah/models/warga.dart';
 import 'package:jawarapbl/shared/layouts/main_layout.dart';
 import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
 import 'package:jawarapbl/shared/widgets/inputs/select_input.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
+import 'package:jawarapbl/services/dataWargaRumah_service.dart';
 
 class WargaPage extends StatelessWidget {
   const WargaPage({super.key});
@@ -20,15 +19,6 @@ class WargaDaftarView extends StatelessWidget {
   const WargaDaftarView({super.key});
 
   void _showAddWargaSheet(BuildContext context) {
-    final keluargaItems = DataWargaRumahSamples.keluargaList
-        .map(
-          (keluarga) => DropdownMenuItem<String>(
-            value: keluarga.name,
-            child: Text(keluarga.name),
-          ),
-        )
-        .toList();
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -75,11 +65,25 @@ class WargaDaftarView extends StatelessWidget {
                   label: 'Nomor HP',
                   prefixIcon: const Icon(Icons.phone),
                 ),
-                SelectInput<String>(
-                  label: 'Pilih Keluarga',
-                  prefixIcon: const Icon(Icons.people),
-                  items: keluargaItems,
-                  onChanged: (value) {},
+                FutureBuilder<List<dynamic>>(
+                  future: DataWargaRumahService().getKeluargaList(),
+                  builder: (context, snapshot) {
+                    final items = snapshot.data ?? [];
+                    final dropdownItems = items.map((item) {
+                      final map = item as Map<String, dynamic>;
+                      final name = (map['name'] ?? map['nama'] ?? '').toString();
+                      return DropdownMenuItem<String>(
+                        value: name,
+                        child: Text(name.isEmpty ? '-' : name),
+                      );
+                    }).toList();
+                    return SelectInput<String>(
+                      label: 'Pilih Keluarga',
+                      prefixIcon: const Icon(Icons.people),
+                      items: dropdownItems,
+                      onChanged: (value) {},
+                    );
+                  },
                 ),
                 SelectInput<String>(
                   label: 'Jenis Kelamin',
@@ -145,8 +149,7 @@ class WargaDaftarView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wargaList = DataWargaRumahSamples.wargaList;
-
+    final service = DataWargaRumahService();
     return Stack(
       children: [
         Column(
@@ -233,14 +236,36 @@ class WargaDaftarView extends StatelessWidget {
               ],
             ),
             Expanded(
-              child: CardListView<Warga>(
-                shrinkWrap: false,
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
-                items: wargaList,
-                itemBuilder: (context, warga) {
-                  return ListTile(
-                    title: Text(warga.name),
-                    subtitle: Text('${warga.familyName} • NIK - ${warga.nik}'),
+              child: FutureBuilder<List<dynamic>>(
+                future: service.getWargaList(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Gagal memuat data: ${snapshot.error}'));
+                  }
+                  final items = snapshot.data ?? [];
+                  if (items.isEmpty) {
+                    return const Center(child: Text('Belum ada data warga'));
+                  }
+                  return CardListView<dynamic>(
+                    shrinkWrap: false,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
+                    items: items,
+                    itemBuilder: (context, item) {
+                      final map = item as Map<String, dynamic>;
+                      final name = (map['name'] ?? map['nama'] ?? '').toString();
+                      final nik = (map['nik'] ?? '').toString();
+                      final keluargaName = (map['keluarga_name'] ?? map['keluarga'] ?? '').toString();
+                      return ListTile(
+                        title: Text(name.isEmpty ? '-' : name),
+                        subtitle: Text([
+                          if (keluargaName.isNotEmpty) keluargaName,
+                          if (nik.isNotEmpty) 'NIK - $nik',
+                        ].join(' • ')),
+                      );
+                    },
                   );
                 },
               ),

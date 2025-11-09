@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:jawarapbl/modules/data-warga-rumah/models/keluarga.dart';
-import 'package:jawarapbl/modules/data-warga-rumah/data/sample_data.dart';
 import 'package:jawarapbl/shared/layouts/main_layout.dart';
 import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
 import 'package:jawarapbl/shared/widgets/inputs/select_input.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
+import 'package:jawarapbl/services/dataWargaRumah_service.dart';
 
 class KeluargaPage extends StatelessWidget {
   const KeluargaPage({super.key});
@@ -21,7 +20,7 @@ class KeluargaListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final keluargaList = DataWargaRumahSamples.keluargaList;
+    final service = DataWargaRumahService();
     return Column(
       spacing: 12,
       children: [
@@ -104,26 +103,54 @@ class KeluargaListView extends StatelessWidget {
             ),
           ],
         ),
-        CardListView<Keluarga>(
-          items: keluargaList,
-          itemBuilder: (context, keluarga) {
-            return ListTile(
-              title: Text(keluarga.name),
-              subtitle: Text(
-                'Kepala: ${keluarga.leader} • Alamat: ${keluarga.address}',
-              ),
-              trailing: Chip(
-                label: Text(keluarga.isActive ? 'Aktif' : 'Tidak Aktif'),
-                backgroundColor: keluarga.isActive
-                    ? Colors.green.withOpacity(0.15)
-                    : Colors.red.withOpacity(0.15),
-                labelStyle: TextStyle(
-                  color: keluarga.isActive ? Colors.green : Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            );
-          },
+        Expanded(
+          child: FutureBuilder<List<dynamic>>(
+            future: service.getKeluargaList(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text('Gagal memuat data: ${snapshot.error}'));
+              }
+              final items = snapshot.data ?? [];
+              if (items.isEmpty) {
+                return const Center(child: Text('Belum ada data keluarga'));
+              }
+              return CardListView<dynamic>(
+                items: items,
+                itemBuilder: (context, item) {
+                  final map = item as Map<String, dynamic>;
+                  final name = (map['name'] ?? map['nama'] ?? '').toString();
+                  final leader = (map['leader'] ?? map['kepala'] ?? map['kepala_keluarga'] ?? '').toString();
+                  final address = (map['address'] ?? map['alamat'] ?? '').toString();
+                  final isActiveVal = map['is_active'] ?? map['aktif'] ?? map['status'];
+                  final isActive = isActiveVal is bool
+                      ? isActiveVal
+                      : (isActiveVal is String
+                          ? (isActiveVal.toLowerCase() == 'aktif' || isActiveVal == '1' || isActiveVal.toLowerCase() == 'true')
+                          : false);
+                  return ListTile(
+                    title: Text(name.isEmpty ? '-' : name),
+                    subtitle: Text([
+                      if (leader.isNotEmpty) 'Kepala: $leader',
+                      if (address.isNotEmpty) 'Alamat: $address',
+                    ].join(' • ')),
+                    trailing: Chip(
+                      label: Text(isActive ? 'Aktif' : 'Tidak Aktif'),
+                      backgroundColor: isActive
+                          ? Colors.green.withOpacity(0.15)
+                          : Colors.red.withOpacity(0.15),
+                      labelStyle: TextStyle(
+                        color: isActive ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ),
       ],
     );

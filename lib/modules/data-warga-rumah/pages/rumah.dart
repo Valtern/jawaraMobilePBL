@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:jawarapbl/modules/data-warga-rumah/data/sample_data.dart';
-import 'package:jawarapbl/modules/data-warga-rumah/models/rumah.dart';
 import 'package:jawarapbl/shared/layouts/main_layout.dart';
 import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
 import 'package:jawarapbl/shared/widgets/inputs/select_input.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
+import 'package:jawarapbl/services/dataWargaRumah_service.dart';
 
 class RumahPage extends StatelessWidget {
   const RumahPage({super.key});
@@ -123,7 +122,7 @@ class RumahListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rumahList = DataWargaRumahSamples.rumahList;
+    final service = DataWargaRumahService();
     return Stack(
       children: [
         Column(
@@ -209,21 +208,31 @@ class RumahListView extends StatelessWidget {
               ],
             ),
             Expanded(
-              child: CardListView<Rumah>(
-                shrinkWrap: false,
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
-                items: rumahList,
-                itemBuilder: (context, rumah) {
-                  final penghuni = DataWargaRumahSamples.keluargaList
-                      .where((keluarga) => keluarga.rumah == rumah)
-                      .map((keluarga) => keluarga.name)
-                      .toList();
-                  return ListTile(
-                    leading: const Icon(Icons.home),
-                    title: Text(rumah.address),
-                    subtitle: penghuni.isEmpty
-                        ? const Text('Belum ada keluarga terdaftar')
-                        : Text('Dihuni oleh: ${penghuni.join(', ')}'),
+              child: FutureBuilder<List<dynamic>>(
+                future: service.getRumahList(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Gagal memuat data: ${snapshot.error}'));
+                  }
+                  final items = snapshot.data ?? [];
+                  if (items.isEmpty) {
+                    return const Center(child: Text('Belum ada data rumah'));
+                  }
+                  return CardListView<dynamic>(
+                    shrinkWrap: false,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
+                    items: items,
+                    itemBuilder: (context, item) {
+                      final map = item as Map<String, dynamic>;
+                      final address = (map['address'] ?? map['alamat'] ?? '').toString();
+                      return ListTile(
+                        leading: const Icon(Icons.home),
+                        title: Text(address.isEmpty ? '-' : address),
+                      );
+                    },
                   );
                 },
               ),
