@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.grey[100],
         primarySwatch: Colors.deepPurple,
       ),
-      initialRoute: '/home',
+      initialRoute: '/login',
       routes: {
         // Auth Routes
         '/login': (context) => const LoginPage(),

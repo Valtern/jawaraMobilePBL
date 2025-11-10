@@ -9,6 +9,8 @@ class TextInput extends StatelessWidget {
     this.keyboardType,
     this.onChanged,
     this.maxLines = 1,
+    this.onTap,
+    this.readOnly = false,
   });
 
   final String label;
@@ -17,6 +19,8 @@ class TextInput extends StatelessWidget {
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
   final int maxLines;
+  final VoidCallback? onTap;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +29,8 @@ class TextInput extends StatelessWidget {
       keyboardType: keyboardType,
       onChanged: onChanged,
       maxLines: maxLines,
+      onTap: onTap,
+      readOnly: readOnly,
       decoration: InputDecoration(
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
