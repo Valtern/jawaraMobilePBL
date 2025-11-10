@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/semuapemasukan_model.dart';
+import 'package:jawarapbl/services/auth_services.dart';
 
 // =========================================================================
 // A. HALAMAN DETAIL PEMASUKAN
@@ -354,7 +355,7 @@ class _SemuaPemasukanPageState extends State<SemuaPemasukanPage> {
 
   Future<List<PemasukanModel>> _fetchPemasukan() async {
     final response = await http.get(
-      Uri.parse('http://192.168.0.5:8000/api/pemasukan'),
+      Uri.parse('${AuthService().baseUrl}/pemasukan'),
     );
 
     if (response.statusCode == 200) {
@@ -397,7 +398,7 @@ class _SemuaPemasukanPageState extends State<SemuaPemasukanPage> {
 
   void _createData() async {
     final response = await http.post(
-      Uri.parse('http://192.168.0.5:8000/api/pemasukan'),
+      Uri.parse('${AuthService().baseUrl}/pemasukan'),
       body: {
         'name': 'Pemasukan Baru',
         'jenis': 'Iuran Warga',
@@ -422,7 +423,7 @@ class _SemuaPemasukanPageState extends State<SemuaPemasukanPage> {
 
   void _updateData(int id) async {
     final response = await http.put(
-      Uri.parse('http://192.168.0.5:8000/api/pemasukan/$id'),
+      Uri.parse('${AuthService().baseUrl}/pemasukan/$id'),
       body: {
         'name': 'Update Nama',
         'jenis': 'Donasi',
@@ -447,7 +448,7 @@ class _SemuaPemasukanPageState extends State<SemuaPemasukanPage> {
 
   void _deleteData(int id) async {
     final response = await http.delete(
-      Uri.parse('http://192.168.0.5:8000/api/pemasukan/$id'),
+      Uri.parse('${AuthService().baseUrl}/pemasukan/$id'),
     );
 
     if (response.statusCode == 200) {
@@ -611,7 +612,7 @@ class _TambahPemasukanDialogState extends State<TambahPemasukanDialog> {
   Future<void> _simpanData() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final url = Uri.parse('http://192.168.0.5:8000/api/pemasukan');
+    final url = Uri.parse('${AuthService().baseUrl}/pemasukan');
     final body = {
       'name': _namaController.text,
       'jenis': _jenisController.text,
@@ -749,7 +750,7 @@ class _EditPemasukanDialogState extends State<EditPemasukanDialog> {
     if (!_formKey.currentState!.validate()) return;
 
     final response = await http.put(
-      Uri.parse('http://192.168.0.5:8000/api/pemasukan/${widget.item.no}'),
+      Uri.parse('${AuthService().baseUrl}/pemasukan/${widget.item.no}'),
       body: {
         'name': _namaController.text,
         'jenis': _jenisController.text,
