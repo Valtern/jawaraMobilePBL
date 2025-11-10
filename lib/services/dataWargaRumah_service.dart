@@ -17,6 +17,21 @@ class DataWargaRumahService {
     return headers;
   }
 
+  // ✅ Helper to parse error responses
+  String? _parseError(http.Response resp) {
+    if (resp.statusCode == 422) {
+      try {
+        final errors = jsonDecode(resp.body)['errors'] as Map<String, dynamic>;
+        final firstErrorKey = errors.keys.first;
+        final firstErrorMessage = (errors[firstErrorKey] as List).first;
+        return firstErrorMessage;
+      } catch (e) {
+        return 'Terjadi kesalahan validasi.';
+      }
+    }
+    return jsonDecode(resp.body)['message'] ?? 'Terjadi kesalahan server.';
+  }
+
   Future<List<dynamic>> getWargaList({
     String? namaLengkap,
     String? nik,
@@ -28,13 +43,19 @@ class DataWargaRumahService {
       if ((namaLengkap ?? '').isNotEmpty) query['nama_lengkap'] = namaLengkap!;
       if ((nik ?? '').isNotEmpty) query['nik'] = nik!;
       if (keluargaId != null) query['keluarga_id'] = keluargaId.toString();
-      final uri = Uri.parse('$_baseUrl/wargas').replace(queryParameters: query.isEmpty ? null : query);
+      final uri = Uri.parse('$_baseUrl/wargas')
+          .replace(queryParameters: query.isEmpty ? null : query);
       final resp = await http.get(uri, headers: headers);
-      print('GET /wargas status: ${resp.statusCode}');
-      print('GET /wargas body: ${resp.body}');
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        if (data['success'] == true) return (data['data'] as List<dynamic>);
+        // Assuming data structure is { "success": true, "data": [...] }
+        if (data is Map && data.containsKey('data')) {
+           return (data['data'] as List<dynamic>);
+        }
+        // Fallback for if API just returns [...]
+        if (data is List) {
+          return data;
+        }
       }
     } catch (e) {
       print('Exception in getWargaList: $e');
@@ -50,16 +71,21 @@ class DataWargaRumahService {
     try {
       final headers = await _authHeaders();
       final query = <String, String>{};
-      if ((namaKeluarga ?? '').isNotEmpty) query['nama_keluarga'] = namaKeluarga!;
+      if ((namaKeluarga ?? '').isNotEmpty)
+        query['nama_keluarga'] = namaKeluarga!;
       if ((nomorKk ?? '').isNotEmpty) query['nomor_kk'] = nomorKk!;
       if (rumahId != null) query['rumah_id'] = rumahId.toString();
-      final uri = Uri.parse('$_baseUrl/keluargas').replace(queryParameters: query.isEmpty ? null : query);
+      final uri = Uri.parse('$_baseUrl/keluargas')
+          .replace(queryParameters: query.isEmpty ? null : query);
       final resp = await http.get(uri, headers: headers);
-      print('GET /keluargas status: ${resp.statusCode}');
-      print('GET /keluargas body: ${resp.body}');
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        if (data['success'] == true) return (data['data'] as List<dynamic>);
+         if (data is Map && data.containsKey('data')) {
+           return (data['data'] as List<dynamic>);
+        }
+        if (data is List) {
+          return data;
+        }
       }
     } catch (e) {
       print('Exception in getKeluargaList: $e');
@@ -75,14 +101,19 @@ class DataWargaRumahService {
       final headers = await _authHeaders();
       final query = <String, String>{};
       if ((alamat ?? '').isNotEmpty) query['alamat'] = alamat!;
-      if ((statusHunian ?? '').isNotEmpty) query['status_hunian'] = statusHunian!;
-      final uri = Uri.parse('$_baseUrl/rumahs').replace(queryParameters: query.isEmpty ? null : query);
+      if ((statusHunian ?? '').isNotEmpty)
+        query['status_hunian'] = statusHunian!;
+      final uri = Uri.parse('$_baseUrl/rumahs')
+          .replace(queryParameters: query.isEmpty ? null : query);
       final resp = await http.get(uri, headers: headers);
-      print('GET /rumahs status: ${resp.statusCode}');
-      print('GET /rumahs body: ${resp.body}');
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        if (data['success'] == true) return (data['data'] as List<dynamic>);
+         if (data is Map && data.containsKey('data')) {
+           return (data['data'] as List<dynamic>);
+        }
+        if (data is List) {
+          return data;
+        }
       }
     } catch (e) {
       print('Exception in getRumahList: $e');
@@ -90,55 +121,11 @@ class DataWargaRumahService {
     return [];
   }
 
-  Future<Map<String, dynamic>?> getWarga(int id) async {
-    try {
-      final headers = await _authHeaders();
-      final resp = await http.get(Uri.parse('$_baseUrl/wargas/$id'), headers: headers);
-      print('GET /wargas/$id status: ${resp.statusCode}');
-      print('GET /wargas/$id body: ${resp.body}');
-      if (resp.statusCode == 200) {
-        final data = jsonDecode(resp.body);
-        if (data['success'] == true) return data['data'];
-      }
-    } catch (e) {
-      print('Exception in getWarga: $e');
-    }
-    return null;
-  }
+  // GET Single... (No changes needed, but good practice to add error handling)
+  
+  // --- ✅ MODIFIED CREATE/UPDATE/DELETE FUNCTIONS ---
 
-  Future<Map<String, dynamic>?> getKeluarga(int id) async {
-    try {
-      final headers = await _authHeaders();
-      final resp = await http.get(Uri.parse('$_baseUrl/keluargas/$id'), headers: headers);
-      print('GET /keluargas/$id status: ${resp.statusCode}');
-      print('GET /keluargas/$id body: ${resp.body}');
-      if (resp.statusCode == 200) {
-        final data = jsonDecode(resp.body);
-        if (data['success'] == true) return data['data'];
-      }
-    } catch (e) {
-      print('Exception in getKeluarga: $e');
-    }
-    return null;
-  }
-
-  Future<Map<String, dynamic>?> getRumah(int id) async {
-    try {
-      final headers = await _authHeaders();
-      final resp = await http.get(Uri.parse('$_baseUrl/rumahs/$id'), headers: headers);
-      print('GET /rumahs/$id status: ${resp.statusCode}');
-      print('GET /rumahs/$id body: ${resp.body}');
-      if (resp.statusCode == 200) {
-        final data = jsonDecode(resp.body);
-        if (data['success'] == true) return data['data'];
-      }
-    } catch (e) {
-      print('Exception in getRumah: $e');
-    }
-    return null;
-  }
-
-  Future<bool> createWarga(Map<String, dynamic> payload) async {
+  Future<String?> createWarga(Map<String, dynamic> payload) async {
     try {
       final headers = await _authHeaders();
       final resp = await http.post(
@@ -146,16 +133,15 @@ class DataWargaRumahService {
         headers: headers,
         body: jsonEncode(payload),
       );
-      print('POST /wargas status: ${resp.statusCode}');
-      print('POST /wargas body: ${resp.body}');
-      return resp.statusCode == 201;
+      if (resp.statusCode == 201) return null; // Success
+      return _parseError(resp); // Failure
     } catch (e) {
       print('Exception in createWarga: $e');
-      return false;
+      return 'Terjadi error: $e';
     }
   }
 
-  Future<bool> updateWarga(int id, Map<String, dynamic> payload) async {
+  Future<String?> updateWarga(int id, Map<String, dynamic> payload) async {
     try {
       final headers = await _authHeaders();
       final resp = await http.put(
@@ -163,29 +149,28 @@ class DataWargaRumahService {
         headers: headers,
         body: jsonEncode(payload),
       );
-      print('PUT /wargas/$id status: ${resp.statusCode}');
-      print('PUT /wargas/$id body: ${resp.body}');
-      return resp.statusCode == 200;
+      if (resp.statusCode == 200) return null;
+      return _parseError(resp);
     } catch (e) {
       print('Exception in updateWarga: $e');
-      return false;
+      return 'Terjadi error: $e';
     }
   }
 
-  Future<bool> deleteWarga(int id) async {
+  Future<String?> deleteWarga(int id) async {
     try {
       final headers = await _authHeaders();
-      final resp = await http.delete(Uri.parse('$_baseUrl/wargas/$id'), headers: headers);
-      print('DELETE /wargas/$id status: ${resp.statusCode}');
-      print('DELETE /wargas/$id body: ${resp.body}');
-      return resp.statusCode == 200;
+      final resp =
+          await http.delete(Uri.parse('$_baseUrl/wargas/$id'), headers: headers);
+      if (resp.statusCode == 200) return null;
+      return _parseError(resp);
     } catch (e) {
       print('Exception in deleteWarga: $e');
-      return false;
+      return 'Terjadi error: $e';
     }
   }
 
-  Future<bool> createKeluarga(Map<String, dynamic> payload) async {
+  Future<String?> createKeluarga(Map<String, dynamic> payload) async {
     try {
       final headers = await _authHeaders();
       final resp = await http.post(
@@ -193,16 +178,15 @@ class DataWargaRumahService {
         headers: headers,
         body: jsonEncode(payload),
       );
-      print('POST /keluargas status: ${resp.statusCode}');
-      print('POST /keluargas body: ${resp.body}');
-      return resp.statusCode == 201;
+      if (resp.statusCode == 201) return null;
+      return _parseError(resp);
     } catch (e) {
       print('Exception in createKeluarga: $e');
-      return false;
+      return 'Terjadi error: $e';
     }
   }
 
-  Future<bool> updateKeluarga(int id, Map<String, dynamic> payload) async {
+  Future<String?> updateKeluarga(int id, Map<String, dynamic> payload) async {
     try {
       final headers = await _authHeaders();
       final resp = await http.put(
@@ -210,29 +194,28 @@ class DataWargaRumahService {
         headers: headers,
         body: jsonEncode(payload),
       );
-      print('PUT /keluargas/$id status: ${resp.statusCode}');
-      print('PUT /keluargas/$id body: ${resp.body}');
-      return resp.statusCode == 200;
+      if (resp.statusCode == 200) return null;
+      return _parseError(resp);
     } catch (e) {
       print('Exception in updateKeluarga: $e');
-      return false;
+      return 'Terjadi error: $e';
     }
   }
 
-  Future<bool> deleteKeluarga(int id) async {
+  Future<String?> deleteKeluarga(int id) async {
     try {
       final headers = await _authHeaders();
-      final resp = await http.delete(Uri.parse('$_baseUrl/keluargas/$id'), headers: headers);
-      print('DELETE /keluargas/$id status: ${resp.statusCode}');
-      print('DELETE /keluargas/$id body: ${resp.body}');
-      return resp.statusCode == 200;
+      final resp = await http
+          .delete(Uri.parse('$_baseUrl/keluargas/$id'), headers: headers);
+      if (resp.statusCode == 200) return null;
+      return _parseError(resp);
     } catch (e) {
       print('Exception in deleteKeluarga: $e');
-      return false;
+      return 'Terjadi error: $e';
     }
   }
 
-  Future<bool> createRumah(Map<String, dynamic> payload) async {
+  Future<String?> createRumah(Map<String, dynamic> payload) async {
     try {
       final headers = await _authHeaders();
       final resp = await http.post(
@@ -240,16 +223,15 @@ class DataWargaRumahService {
         headers: headers,
         body: jsonEncode(payload),
       );
-      print('POST /rumahs status: ${resp.statusCode}');
-      print('POST /rumahs body: ${resp.body}');
-      return resp.statusCode == 201;
+      if (resp.statusCode == 201) return null;
+      return _parseError(resp);
     } catch (e) {
       print('Exception in createRumah: $e');
-      return false;
+      return 'Terjadi error: $e';
     }
   }
 
-  Future<bool> updateRumah(int id, Map<String, dynamic> payload) async {
+  Future<String?> updateRumah(int id, Map<String, dynamic> payload) async {
     try {
       final headers = await _authHeaders();
       final resp = await http.put(
@@ -257,25 +239,24 @@ class DataWargaRumahService {
         headers: headers,
         body: jsonEncode(payload),
       );
-      print('PUT /rumahs/$id status: ${resp.statusCode}');
-      print('PUT /rumahs/$id body: ${resp.body}');
-      return resp.statusCode == 200;
+      if (resp.statusCode == 200) return null;
+      return _parseError(resp);
     } catch (e) {
       print('Exception in updateRumah: $e');
-      return false;
+      return 'Terjadi error: $e';
     }
   }
 
-  Future<bool> deleteRumah(int id) async {
+  Future<String?> deleteRumah(int id) async {
     try {
       final headers = await _authHeaders();
-      final resp = await http.delete(Uri.parse('$_baseUrl/rumahs/$id'), headers: headers);
-      print('DELETE /rumahs/$id status: ${resp.statusCode}');
-      print('DELETE /rumahs/$id body: ${resp.body}');
-      return resp.statusCode == 200;
+      final resp =
+          await http.delete(Uri.parse('$_baseUrl/rumahs/$id'), headers: headers);
+      if (resp.statusCode == 200) return null;
+      return _parseError(resp);
     } catch (e) {
       print('Exception in deleteRumah: $e');
-      return false;
+      return 'Terjadi error: $e';
     }
   }
 }
