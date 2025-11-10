@@ -11,8 +11,8 @@ class AuthService {
 
   // this one is the domain im running with localtunnel, change it accordingly if you made changes to the api.
   // simply comment below and uncomment the above to run on local network
-  String get baseUrl => 'https://jawara-api-group3.loca.lt/api';
-  String get storageUrl => 'https://jawara-api-group3.loca.lt/storage';
+  String get baseUrl => 'http://192.168.0.5:8000/api';
+  String get storageUrl => 'http://192.168.0.5:8000/api';
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -26,7 +26,7 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'bypass-tunnel-reminder': 'true'
+          'bypass-tunnel-reminder': 'true',
         },
         body: jsonEncode({'email': email, 'password': password}),
       );
@@ -76,33 +76,27 @@ class AuthService {
       // Add profile picture file (optional)
       if (fotoProfil != null) {
         request.files.add(
-          await http.MultipartFile.fromPath(
-            'foto_identitas',
-            fotoProfil.path,
-          ),
+          await http.MultipartFile.fromPath('foto_identitas', fotoProfil.path),
         );
       }
 
       // Add KTP file (optional)
       if (fotoKtp != null) {
         request.files.add(
-          await http.MultipartFile.fromPath(
-            'foto_ktp',
-            fotoKtp.path,
-          ),
+          await http.MultipartFile.fromPath('foto_ktp', fotoKtp.path),
         );
       }
 
       var response = await request.send();
-      final respStr = await response.stream.bytesToString(); 
+      final respStr = await response.stream.bytesToString();
 
       if (response.statusCode == 201) {
-        return null; 
+        return null;
       } else if (response.statusCode == 422) {
         final errors = jsonDecode(respStr) as Map<String, dynamic>;
         final firstErrorKey = errors.keys.first;
         final firstErrorMessage = (errors[firstErrorKey] as List).first;
-        return firstErrorMessage; 
+        return firstErrorMessage;
       } else {
         print(respStr);
         return 'Pendaftaran gagal. Terjadi kesalahan server.';
@@ -113,7 +107,6 @@ class AuthService {
     }
   }
 
-
   Future<String?> updateProfile({
     required String name,
     required String phone,
@@ -123,7 +116,7 @@ class AuthService {
     required String? agama,
     required String? statusPerkawinan,
     required String? pekerjaan,
-    required File? fotoProfil, 
+    required File? fotoProfil,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -135,26 +128,27 @@ class AuthService {
       var uri = Uri.parse('$baseUrl/profile/update');
       var request = http.MultipartRequest('POST', uri)
         ..headers['Accept'] = 'application/json'
-        ..headers['Authorization'] = 'Bearer $token'; 
+        ..headers['Authorization'] = 'Bearer $token';
 
       request.fields['name'] = name;
       request.fields['phone'] = phone;
       if (tempatLahir != null) request.fields['tempat_lahir'] = tempatLahir;
       if (tanggalLahir != null) {
-        request.fields['tanggal_lahir'] = tanggalLahir.toIso8601String().split('T').first; // Format as YYYY-MM-DD
+        request.fields['tanggal_lahir'] = tanggalLahir
+            .toIso8601String()
+            .split('T')
+            .first; // Format as YYYY-MM-DD
       }
       if (jenisKelamin != null) request.fields['jenis_kelamin'] = jenisKelamin;
       if (agama != null) request.fields['agama'] = agama;
-      if (statusPerkawinan != null) request.fields['status_perkawinan'] = statusPerkawinan;
+      if (statusPerkawinan != null)
+        request.fields['status_perkawinan'] = statusPerkawinan;
       if (pekerjaan != null) request.fields['pekerjaan'] = pekerjaan;
-      
+
       // Add profile picture file (optional)
       if (fotoProfil != null) {
         request.files.add(
-          await http.MultipartFile.fromPath(
-            'foto_identitas',
-            fotoProfil.path,
-          ),
+          await http.MultipartFile.fromPath('foto_identitas', fotoProfil.path),
         );
       }
 
@@ -179,7 +173,6 @@ class AuthService {
     }
   }
 
-
   Future<String?> changePassword({
     required String oldPassword,
     required String newPassword,
@@ -197,7 +190,7 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': 'Bearer $token', 
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
           'old_password': oldPassword,
@@ -244,9 +237,9 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return User.fromJson(data); 
+        return User.fromJson(data);
       } else {
-        return null; 
+        return null;
       }
     } catch (e) {
       print(e.toString());
@@ -266,7 +259,7 @@ class AuthService {
             headers: {
               'Accept': 'application/json',
               'Authorization': 'Bearer $token',
-              'bypass-tunnel-reminder': 'true'
+              'bypass-tunnel-reminder': 'true',
             },
           );
 
@@ -308,7 +301,7 @@ class AuthService {
         headers: {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
-          'bypass-tunnel-reminder': 'true'
+          'bypass-tunnel-reminder': 'true',
         },
       );
 

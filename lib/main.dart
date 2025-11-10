@@ -17,6 +17,7 @@ import 'package:jawarapbl/modules/mutasi-keluarga/pages/edit_mutasi_page.dart';
 import 'package:jawarapbl/modules/log-aktivitas/pages/log_aktivitas_page.dart';
 import 'package:jawarapbl/modules/manajemen-pengguna/pages/manajemen_pengguna_tabs_page.dart';
 import 'package:jawarapbl/modules/auth/pages/register.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -26,6 +27,17 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Jawara Pintar',
+
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''), // English
+        Locale('id', ''), // Bahasa Indonesia
+      ],
+
       theme: ThemeData(
         cardTheme: CardThemeData(color: Colors.white),
         elevatedButtonTheme: ElevatedButtonThemeData(

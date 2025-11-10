@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Diperlukan untuk format tanggal dan showDatePicker
+import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 import '../models/semuapengeluaran_model.dart';
-import '../widgets/semuapengeluaran_widget.dart'; // Menggunakan widget card list
 
 // =========================================================================
-// A. HALAMAN BARU: DETAIL PENGELUARAN
+// A. HALAMAN DETAIL PENGELUARAN
 // =========================================================================
 
 class DetailPengeluaranPage extends StatelessWidget {
   final PengeluaranModel item;
-
-  // Asumsi data verifikator adalah hardcode
   final String verifikator = 'Admin Jawara';
 
   const DetailPengeluaranPage({super.key, required this.item});
 
-  // Helper untuk baris detail
   Widget _buildDetailRow(String label, String value, {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
@@ -78,19 +77,16 @@ class DetailPengeluaranPage extends StatelessWidget {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 30),
-
                 _buildDetailRow('Nama Pengeluaran', item.nama),
-
-                _buildDetailRow('Kategori', item.jenisPengeluaran),
-
+                _buildDetailRow('Kategori', item.kategori),
                 _buildDetailRow(
                   'Jumlah',
                   item.nominalRupiah,
-                  valueColor: Colors.red.shade700, // Merah untuk pengeluaran
+                  valueColor: Colors.red.shade700,
                 ),
-
                 _buildDetailRow('Verifikator', verifikator),
                 _buildDetailRow('Tanggal Transaksi', item.tanggal),
+                _buildDetailRow('Deskripsi', item.deskripsi ?? '-'),
               ],
             ),
           ),
@@ -100,9 +96,9 @@ class DetailPengeluaranPage extends StatelessWidget {
   }
 }
 
-// =========================================================================
-// B. KODE FILTER PENGELUARAN (STATEFUL)
-// =========================================================================
+// -------------------------------------------------------------------------
+// B. KODE FILTER PENGELUARAN
+// -------------------------------------------------------------------------
 
 class FilterPengeluaranDialog extends StatefulWidget {
   const FilterPengeluaranDialog({super.key});
@@ -113,7 +109,6 @@ class FilterPengeluaranDialog extends StatefulWidget {
 }
 
 class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
-  // State dan Controllers
   String? _selectedKategori;
   DateTime? _dariTanggal;
   DateTime? _sampaiTanggal;
@@ -123,11 +118,11 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
       TextEditingController();
 
   final List<String> _kategoriOptions = const [
-    'Operasional RT/RW',
-    'Kegiatan Sosial',
-    'Pemeliharaan Fasilitas',
-    'Pembangunan',
-    'Kegiatan Warga',
+    'Makan',
+    'Perbaikan',
+    'Kegiatan',
+    'Operasional',
+    'Lainnya',
   ];
 
   @override
@@ -138,7 +133,6 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
     super.dispose();
   }
 
-  // --- Logika Tanggal ---
   Future<void> _selectDate(
     BuildContext context,
     TextEditingController controller,
@@ -163,7 +157,6 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
     }
   }
 
-  // --- Logika Reset ---
   void _resetFilter() {
     setState(() {
       _selectedKategori = null;
@@ -175,7 +168,6 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
     });
   }
 
-  // --- Widget Row Input Tanggal ---
   Widget _buildDateInput(
     String label,
     TextEditingController controller,
@@ -253,7 +245,6 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 1. Nama
             const Text('Nama'),
             const SizedBox(height: 8),
             TextFormField(
@@ -268,12 +259,10 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // 2. Kategori
             const Text('Kategori'),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              initialValue: _selectedKategori,
+              value: _selectedKategori,
               decoration: const InputDecoration(
                 hintText: '-- Pilih Kategori --',
                 border: OutlineInputBorder(),
@@ -282,29 +271,27 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
                   vertical: 12,
                 ),
               ),
-              items: _kategoriOptions.map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
+              items: _kategoriOptions
+                  .map(
+                    (value) => DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (newValue) {
                 setState(() {
                   _selectedKategori = newValue;
                 });
               },
             ),
             const SizedBox(height: 24),
-
-            // 3. Dari Tanggal
             _buildDateInput(
               'Dari Tanggal',
               _dariTanggalController,
               _dariTanggal,
               true,
             ),
-
-            // 4. Sampai Tanggal
             _buildDateInput(
               'Sampai Tanggal',
               _sampaiTanggalController,
@@ -314,16 +301,12 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
           ],
         ),
       ),
-      // --- Tombol Aksi ---
       actions: <Widget>[
         OutlinedButton(
           onPressed: _resetFilter,
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: Colors.black12),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
             foregroundColor: Colors.black54,
             backgroundColor: Colors.grey[50],
           ),
@@ -331,7 +314,6 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            // Logika Terapkan Filter
             Navigator.of(context).pop();
             ScaffoldMessenger.of(
               context,
@@ -351,117 +333,475 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
   }
 }
 
-// =========================================================================
-// C. KODE SEMUAPENGELUARANPAGE (UTAMA)
-// =========================================================================
+// -------------------------------------------------------------------------
+// C. SEMUA PENGELUARAN PAGE (DARI API) + CRUD BUTTON
+// -------------------------------------------------------------------------
 
-class SemuaPengeluaranPage extends StatelessWidget {
+class SemuaPengeluaranPage extends StatefulWidget {
   const SemuaPengeluaranPage({super.key});
 
-  // Data dummy sesuai gambar Pengeluaran
-  final List<PengeluaranModel> _dummyData = const [
-    PengeluaranModel(
-      no: 1,
-      nama: 'Kerja Bakti', // Diubah sesuai gambar detail
-      jenisPengeluaran: 'Pemeliharaan Fasilitas',
-      tanggal: '19 Oct 2025 20:26',
-      nominal: 50000.00, // Diubah sesuai gambar detail
-    ),
-    PengeluaranModel(
-      no: 2,
-      nama: 'Snack Rapat Warga',
-      jenisPengeluaran: 'Kegiatan Warga',
-      tanggal: '19 Oct 2025 20:26',
-      nominal: 100000.00,
-    ),
-    PengeluaranModel(
-      no: 3,
-      nama: 'Bayar Listrik Pos Jaga',
-      jenisPengeluaran: 'Operasional RT/RW',
-      tanggal: '17 Oct 2025 02:30',
-      nominal: 75000.00,
-    ),
-    PengeluaranModel(
-      no: 4,
-      nama: 'Perbaikan Pagar Sekolah',
-      jenisPengeluaran: 'Pemeliharaan Fasilitas',
-      tanggal: '10 Oct 2025 01:08',
-      nominal: 2112000.00,
-    ),
-  ];
+  @override
+  State<SemuaPengeluaranPage> createState() => _SemuaPengeluaranPageState();
+}
 
-  // Fungsi untuk menampilkan dialog filter
+class _SemuaPengeluaranPageState extends State<SemuaPengeluaranPage> {
+  late Future<List<PengeluaranModel>> _futureData;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureData = _fetchPengeluaran();
+  }
+
+  Future<List<PengeluaranModel>> _fetchPengeluaran() async {
+    final response = await http.get(
+      Uri.parse('http://192.168.0.5:8000/api/pengeluaran'),
+    );
+
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body);
+      final List data = body is List ? body : body.values.toList();
+      return data.map((e) => PengeluaranModel.fromJson(e)).toList();
+    } else {
+      throw Exception('Gagal memuat data pengeluaran');
+    }
+  }
+
   void _showFilterDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return const FilterPengeluaranDialog();
-      },
+      builder: (context) => const FilterPengeluaranDialog(),
     );
   }
 
-  // Fungsi untuk menangani aksi Detail (Navigasi)
-  void _handleCardAction(
-    BuildContext context,
-    String action,
-    PengeluaranModel item,
-  ) {
-    if (action == 'Detail') {
-      Navigator.push(
+  void _deleteData(int id) async {
+    final response = await http.delete(
+      Uri.parse('http://192.168.0.5:8000/api/pengeluaran/$id'),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _futureData = _fetchPengeluaran();
+      });
+      ScaffoldMessenger.of(
         context,
-        MaterialPageRoute(
-          builder: (context) => DetailPengeluaranPage(item: item),
-        ),
-      );
+      ).showSnackBar(const SnackBar(content: Text('Data berhasil dihapus')));
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gagal menghapus data')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Mengganti FloatingActionButton dengan tombol filter di kanan atas (menggunakan Stack)
-    return Stack(
-      children: [
-        // Konten Utama (List Card)
-        Padding(
-          // PADDING DIKOREKSI: Memberi ruang di atas untuk tombol filter
-          padding: const EdgeInsets.only(
-            top: 60.0,
-            left: 16.0,
-            right: 16.0,
-            bottom: 16.0,
-          ),
-          // MENGIRIMKAN FUNGSI PENANGANAN AKSI KE LIST CARD
-          child: SemuaPengeluaranCardList(
-            data: _dummyData,
-            onCardAction: (action, item) =>
-                _handleCardAction(context, action, item),
-          ),
-        ),
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.red,
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => TambahPengeluaranDialog(
+              onSaved: () {
+                setState(() {
+                  _futureData = _fetchPengeluaran();
+                });
+              },
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(
+              top: 60.0,
+              left: 16,
+              right: 16,
+              bottom: 16,
+            ),
+            child: FutureBuilder<List<PengeluaranModel>>(
+              future: _futureData,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Terjadi kesalahan: ${snapshot.error}'),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                    child: Text('Tidak ada data pengeluaran.'),
+                  );
+                }
 
-        // Tombol Filter di kanan atas (posisi Absolute)
-        Positioned(
-          top: 16, // Jarak dari atas TabBarView
-          right: 16, // Jarak dari kanan
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.deepPurple,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 5),
-              ],
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              icon: const Icon(
-                Icons.filter_list,
-                color: Colors.white,
-                size: 20,
-              ),
-              onPressed: () => _showFilterDialog(context),
+                final data = snapshot.data!;
+                return ListView.builder(
+                  itemCount: data.length,
+                  itemBuilder: (context, index) {
+                    final item = data[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 2,
+                      child: ListTile(
+                        title: Text(
+                          item.nama,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        subtitle: Text('${item.kategori} • ${item.tanggal}'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.edit,
+                                color: Colors.orange,
+                              ),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => EditPengeluaranDialog(
+                                    item: item,
+                                    onSaved: () {
+                                      setState(() {
+                                        _futureData = _fetchPengeluaran();
+                                      });
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _deleteData(item.id),
+                            ),
+                          ],
+                        ),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                DetailPengeluaranPage(item: item),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.deepPurple,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 5,
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const Icon(
+                  Icons.filter_list,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                onPressed: () => _showFilterDialog(context),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// -------------------------------------------------------------------------
+// D. TAMBAH & EDIT PENGELUARAN DIALOG
+// -------------------------------------------------------------------------
+
+class TambahPengeluaranDialog extends StatefulWidget {
+  final Function() onSaved;
+
+  const TambahPengeluaranDialog({super.key, required this.onSaved});
+
+  @override
+  State<TambahPengeluaranDialog> createState() =>
+      _TambahPengeluaranDialogState();
+}
+
+class _TambahPengeluaranDialogState extends State<TambahPengeluaranDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _namaController = TextEditingController();
+  final TextEditingController _kategoriController = TextEditingController();
+  final TextEditingController _nominalController = TextEditingController();
+  final TextEditingController _tanggalController = TextEditingController();
+  final TextEditingController _deskripsiController = TextEditingController();
+
+  Future<void> _simpanData() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final response = await http.post(
+      Uri.parse('http://192.168.0.5:8000/api/pengeluaran'),
+      body: {
+        'user_id': '1',
+        'nama': _namaController.text,
+        'kategori': _kategoriController.text,
+        'nominal': _nominalController.text,
+        'tanggal': _tanggalController.text,
+        'deskripsi': _deskripsiController.text,
+      },
+    );
+
+    if (response.statusCode == 201) {
+      Navigator.pop(context);
+      widget.onSaved();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data berhasil ditambahkan')),
+      );
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gagal menambah data')));
+    }
+  }
+
+  Future<void> _pilihTanggal(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _tanggalController.text = DateFormat('yyyy-MM-dd').format(picked);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Tambah Pengeluaran'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _namaController,
+              decoration: const InputDecoration(labelText: 'Nama Pengeluaran'),
+              validator: (value) => value!.isEmpty ? 'Nama wajib diisi' : null,
+            ),
+            TextFormField(
+              controller: _kategoriController,
+              decoration: const InputDecoration(labelText: 'Kategori'),
+              validator: (value) =>
+                  value!.isEmpty ? 'Kategori wajib diisi' : null,
+            ),
+            TextFormField(
+              controller: _nominalController,
+              decoration: const InputDecoration(labelText: 'Nominal'),
+              keyboardType: TextInputType.number,
+              validator: (value) =>
+                  value!.isEmpty ? 'Nominal wajib diisi' : null,
+            ),
+            TextFormField(
+              controller: _tanggalController,
+              readOnly: true,
+              decoration: const InputDecoration(labelText: 'Tanggal'),
+              onTap: () => _pilihTanggal(context),
+              validator: (value) =>
+                  value!.isEmpty ? 'Tanggal wajib diisi' : null,
+            ),
+            TextFormField(
+              controller: _deskripsiController,
+              decoration: const InputDecoration(
+                labelText: 'Deskripsi (opsional)',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+        ElevatedButton(
+          onPressed: _simpanData,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.deepPurple,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    );
+  }
+}
+
+// -------------------------------------------------------------------------
+// E. EDIT PENGELUARAN DIALOG
+// -------------------------------------------------------------------------
+
+class EditPengeluaranDialog extends StatefulWidget {
+  final PengeluaranModel item;
+  final Function() onSaved;
+
+  const EditPengeluaranDialog({
+    super.key,
+    required this.item,
+    required this.onSaved,
+  });
+
+  @override
+  State<EditPengeluaranDialog> createState() => _EditPengeluaranDialogState();
+}
+
+class _EditPengeluaranDialogState extends State<EditPengeluaranDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _namaController;
+  late TextEditingController _kategoriController;
+  late TextEditingController _nominalController;
+  late TextEditingController _tanggalController;
+  late TextEditingController _deskripsiController;
+
+  @override
+  void initState() {
+    super.initState();
+    _namaController = TextEditingController(text: widget.item.nama);
+    _kategoriController = TextEditingController(text: widget.item.kategori);
+    _nominalController = TextEditingController(
+      text: widget.item.nominal.toString(),
+    );
+    _tanggalController = TextEditingController(text: widget.item.tanggal);
+    _deskripsiController = TextEditingController(
+      text: widget.item.deskripsi ?? '',
+    );
+  }
+
+  Future<void> _editData() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final response = await http.put(
+      Uri.parse('http://192.168.0.5:8000/api/pengeluaran/${widget.item.id}'),
+      body: {
+        'nama': _namaController.text,
+        'kategori': _kategoriController.text,
+        'nominal': _nominalController.text,
+        'tanggal': _tanggalController.text,
+        'deskripsi': _deskripsiController.text,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      Navigator.pop(context);
+      widget.onSaved();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Data berhasil diperbarui')));
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gagal memperbarui data')));
+    }
+  }
+
+  Future<void> _pilihTanggal(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.tryParse(widget.item.tanggal) ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _tanggalController.text = DateFormat('yyyy-MM-dd').format(picked);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Pengeluaran'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _namaController,
+              decoration: const InputDecoration(labelText: 'Nama Pengeluaran'),
+              validator: (value) => value!.isEmpty ? 'Nama wajib diisi' : null,
+            ),
+            TextFormField(
+              controller: _kategoriController,
+              decoration: const InputDecoration(labelText: 'Kategori'),
+              validator: (value) =>
+                  value!.isEmpty ? 'Kategori wajib diisi' : null,
+            ),
+            TextFormField(
+              controller: _nominalController,
+              decoration: const InputDecoration(labelText: 'Nominal'),
+              keyboardType: TextInputType.number,
+              validator: (value) =>
+                  value!.isEmpty ? 'Nominal wajib diisi' : null,
+            ),
+            TextFormField(
+              controller: _tanggalController,
+              readOnly: true,
+              decoration: const InputDecoration(labelText: 'Tanggal'),
+              onTap: () => _pilihTanggal(context),
+              validator: (value) =>
+                  value!.isEmpty ? 'Tanggal wajib diisi' : null,
+            ),
+            TextFormField(
+              controller: _deskripsiController,
+              decoration: const InputDecoration(
+                labelText: 'Deskripsi (opsional)',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+        ElevatedButton(
+          onPressed: _editData,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.deepPurple,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Text('Simpan', style: TextStyle(color: Colors.white)),
         ),
       ],
     );

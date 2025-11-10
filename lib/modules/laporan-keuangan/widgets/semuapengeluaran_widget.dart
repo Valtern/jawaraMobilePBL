@@ -54,6 +54,7 @@ class PengeluaranCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Bagian header card (judul + popup menu)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,14 +78,21 @@ class PengeluaranCard extends StatelessWidget {
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
                         const PopupMenuItem<String>(
-                          value: 'Detail',
-                          child: Text('Detail'),
+                          value: 'Edit',
+                          child: Text('Edit'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'Delete',
+                          child: Text('Delete'),
                         ),
                       ],
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
+
+            // Isi informasi utama
             _buildInfoRow(
               'Jenis Pengeluaran',
               item.jenisPengeluaran,
