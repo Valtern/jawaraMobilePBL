@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
+import 'package:jawarapbl/services/auth_services.dart';
 import '../models/semuapengeluaran_model.dart';
 
 // =========================================================================
@@ -136,7 +136,7 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
   Future<void> _selectDate(
     BuildContext context,
     TextEditingController controller,
-    bool isStartDate,
+    bool isStart,
   ) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -147,7 +147,7 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
     );
     if (picked != null) {
       setState(() {
-        if (isStartDate) {
+        if (isStart) {
           _dariTanggal = picked;
         } else {
           _sampaiTanggal = picked;
@@ -166,58 +166,6 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
       _dariTanggalController.clear();
       _sampaiTanggalController.clear();
     });
-  }
-
-  Widget _buildDateInput(
-    String label,
-    TextEditingController controller,
-    DateTime? dateValue,
-    bool isStartDate,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          readOnly: true,
-          decoration: InputDecoration(
-            hintText: '--/--/----',
-            border: const OutlineInputBorder(),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (controller.text.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () {
-                      setState(() {
-                        if (isStartDate) {
-                          _dariTanggal = null;
-                        } else {
-                          _sampaiTanggal = null;
-                        }
-                        controller.clear();
-                      });
-                    },
-                  ),
-                IconButton(
-                  icon: const Icon(Icons.calendar_today, size: 20),
-                  onPressed: () =>
-                      _selectDate(context, controller, isStartDate),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-      ],
-    );
   }
 
   @override
@@ -252,10 +200,6 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
               decoration: const InputDecoration(
                 hintText: 'Cari nama...',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -266,50 +210,26 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
               decoration: const InputDecoration(
                 hintText: '-- Pilih Kategori --',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
               ),
               items: _kategoriOptions
                   .map(
-                    (value) => DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    ),
+                    (value) =>
+                        DropdownMenuItem(value: value, child: Text(value)),
                   )
                   .toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  _selectedKategori = newValue;
-                });
-              },
+              onChanged: (newValue) => setState(() {
+                _selectedKategori = newValue;
+              }),
             ),
             const SizedBox(height: 24),
-            _buildDateInput(
-              'Dari Tanggal',
-              _dariTanggalController,
-              _dariTanggal,
-              true,
-            ),
-            _buildDateInput(
-              'Sampai Tanggal',
-              _sampaiTanggalController,
-              _sampaiTanggal,
-              false,
-            ),
+            _buildDateInput('Dari Tanggal', _dariTanggalController, true),
+            _buildDateInput('Sampai Tanggal', _sampaiTanggalController, false),
           ],
         ),
       ),
       actions: <Widget>[
         OutlinedButton(
           onPressed: _resetFilter,
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Colors.black12),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            foregroundColor: Colors.black54,
-            backgroundColor: Colors.grey[50],
-          ),
           child: const Text('Reset Filter'),
         ),
         ElevatedButton(
@@ -317,24 +237,44 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
             Navigator.of(context).pop();
             ScaffoldMessenger.of(
               context,
-            ).showSnackBar(const SnackBar(content: Text('Filter Diterapkan')));
+            ).showSnackBar(const SnackBar(content: Text('Filter diterapkan')));
           },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF673AB7),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+          child: const Text('Terapkan'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateInput(
+    String label,
+    TextEditingController controller,
+    bool isStartDate,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          readOnly: true,
+          decoration: InputDecoration(
+            hintText: '--/--/----',
+            border: const OutlineInputBorder(),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.calendar_today),
+              onPressed: () => _selectDate(context, controller, isStartDate),
             ),
           ),
-          child: const Text('Terapkan', style: TextStyle(color: Colors.white)),
         ),
+        const SizedBox(height: 24),
       ],
     );
   }
 }
 
 // -------------------------------------------------------------------------
-// C. SEMUA PENGELUARAN PAGE (DARI API) + CRUD BUTTON
+// C. HALAMAN SEMUA PENGELUARAN TANPA EDIT/DELETE
 // -------------------------------------------------------------------------
 
 class SemuaPengeluaranPage extends StatefulWidget {
@@ -355,13 +295,17 @@ class _SemuaPengeluaranPageState extends State<SemuaPengeluaranPage> {
 
   Future<List<PengeluaranModel>> _fetchPengeluaran() async {
     final response = await http.get(
-      Uri.parse('http://192.168.0.5:8000/api/pengeluaran'),
+      Uri.parse('${AuthService().baseUrl}/pengeluaran'),
     );
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
-      final List data = body is List ? body : body.values.toList();
-      return data.map((e) => PengeluaranModel.fromJson(e)).toList();
+      if (body is Map<String, dynamic> && body['data'] is List) {
+        final List data = body['data'];
+        return data.map((e) => PengeluaranModel.fromJson(e)).toList();
+      } else {
+        throw Exception('Format data tidak sesuai');
+      }
     } else {
       throw Exception('Gagal memuat data pengeluaran');
     }
@@ -374,49 +318,14 @@ class _SemuaPengeluaranPageState extends State<SemuaPengeluaranPage> {
     );
   }
 
-  void _deleteData(int id) async {
-    final response = await http.delete(
-      Uri.parse('http://192.168.0.5:8000/api/pengeluaran/$id'),
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _futureData = _fetchPengeluaran();
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Data berhasil dihapus')));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Gagal menghapus data')));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.red,
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => TambahPengeluaranDialog(
-              onSaved: () {
-                setState(() {
-                  _futureData = _fetchPengeluaran();
-                });
-              },
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
       body: Stack(
         children: [
           Padding(
             padding: const EdgeInsets.only(
-              top: 60.0,
+              top: 60,
               left: 16,
               right: 16,
               bottom: 16,
@@ -456,34 +365,6 @@ class _SemuaPengeluaranPageState extends State<SemuaPengeluaranPage> {
                           ),
                         ),
                         subtitle: Text('${item.kategori} • ${item.tanggal}'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.orange,
-                              ),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => EditPengeluaranDialog(
-                                    item: item,
-                                    onSaved: () {
-                                      setState(() {
-                                        _futureData = _fetchPengeluaran();
-                                      });
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteData(item.id),
-                            ),
-                          ],
-                        ),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -507,15 +388,8 @@ class _SemuaPengeluaranPageState extends State<SemuaPengeluaranPage> {
               decoration: BoxDecoration(
                 color: Colors.deepPurple,
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 5,
-                  ),
-                ],
               ),
               child: IconButton(
-                padding: EdgeInsets.zero,
                 icon: const Icon(
                   Icons.filter_list,
                   color: Colors.white,
@@ -527,283 +401,6 @@ class _SemuaPengeluaranPageState extends State<SemuaPengeluaranPage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-// -------------------------------------------------------------------------
-// D. TAMBAH & EDIT PENGELUARAN DIALOG
-// -------------------------------------------------------------------------
-
-class TambahPengeluaranDialog extends StatefulWidget {
-  final Function() onSaved;
-
-  const TambahPengeluaranDialog({super.key, required this.onSaved});
-
-  @override
-  State<TambahPengeluaranDialog> createState() =>
-      _TambahPengeluaranDialogState();
-}
-
-class _TambahPengeluaranDialogState extends State<TambahPengeluaranDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _namaController = TextEditingController();
-  final TextEditingController _kategoriController = TextEditingController();
-  final TextEditingController _nominalController = TextEditingController();
-  final TextEditingController _tanggalController = TextEditingController();
-  final TextEditingController _deskripsiController = TextEditingController();
-
-  Future<void> _simpanData() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final response = await http.post(
-      Uri.parse('http://192.168.0.5:8000/api/pengeluaran'),
-      body: {
-        'user_id': '1',
-        'nama': _namaController.text,
-        'kategori': _kategoriController.text,
-        'nominal': _nominalController.text,
-        'tanggal': _tanggalController.text,
-        'deskripsi': _deskripsiController.text,
-      },
-    );
-
-    if (response.statusCode == 201) {
-      Navigator.pop(context);
-      widget.onSaved();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data berhasil ditambahkan')),
-      );
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Gagal menambah data')));
-    }
-  }
-
-  Future<void> _pilihTanggal(BuildContext context) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (picked != null) {
-      setState(() {
-        _tanggalController.text = DateFormat('yyyy-MM-dd').format(picked);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Tambah Pengeluaran'),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _namaController,
-              decoration: const InputDecoration(labelText: 'Nama Pengeluaran'),
-              validator: (value) => value!.isEmpty ? 'Nama wajib diisi' : null,
-            ),
-            TextFormField(
-              controller: _kategoriController,
-              decoration: const InputDecoration(labelText: 'Kategori'),
-              validator: (value) =>
-                  value!.isEmpty ? 'Kategori wajib diisi' : null,
-            ),
-            TextFormField(
-              controller: _nominalController,
-              decoration: const InputDecoration(labelText: 'Nominal'),
-              keyboardType: TextInputType.number,
-              validator: (value) =>
-                  value!.isEmpty ? 'Nominal wajib diisi' : null,
-            ),
-            TextFormField(
-              controller: _tanggalController,
-              readOnly: true,
-              decoration: const InputDecoration(labelText: 'Tanggal'),
-              onTap: () => _pilihTanggal(context),
-              validator: (value) =>
-                  value!.isEmpty ? 'Tanggal wajib diisi' : null,
-            ),
-            TextFormField(
-              controller: _deskripsiController,
-              decoration: const InputDecoration(
-                labelText: 'Deskripsi (opsional)',
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-        ElevatedButton(
-          onPressed: _simpanData,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: const Text('Simpan', style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    );
-  }
-}
-
-// -------------------------------------------------------------------------
-// E. EDIT PENGELUARAN DIALOG
-// -------------------------------------------------------------------------
-
-class EditPengeluaranDialog extends StatefulWidget {
-  final PengeluaranModel item;
-  final Function() onSaved;
-
-  const EditPengeluaranDialog({
-    super.key,
-    required this.item,
-    required this.onSaved,
-  });
-
-  @override
-  State<EditPengeluaranDialog> createState() => _EditPengeluaranDialogState();
-}
-
-class _EditPengeluaranDialogState extends State<EditPengeluaranDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _namaController;
-  late TextEditingController _kategoriController;
-  late TextEditingController _nominalController;
-  late TextEditingController _tanggalController;
-  late TextEditingController _deskripsiController;
-
-  @override
-  void initState() {
-    super.initState();
-    _namaController = TextEditingController(text: widget.item.nama);
-    _kategoriController = TextEditingController(text: widget.item.kategori);
-    _nominalController = TextEditingController(
-      text: widget.item.nominal.toString(),
-    );
-    _tanggalController = TextEditingController(text: widget.item.tanggal);
-    _deskripsiController = TextEditingController(
-      text: widget.item.deskripsi ?? '',
-    );
-  }
-
-  Future<void> _editData() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final response = await http.put(
-      Uri.parse('http://192.168.0.5:8000/api/pengeluaran/${widget.item.id}'),
-      body: {
-        'nama': _namaController.text,
-        'kategori': _kategoriController.text,
-        'nominal': _nominalController.text,
-        'tanggal': _tanggalController.text,
-        'deskripsi': _deskripsiController.text,
-      },
-    );
-
-    if (response.statusCode == 200) {
-      Navigator.pop(context);
-      widget.onSaved();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Data berhasil diperbarui')));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Gagal memperbarui data')));
-    }
-  }
-
-  Future<void> _pilihTanggal(BuildContext context) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.tryParse(widget.item.tanggal) ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (picked != null) {
-      setState(() {
-        _tanggalController.text = DateFormat('yyyy-MM-dd').format(picked);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Edit Pengeluaran'),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _namaController,
-              decoration: const InputDecoration(labelText: 'Nama Pengeluaran'),
-              validator: (value) => value!.isEmpty ? 'Nama wajib diisi' : null,
-            ),
-            TextFormField(
-              controller: _kategoriController,
-              decoration: const InputDecoration(labelText: 'Kategori'),
-              validator: (value) =>
-                  value!.isEmpty ? 'Kategori wajib diisi' : null,
-            ),
-            TextFormField(
-              controller: _nominalController,
-              decoration: const InputDecoration(labelText: 'Nominal'),
-              keyboardType: TextInputType.number,
-              validator: (value) =>
-                  value!.isEmpty ? 'Nominal wajib diisi' : null,
-            ),
-            TextFormField(
-              controller: _tanggalController,
-              readOnly: true,
-              decoration: const InputDecoration(labelText: 'Tanggal'),
-              onTap: () => _pilihTanggal(context),
-              validator: (value) =>
-                  value!.isEmpty ? 'Tanggal wajib diisi' : null,
-            ),
-            TextFormField(
-              controller: _deskripsiController,
-              decoration: const InputDecoration(
-                labelText: 'Deskripsi (opsional)',
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-        ElevatedButton(
-          onPressed: _editData,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: const Text('Simpan', style: TextStyle(color: Colors.white)),
-        ),
-      ],
     );
   }
 }

@@ -95,7 +95,7 @@ class PengeluaranCard extends StatelessWidget {
             // Isi informasi utama
             _buildInfoRow(
               'Jenis Pengeluaran',
-              item.jenisPengeluaran,
+              //item.jenisPengeluaran,
               alignment: Alignment.centerRight,
             ),
             const SizedBox(height: 4),
