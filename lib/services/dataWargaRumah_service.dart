@@ -71,8 +71,9 @@ class DataWargaRumahService {
     try {
       final headers = await _authHeaders();
       final query = <String, String>{};
-      if ((namaKeluarga ?? '').isNotEmpty)
+      if ((namaKeluarga ?? '').isNotEmpty) {
         query['nama_keluarga'] = namaKeluarga!;
+      }
       if ((nomorKk ?? '').isNotEmpty) query['nomor_kk'] = nomorKk!;
       if (rumahId != null) query['rumah_id'] = rumahId.toString();
       final uri = Uri.parse('$_baseUrl/keluargas')
@@ -101,8 +102,9 @@ class DataWargaRumahService {
       final headers = await _authHeaders();
       final query = <String, String>{};
       if ((alamat ?? '').isNotEmpty) query['alamat'] = alamat!;
-      if ((statusHunian ?? '').isNotEmpty)
+      if ((statusHunian ?? '').isNotEmpty) {
         query['status_hunian'] = statusHunian!;
+      }
       final uri = Uri.parse('$_baseUrl/rumahs')
           .replace(queryParameters: query.isEmpty ? null : query);
       final resp = await http.get(uri, headers: headers);

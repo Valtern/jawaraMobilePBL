@@ -279,8 +279,9 @@ class _AddKeluargaFormState extends State<_AddKeluargaForm> {
     final payload = <String, dynamic>{
       'nama_keluarga': nama,
     };
-    if (_nomorKkController.text.trim().isNotEmpty)
+    if (_nomorKkController.text.trim().isNotEmpty) {
       payload['nomor_kk'] = _nomorKkController.text.trim();
+    }
     if (_rumahId != null) payload['rumah_id'] = _rumahId;
 
     final error = await widget.service.createKeluarga(payload);

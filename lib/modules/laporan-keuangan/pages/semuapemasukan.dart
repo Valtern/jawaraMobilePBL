@@ -1,13 +1,14 @@
+// lib/modules/laporan-keuangan/pages/semuapemasukan.dart
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-
+// FIXED: Removed http and convert imports
 import '../models/semuapemasukan_model.dart';
-import 'package:jawarapbl/services/auth_services.dart';
+// FIXED: Import the new service
+import 'package:jawarapbl/services/pemasukan_laporan_service.dart';
 
 // =========================================================================
-// A. HALAMAN DETAIL PEMASUKAN
+// A. HALAMAN DETAIL PEMASUKAN (Unchanged, uses local PemasukanModel)
 // =========================================================================
 
 class DetailPemasukanPage extends StatelessWidget {
@@ -97,7 +98,7 @@ class DetailPemasukanPage extends StatelessWidget {
 }
 
 // -------------------------------------------------------------------------
-// B. KODE FILTER PEMASUKAN
+// B. KODE FILTER PEMASUKAN (Unchanged)
 // -------------------------------------------------------------------------
 
 class FilterPemasukanDialog extends StatefulWidget {
@@ -262,7 +263,7 @@ class _FilterPemasukanDialogState extends State<FilterPemasukanDialog> {
             const Text('Kategori'),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedKategori,
+              initialValue: _selectedKategori,
               decoration: const InputDecoration(
                 hintText: '-- Pilih Kategori --',
                 border: OutlineInputBorder(),
@@ -346,6 +347,8 @@ class SemuaPemasukanPage extends StatefulWidget {
 
 class _SemuaPemasukanPageState extends State<SemuaPemasukanPage> {
   late Future<List<PemasukanModel>> _futureData;
+  // FIXED: Instantiate the new service
+  final PemasukanLaporanService _pemasukanService = PemasukanLaporanService();
 
   @override
   void initState() {
@@ -353,17 +356,13 @@ class _SemuaPemasukanPageState extends State<SemuaPemasukanPage> {
     _futureData = _fetchPemasukan();
   }
 
+  // FIXED: Fetch data using the new PemasukanLaporanService
   Future<List<PemasukanModel>> _fetchPemasukan() async {
-    final response = await http.get(
-      Uri.parse('${AuthService().baseUrl}/pemasukan'),
-    );
-
-    if (response.statusCode == 200) {
-      final body = jsonDecode(response.body);
-      final List data = body.values.toList();
-      return data.map((e) => PemasukanModel.fromJson(e)).toList();
-    } else {
-      throw Exception('Gagal memuat data pemasukan');
+    try {
+      return await _pemasukanService.getLaporanPemasukan();
+    } catch (e) {
+      // Throw exception to be caught by FutureBuilder
+      throw Exception('Gagal memuat data pemasukan: $e');
     }
   }
 

@@ -133,7 +133,7 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
                 const Text('Role', style: TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: selectedRole,
+                  initialValue: selectedRole,
                   items: _roleOptions.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                   onChanged: (v) => setState(() => selectedRole = v),
                   validator: (v) => (v == null || v.isEmpty) ? 'Role wajib dipilih' : null,
@@ -143,7 +143,7 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
                 const Text('Status', style: TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: selectedStatus,
+                  initialValue: selectedStatus,
                   items: _statusOptions.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                   onChanged: (v) => setState(() => selectedStatus = v),
                 ),

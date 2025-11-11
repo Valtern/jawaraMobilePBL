@@ -314,7 +314,7 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
             contentPadding: EdgeInsets.symmetric(horizontal: 12),
           ),
           hint: Text(hint),
-          value: selectedValue,
+          initialValue: selectedValue,
           validator: validator,
           onChanged: (String? newValue) {
             setState(() {

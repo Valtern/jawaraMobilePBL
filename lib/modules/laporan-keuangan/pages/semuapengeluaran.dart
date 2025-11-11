@@ -1,16 +1,16 @@
+// lib/modules/laporan-keuangan/pages/semuapengeluaran.dart
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:jawarapbl/services/auth_services.dart';
-import '../models/semuapengeluaran_model.dart';
+import 'package:jawarapbl/services/pengeluaran_service.dart'; // FIXED
+import 'package:jawarapbl/shared/models/pengeluaran_model.dart'; // FIXED
 
 // =========================================================================
 // A. HALAMAN DETAIL PENGELUARAN
 // =========================================================================
 
 class DetailPengeluaranPage extends StatelessWidget {
-  final PengeluaranModel item;
+  final Pengeluaran item; // FIXED: Use shared Pengeluaran model
   final String verifikator = 'Admin Jawara';
 
   const DetailPengeluaranPage({super.key, required this.item});
@@ -45,6 +45,9 @@ class DetailPengeluaranPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FIXED: Use intl to format nominal value
+    final formatCurrency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -81,12 +84,15 @@ class DetailPengeluaranPage extends StatelessWidget {
                 _buildDetailRow('Kategori', item.kategori),
                 _buildDetailRow(
                   'Jumlah',
-                  item.nominalRupiah,
+                  formatCurrency.format(item.nominal), // FIXED: Use item.nominal
                   valueColor: Colors.red.shade700,
                 ),
                 _buildDetailRow('Verifikator', verifikator),
-                _buildDetailRow('Tanggal Transaksi', item.tanggal),
-                _buildDetailRow('Deskripsi', item.deskripsi ?? '-'),
+                _buildDetailRow(
+                  'Tanggal Transaksi', 
+                  DateFormat('dd MMMM yyyy', 'id_ID').format(item.tanggal) // FIXED: Format DateTime
+                ),
+                _buildDetailRow('Deskripsi', item.deskripsi ?? '-'), // FIXED: Handle null
               ],
             ),
           ),
@@ -97,7 +103,7 @@ class DetailPengeluaranPage extends StatelessWidget {
 }
 
 // -------------------------------------------------------------------------
-// B. KODE FILTER PENGELUARAN
+// B. KODE FILTER PENGELUARAN (Unchanged)
 // -------------------------------------------------------------------------
 
 class FilterPengeluaranDialog extends StatefulWidget {
@@ -206,7 +212,7 @@ class _FilterPengeluaranDialogState extends State<FilterPengeluaranDialog> {
             const Text('Kategori'),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _selectedKategori,
+              initialValue: _selectedKategori,
               decoration: const InputDecoration(
                 hintText: '-- Pilih Kategori --',
                 border: OutlineInputBorder(),
@@ -285,7 +291,8 @@ class SemuaPengeluaranPage extends StatefulWidget {
 }
 
 class _SemuaPengeluaranPageState extends State<SemuaPengeluaranPage> {
-  late Future<List<PengeluaranModel>> _futureData;
+  late Future<List<Pengeluaran>> _futureData; // FIXED: Use shared Pengeluaran model
+  final PengeluaranService _pengeluaranService = PengeluaranService(); // FIXED
 
   @override
   void initState() {
@@ -293,21 +300,14 @@ class _SemuaPengeluaranPageState extends State<SemuaPengeluaranPage> {
     _futureData = _fetchPengeluaran();
   }
 
-  Future<List<PengeluaranModel>> _fetchPengeluaran() async {
-    final response = await http.get(
-      Uri.parse('${AuthService().baseUrl}/pengeluaran'),
-    );
-
-    if (response.statusCode == 200) {
-      final body = jsonDecode(response.body);
-      if (body is Map<String, dynamic> && body['data'] is List) {
-        final List data = body['data'];
-        return data.map((e) => PengeluaranModel.fromJson(e)).toList();
-      } else {
-        throw Exception('Format data tidak sesuai');
-      }
-    } else {
-      throw Exception('Gagal memuat data pengeluaran');
+  // FIXED: Fetch data using PengeluaranService
+  Future<List<Pengeluaran>> _fetchPengeluaran() async {
+    try {
+      // Pass an empty map for filters as required by the service
+      return await _pengeluaranService.getPengeluaran({});
+    } catch (e) {
+      // Throw exception to be caught by FutureBuilder
+      throw Exception('Gagal memuat data pengeluaran: $e');
     }
   }
 
@@ -330,7 +330,7 @@ class _SemuaPengeluaranPageState extends State<SemuaPengeluaranPage> {
               right: 16,
               bottom: 16,
             ),
-            child: FutureBuilder<List<PengeluaranModel>>(
+            child: FutureBuilder<List<Pengeluaran>>( // FIXED: Use Pengeluaran
               future: _futureData,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -364,7 +364,10 @@ class _SemuaPengeluaranPageState extends State<SemuaPengeluaranPage> {
                             fontSize: 16,
                           ),
                         ),
-                        subtitle: Text('${item.kategori} • ${item.tanggal}'),
+                        // FIXED: Use shared model properties and format DateTime
+                        subtitle: Text(
+                          '${item.kategori} • ${DateFormat('dd/MM/yyyy').format(item.tanggal)}'
+                        ),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(

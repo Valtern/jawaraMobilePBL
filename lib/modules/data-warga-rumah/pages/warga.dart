@@ -300,12 +300,15 @@ class _AddWargaFormState extends State<_AddWargaForm> {
       'nama_lengkap': nama,
       'nik': nik,
     };
-    if ((_jenisKelamin ?? '').isNotEmpty)
+    if ((_jenisKelamin ?? '').isNotEmpty) {
       payload['jenis_kelamin'] = _jenisKelamin;
-    if (_tempatLahirController.text.trim().isNotEmpty)
+    }
+    if (_tempatLahirController.text.trim().isNotEmpty) {
       payload['tempat_lahir'] = _tempatLahirController.text.trim();
-    if (_tanggalLahirController.text.trim().isNotEmpty)
+    }
+    if (_tanggalLahirController.text.trim().isNotEmpty) {
       payload['tanggal_lahir'] = _tanggalLahirController.text.trim();
+    }
     if (_keluargaId != null) payload['keluarga_id'] = _keluargaId;
 
     final error = await widget.service.createWarga(payload);

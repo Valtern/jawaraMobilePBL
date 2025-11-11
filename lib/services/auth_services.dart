@@ -141,8 +141,9 @@ class AuthService {
       }
       if (jenisKelamin != null) request.fields['jenis_kelamin'] = jenisKelamin;
       if (agama != null) request.fields['agama'] = agama;
-      if (statusPerkawinan != null)
+      if (statusPerkawinan != null) {
         request.fields['status_perkawinan'] = statusPerkawinan;
+      }
       if (pekerjaan != null) request.fields['pekerjaan'] = pekerjaan;
 
       // Add profile picture file (optional)

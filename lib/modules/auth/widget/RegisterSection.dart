@@ -330,7 +330,7 @@ class _RegisterSectionState extends State<RegisterSection> {
             border: const OutlineInputBorder(),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
           ),
-          value: value, // Assign value
+          initialValue: value, // Assign value
           hint: Text(hint),
           onChanged: onChanged, // Assign onChanged
           items: items.map<DropdownMenuItem<String>>((String value) {

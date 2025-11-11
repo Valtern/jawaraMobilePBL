@@ -581,7 +581,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               border: const OutlineInputBorder(),
               prefixIcon: Icon(icon, color: Colors.grey[600], size: 20),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12)),
-          value: value,
+          initialValue: value,
           hint: Text(hint),
           onChanged: onChanged,
           items: items.map<DropdownMenuItem<String>>((String value) {
