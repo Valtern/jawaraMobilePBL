@@ -93,11 +93,11 @@ class PengeluaranCard extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Isi informasi utama
-            _buildInfoRow(
-              'Jenis Pengeluaran',
-              item.jenisPengeluaran,
-              alignment: Alignment.centerRight,
-            ),
+            // _buildInfoRow(
+            //   'Jenis Pengeluaran',
+            //   item.jenisPengeluaran,
+            //   alignment: Alignment.centerRight,
+            // ),
             const SizedBox(height: 4),
             _buildInfoRow(
               'Tanggal',
