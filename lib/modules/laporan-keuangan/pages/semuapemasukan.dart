@@ -334,7 +334,7 @@ class _FilterPemasukanDialogState extends State<FilterPemasukanDialog> {
 }
 
 // -------------------------------------------------------------------------
-// C. SEMUA PEMASUKAN PAGE (DARI API) + CRUD BUTTON
+// C. SEMUA PEMASUKAN PAGE (READ ONLY)
 // -------------------------------------------------------------------------
 
 class SemuaPemasukanPage extends StatefulWidget {
@@ -360,10 +360,7 @@ class _SemuaPemasukanPageState extends State<SemuaPemasukanPage> {
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
-
-      // ✅ Ubah Map ke List
       final List data = body.values.toList();
-
       return data.map((e) => PemasukanModel.fromJson(e)).toList();
     } else {
       throw Exception('Gagal memuat data pemasukan');
@@ -377,110 +374,16 @@ class _SemuaPemasukanPageState extends State<SemuaPemasukanPage> {
     );
   }
 
-  void _handleCardAction(
-    BuildContext context,
-    String action,
-    PemasukanModel item,
-  ) {
-    if (action == 'Detail') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => DetailPemasukanPage(item: item),
-        ),
-      );
-    }
-  }
-
-  // =====================================================
-  // 🔹 Tambahan: Fungsi Create / Update / Delete
-  // =====================================================
-
-  void _createData() async {
-    final response = await http.post(
-      Uri.parse('${AuthService().baseUrl}/pemasukan'),
-      body: {
-        'name': 'Pemasukan Baru',
-        'jenis': 'Iuran Warga',
-        'nominal': '100000',
-        'tanggal': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-      },
+  void _openDetail(BuildContext context, PemasukanModel item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => DetailPemasukanPage(item: item)),
     );
-
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      setState(() {
-        _futureData = _fetchPemasukan();
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data berhasil ditambahkan')),
-      );
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Gagal menambah data')));
-    }
   }
-
-  void _updateData(int id) async {
-    final response = await http.put(
-      Uri.parse('${AuthService().baseUrl}/pemasukan/$id'),
-      body: {
-        'name': 'Update Nama',
-        'jenis': 'Donasi',
-        'nominal': '200000',
-        'tanggal': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-      },
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _futureData = _fetchPemasukan();
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Data berhasil diperbarui')));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Gagal memperbarui data')));
-    }
-  }
-
-  void _deleteData(int id) async {
-    final response = await http.delete(
-      Uri.parse('${AuthService().baseUrl}/pemasukan/$id'),
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _futureData = _fetchPemasukan();
-      });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Data berhasil dihapus')));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Gagal menghapus data')));
-    }
-  }
-
-  // =====================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'btn1',
-        backgroundColor: Colors.green,
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => const TambahPemasukanDialog(),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
       body: Stack(
         children: [
           Padding(
@@ -525,36 +428,14 @@ class _SemuaPemasukanPageState extends State<SemuaPemasukanPage> {
                         subtitle: Text(
                           '${item.jenisPemasukan} • ${item.tanggal}',
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.orange,
-                              ),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => EditPemasukanDialog(
-                                    item: item,
-                                    onSaved: () {
-                                      setState(() {
-                                        _futureData = _fetchPemasukan();
-                                      });
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteData(item.no),
-                            ),
-                          ],
+                        trailing: Text(
+                          item.nominalRupiah,
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        onTap: () => _handleCardAction(context, 'Detail', item),
+                        onTap: () => _openDetail(context, item),
                       ),
                     );
                   },
@@ -591,235 +472,6 @@ class _SemuaPemasukanPageState extends State<SemuaPemasukanPage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class TambahPemasukanDialog extends StatefulWidget {
-  const TambahPemasukanDialog({super.key});
-
-  @override
-  State<TambahPemasukanDialog> createState() => _TambahPemasukanDialogState();
-}
-
-class _TambahPemasukanDialogState extends State<TambahPemasukanDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _namaController = TextEditingController();
-  final TextEditingController _jenisController = TextEditingController();
-  final TextEditingController _nominalController = TextEditingController();
-  final TextEditingController _tanggalController = TextEditingController();
-
-  Future<void> _simpanData() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final url = Uri.parse('${AuthService().baseUrl}/pemasukan');
-    final body = {
-      'name': _namaController.text,
-      'jenis': _jenisController.text,
-      'nominal': _nominalController.text,
-      'tanggal': _tanggalController.text,
-    };
-
-    final response = await http.post(url, body: body);
-
-    if (response.statusCode == 201) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data berhasil ditambahkan')),
-      );
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Gagal menambah data')));
-    }
-  }
-
-  Future<void> _pilihTanggal(BuildContext context) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (picked != null) {
-      setState(() {
-        _tanggalController.text = DateFormat('yyyy-MM-dd').format(picked);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Tambah Pemasukan'),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _namaController,
-              decoration: const InputDecoration(labelText: 'Nama'),
-              validator: (value) =>
-                  value!.isEmpty ? 'Nama tidak boleh kosong' : null,
-            ),
-            TextFormField(
-              controller: _jenisController,
-              decoration: const InputDecoration(labelText: 'Jenis'),
-              validator: (value) =>
-                  value!.isEmpty ? 'Jenis tidak boleh kosong' : null,
-            ),
-            TextFormField(
-              controller: _nominalController,
-              decoration: const InputDecoration(labelText: 'Nominal'),
-              keyboardType: TextInputType.number,
-              validator: (value) =>
-                  value!.isEmpty ? 'Nominal tidak boleh kosong' : null,
-            ),
-            TextFormField(
-              controller: _tanggalController,
-              readOnly: true,
-              onTap: () => _pilihTanggal(context),
-              decoration: const InputDecoration(labelText: 'Tanggal'),
-              validator: (value) =>
-                  value!.isEmpty ? 'Tanggal tidak boleh kosong' : null,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-        ElevatedButton(onPressed: _simpanData, child: const Text('Simpan')),
-      ],
-    );
-  }
-}
-
-class EditPemasukanDialog extends StatefulWidget {
-  final PemasukanModel item;
-  final Function() onSaved;
-
-  const EditPemasukanDialog({
-    super.key,
-    required this.item,
-    required this.onSaved,
-  });
-
-  @override
-  State<EditPemasukanDialog> createState() => _EditPemasukanDialogState();
-}
-
-class _EditPemasukanDialogState extends State<EditPemasukanDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _namaController;
-  late TextEditingController _jenisController;
-  late TextEditingController _nominalController;
-  late TextEditingController _tanggalController;
-
-  @override
-  void initState() {
-    super.initState();
-    _namaController = TextEditingController(text: widget.item.nama);
-    _jenisController = TextEditingController(text: widget.item.jenisPemasukan);
-    _nominalController = TextEditingController(
-      text: widget.item.nominal.toString(),
-    );
-    _tanggalController = TextEditingController(text: widget.item.tanggal);
-  }
-
-  Future<void> _pilihTanggal(BuildContext context) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.tryParse(widget.item.tanggal) ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (picked != null) {
-      setState(() {
-        _tanggalController.text = DateFormat('yyyy-MM-dd').format(picked);
-      });
-    }
-  }
-
-  Future<void> _updateData() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final response = await http.put(
-      Uri.parse('${AuthService().baseUrl}/pemasukan/${widget.item.no}'),
-      body: {
-        'name': _namaController.text,
-        'jenis': _jenisController.text,
-        'nominal': _nominalController.text,
-        'tanggal': _tanggalController.text,
-      },
-    );
-
-    if (response.statusCode == 200) {
-      Navigator.pop(context);
-      widget.onSaved();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Data berhasil diperbarui')));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Gagal memperbarui data')));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Edit Pemasukan'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _namaController,
-                decoration: const InputDecoration(labelText: 'Nama'),
-                validator: (value) =>
-                    value!.isEmpty ? 'Nama tidak boleh kosong' : null,
-              ),
-              TextFormField(
-                controller: _jenisController,
-                decoration: const InputDecoration(labelText: 'Jenis'),
-                validator: (value) =>
-                    value!.isEmpty ? 'Jenis tidak boleh kosong' : null,
-              ),
-              TextFormField(
-                controller: _nominalController,
-                decoration: const InputDecoration(labelText: 'Nominal'),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value!.isEmpty ? 'Nominal tidak boleh kosong' : null,
-              ),
-              TextFormField(
-                controller: _tanggalController,
-                readOnly: true,
-                decoration: const InputDecoration(labelText: 'Tanggal'),
-                onTap: () => _pilihTanggal(context),
-                validator: (value) =>
-                    value!.isEmpty ? 'Tanggal tidak boleh kosong' : null,
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-        ElevatedButton(onPressed: _updateData, child: const Text('Simpan')),
-      ],
     );
   }
 }
