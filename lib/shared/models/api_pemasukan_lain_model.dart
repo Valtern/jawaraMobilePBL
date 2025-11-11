@@ -1,5 +1,3 @@
-// lib/shared/models/api_pemasukan_lain_model.dart
-
 class ApiPemasukanLain {
   final int id;
   final String name;
@@ -19,7 +17,7 @@ class ApiPemasukanLain {
 
   factory ApiPemasukanLain.fromJson(Map<String, dynamic> json) {
     return ApiPemasukanLain(
-      id: json['id'],
+      id: int.tryParse(json['id'].toString()) ?? 0,
       name: json['name'],
       jenis: json['jenis'],
       nominal: json['nominal'],

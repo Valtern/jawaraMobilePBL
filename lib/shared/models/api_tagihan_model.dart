@@ -1,5 +1,3 @@
-// lib/shared/models/api_tagihan_model.dart
-
 class ApiTagihan {
   final int id;
   final int keluargaId;
@@ -23,9 +21,9 @@ class ApiTagihan {
 
   factory ApiTagihan.fromJson(Map<String, dynamic> json) {
     return ApiTagihan(
-      id: json['id'],
-      keluargaId: json['keluarga_id'],
-      kategoriIuranId: json['kategori_iuran_id'],
+      id: int.tryParse(json['id'].toString()) ?? 0,
+      keluargaId: int.tryParse(json['keluarga_id'].toString()) ?? 0,
+      kategoriIuranId: int.tryParse(json['kategori_iuran_id'].toString()) ?? 0,
       nominal: json['nominal'],
       periode: json['periode'],
       paymentStatus: json['payment_status'],

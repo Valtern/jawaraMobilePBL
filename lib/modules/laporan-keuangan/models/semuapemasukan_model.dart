@@ -1,12 +1,10 @@
-// lib/modules/laporan-keuangan/models/semuapemasukan_model.dart
-
 class PemasukanModel {
   final int no;
   final String nama;
   final String jenisPemasukan;
   final String tanggal;
   final double nominal;
-  final DateTime tanggalSort; // ADDED: For sorting
+  final DateTime tanggalSort;
 
   const PemasukanModel({
     required this.no,
@@ -14,12 +12,10 @@ class PemasukanModel {
     required this.jenisPemasukan,
     required this.tanggal,
     required this.nominal,
-    required this.tanggalSort, // ADDED: To constructor
+    required this.tanggalSort,
   });
 
   factory PemasukanModel.fromJson(Map<String, dynamic> json) {
-    // This factory is now less relevant as the service uses the constructor,
-    // but we update it for completeness.
     final tanggalString = json['tanggal'] ?? '1970-01-01';
     return PemasukanModel(
       no: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
@@ -29,7 +25,6 @@ class PemasukanModel {
       nominal: json['nominal'] is double
           ? json['nominal']
           : double.tryParse(json['nominal'].toString()) ?? 0.0,
-      // Attempt to parse sort date, fallback to 'tanggal' or epoch
       tanggalSort: DateTime.tryParse(json['tanggalSort'] ?? tanggalString) ?? DateTime(1970),
     );
   }
@@ -41,7 +36,7 @@ class PemasukanModel {
       'jenis': jenisPemasukan,
       'tanggal': tanggal,
       'nominal': nominal,
-      'tanggalSort': tanggalSort.toIso8601String(), // ADDED: To JSON
+      'tanggalSort': tanggalSort.toIso8601String(),
     };
   }
 

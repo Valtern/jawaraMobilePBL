@@ -29,10 +29,12 @@ class PengeluaranService {
   // MODIFIED: Now accepts a filter map
   Future<List<Pengeluaran>> getPengeluaran(Map<String, String> filters) async {
     try {
+      // --- START OF MODIFICATION ---
       // Build the URI with query parameters
       final uri = Uri.parse('$baseUrl/pengeluaran').replace(
         queryParameters: filters.isEmpty ? null : filters,
       );
+      // --- END OF MODIFICATION ---
 
       final response = await http.get(
         uri,
@@ -50,7 +52,6 @@ class PengeluaranService {
     }
   }
 
-  // Returns a Map with success status and message
   Future<Map<String, dynamic>> createPengeluaran(Map<String, String> data, File? buktiFile) async {
     try {
       var request = http.MultipartRequest(
