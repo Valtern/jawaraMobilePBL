@@ -11,8 +11,8 @@ class AuthService {
 
   // this one is the domain im running with localtunnel, change it accordingly if you made changes to the api.
   // simply comment below and uncomment the above to run on local network
-  String get baseUrl => 'http://192.168.76.103:8000/api';
-  String get storageUrl => 'http://192.168.76.103:8000/api';
+  String get baseUrl => 'https://jawara-api-group3.loca.lt/api';
+  String get storageUrl => 'https://jawara-api-group3.loca.lt/storage';
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
