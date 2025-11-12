@@ -7,6 +7,7 @@ class User {
   final String? fotoIdentitas;
   final String role;
   final String status;
+  
 
   final String? tempatLahir;
   final String? tanggalLahir;
@@ -14,6 +15,8 @@ class User {
   final String? agama;
   final String? statusPerkawinan;
   final String? pekerjaan;
+  final int? wargaId;
+  
 
   User({
     required this.id,
@@ -30,6 +33,7 @@ class User {
     this.agama,
     this.statusPerkawinan,
     this.pekerjaan,
+    this.wargaId,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -52,6 +56,7 @@ class User {
       agama: wargaData?['agama'],
       statusPerkawinan: wargaData?['status_perkawinan'],
       pekerjaan: wargaData?['pekerjaan'],
+      wargaId: wargaData?['id'],
     );
   }
 }

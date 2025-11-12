@@ -8,10 +8,22 @@ class DetailAspirasiPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = item.status.toLowerCase() == 'diterima'
+        ? Colors.green
+        : item.status.toLowerCase() == 'ditolak'
+            ? Colors.red
+            : Colors.orange; 
+
+    final statusBgColor = item.status.toLowerCase() == 'diterima'
+        ? Colors.green.shade100
+        : item.status.toLowerCase() == 'ditolak'
+            ? Colors.red.shade100
+            : Colors.orange.shade100;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detail Aspirasi"),
-        backgroundColor: Colors.blue.shade700,
+        backgroundColor: Colors.deepPurpleAccent
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -63,21 +75,13 @@ class DetailAspirasiPage extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: item.status == 'diterima'
-                            ? Colors.green.shade100
-                            : item.status == 'ditolak'
-                            ? Colors.red.shade100
-                            : Colors.orange.shade100,
+                        color: statusBgColor, 
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         item.status.capitalize(),
                         style: TextStyle(
-                          color: item.status == 'diterima'
-                              ? Colors.green
-                              : item.status == 'ditolak'
-                              ? Colors.red
-                              : Colors.orange,
+                          color: statusColor, 
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -91,7 +95,7 @@ class DetailAspirasiPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  item.deskripsi ?? '-',
+                  item.deskripsi,
                   style: const TextStyle(fontSize: 15, height: 1.4),
                 ),
               ],

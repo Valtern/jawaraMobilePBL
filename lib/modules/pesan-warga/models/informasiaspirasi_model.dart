@@ -5,6 +5,7 @@ class AspirasiWarga {
   final String status;
   final String? pengirim;
   final String? tanggalDibuat;
+  final int wargaId; 
 
   AspirasiWarga({
     required this.id,
@@ -13,6 +14,7 @@ class AspirasiWarga {
     required this.status,
     this.pengirim,
     this.tanggalDibuat,
+    required this.wargaId,
   });
 
   factory AspirasiWarga.fromJson(Map<String, dynamic> json) {
@@ -22,8 +24,9 @@ class AspirasiWarga {
       deskripsi: json['deskripsi'] ?? '',
       status: json['status'] ?? '',
       pengirim:
-          json['warga']?['nama_lengkap'] ?? '-', // 👈 ambil dari relasi warga
+          json['warga']?['nama_lengkap'] ?? '-',
       tanggalDibuat: json['created_at'] ?? '',
+      wargaId: json['warga_id'] ?? 0, 
     );
   }
 }

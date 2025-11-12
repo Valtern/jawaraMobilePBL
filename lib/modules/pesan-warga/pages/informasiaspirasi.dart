@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
 import 'package:jawarapbl/services/auth_services.dart';
+import 'package:jawarapbl/services/pesan_service.dart';
+import 'package:jawarapbl/shared/models/user_model.dart';
 import '../models/informasiaspirasi_model.dart';
-import 'detail_aspirasi_page.dart'; // Tambahkan import ini
+import 'detail_aspirasi_page.dart';
+import '../widgets/informasiaspirasi_widget.dart';
+import 'edit_aspirasi_page.dart';
 
 class AspirasiWargaPage extends StatefulWidget {
   const AspirasiWargaPage({super.key});
@@ -15,18 +17,46 @@ class AspirasiWargaPage extends StatefulWidget {
 }
 
 class _AspirasiWargaPageState extends State<AspirasiWargaPage> {
+  final PesanService _pesanService = PesanService();
   late Future<List<AspirasiWarga>> _futureData;
   String _selectedFilter = 'Semua';
+  
+  User? _currentUser;
+  bool _isLoadingUser = true;
+  bool _isManagement = false;
 
   @override
   void initState() {
     super.initState();
-    _futureData = _fetchAspirasi();
+    _loadAllData();
   }
 
-  // ======================================================================
-  // FETCH DATA DARI API LARAVEL
-  // ======================================================================
+  Future<void> _loadAllData() async {
+    setState(() {
+      _isLoadingUser = true;
+      _isManagement = false;
+    });
+    try {
+      _currentUser = await AuthService().getProfile();
+      final role = _currentUser?.role;
+      if (role == 'admin' || role == 'rw' || role == 'rt') {
+        _isManagement = true;
+      }
+    } catch (e) {
+      // Handle error
+    }
+    setState(() {
+      _futureData = _fetchAspirasi();
+      _isLoadingUser = false;
+    });
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      _futureData = _fetchAspirasi();
+    });
+  }
+
   Future<List<AspirasiWarga>> _fetchAspirasi() async {
     try {
       final response = await http.get(
@@ -38,14 +68,10 @@ class _AspirasiWargaPageState extends State<AspirasiWargaPage> {
       );
 
       if (response.statusCode == 200) {
-        final body = jsonDecode(response.body);
-        final List data = body is List ? body : body['data'];
-
-        // pastikan hasilnya adalah List<AspirasiWarga>
+        final List data = jsonDecode(response.body);
         final List<AspirasiWarga> hasil = data
             .map((e) => AspirasiWarga.fromJson(e as Map<String, dynamic>))
             .toList();
-
         return hasil;
       } else {
         throw Exception('Gagal memuat data aspirasi warga');
@@ -54,10 +80,174 @@ class _AspirasiWargaPageState extends State<AspirasiWargaPage> {
       throw Exception('Terjadi kesalahan: $e');
     }
   }
+  
+  void _handleAspirasiAction(String action, AspirasiWarga item) {
+    if (action == 'Detail') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DetailAspirasiPage(item: item),
+        ),
+      );
+    }
+    if (action == 'Edit Konten') {
+      _navigateToEdit(item);
+    }
+    if (action == 'Ubah Status') {
+      _showStatusUpdateDialog(item);
+    }
+    if (action == 'Hapus') {
+      _confirmDelete(item);
+    }
+  }
 
-  // ======================================================================
-  // FILTER
-  // ======================================================================
+  void _navigateToEdit(AspirasiWarga item) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditAspirasiPage(aspirasi: item),
+      ),
+    );
+
+    if (result != null) {
+      _refreshData();
+    }
+  }
+
+  void _showStatusUpdateDialog(AspirasiWarga item) {
+    String selectedStatus = item.status;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Ubah Status Aspirasi'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile<String>(
+                    title: const Text('Pending'),
+                    value: 'Pending',
+                    groupValue: selectedStatus,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedStatus = value!;
+                      });
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text('Diterima'),
+                    value: 'Diterima',
+                    groupValue: selectedStatus,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedStatus = value!;
+                      });
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text('Ditolak'),
+                    value: 'Ditolak',
+                    groupValue: selectedStatus,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedStatus = value!;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Batal'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _updateStatus(item, selectedStatus);
+                  },
+                  child: const Text('Simpan'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _updateStatus(AspirasiWarga item, String newStatus) async {
+    try {
+      await _pesanService.updateAspirasiStatus(
+        id: item.id,
+        status: newStatus,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Status aspirasi berhasil diperbarui.'),
+              backgroundColor: Colors.green),
+        );
+      }
+      _refreshData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _confirmDelete(AspirasiWarga item) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Aspirasi'),
+        content: Text('Anda yakin ingin menghapus aspirasi "${item.judul}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteAspirasi(item.id);
+            },
+            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteAspirasi(int id) async {
+    try {
+      await _pesanService.deleteAspirasi(id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Aspirasi berhasil dihapus.'),
+              backgroundColor: Colors.green),
+        );
+      }
+      _refreshData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   List<AspirasiWarga> _applyFilter(List<AspirasiWarga> data) {
     if (_selectedFilter == 'Semua') return data;
     return data
@@ -110,9 +300,6 @@ class _AspirasiWargaPageState extends State<AspirasiWargaPage> {
     );
   }
 
-  // ======================================================================
-  // UI
-  // ======================================================================
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -131,92 +318,56 @@ class _AspirasiWargaPageState extends State<AspirasiWargaPage> {
           ),
         ),
         Expanded(
-          child: FutureBuilder<List<AspirasiWarga>>(
-            future: _futureData,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Text('Terjadi kesalahan: ${snapshot.error}'),
-                );
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('Belum ada aspirasi.'));
-              }
+          child: _isLoadingUser
+              ? const Center(child: CircularProgressIndicator())
+              : FutureBuilder<List<AspirasiWarga>>(
+                  future: _futureData,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Terjadi kesalahan: ${snapshot.error}'),
+                      );
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('Belum ada aspirasi.'));
+                    }
 
-              final filtered = _applyFilter(snapshot.data!);
+                    final filtered = _applyFilter(snapshot.data!);
 
-              if (filtered.isEmpty) {
-                return Center(
-                  child: Text(
-                    'Tidak ada aspirasi dengan status $_selectedFilter.',
-                  ),
-                );
-              }
+                    if (filtered.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'Tidak ada aspirasi dengan status $_selectedFilter.',
+                        ),
+                      );
+                    }
 
-              return RefreshIndicator(
-                onRefresh: () async =>
-                    setState(() => _futureData = _fetchAspirasi()),
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final item = filtered[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                      child: ListTile(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => DetailAspirasiPage(item: item),
+                    return RefreshIndicator(
+                      onRefresh: _refreshData,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          final item = filtered[index];
+                          final isOwner = _currentUser != null &&
+                              _currentUser!.wargaId == item.wargaId;
+                          
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: AspirasiCard(
+                              item: item,
+                              isOwner: isOwner,
+                              isManagement: _isManagement,
+                              onAction: _handleAspirasiAction,
                             ),
                           );
                         },
-                        title: Text(
-                          item.judul,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          '${item.pengirim ?? '-'}\n${item.tanggalDibuat ?? ''}',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        trailing: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: item.status.toLowerCase() == 'diterima'
-                                ? Colors.green.shade100
-                                : item.status.toLowerCase() == 'ditolak'
-                                ? Colors.red.shade100
-                                : Colors.orange.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            item.status.capitalize(),
-                            style: TextStyle(
-                              color: item.status.toLowerCase() == 'diterima'
-                                  ? Colors.green
-                                  : item.status.toLowerCase() == 'ditolak'
-                                  ? Colors.red
-                                  : Colors.orange,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
                       ),
                     );
                   },
                 ),
-              );
-            },
-          ),
         ),
       ],
     );

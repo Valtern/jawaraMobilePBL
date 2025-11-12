@@ -19,6 +19,11 @@ class AuthService {
     return prefs.getString('token');
   }
 
+  Future<String?> getRole() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('role');
+  }
+
   Future<String?> login(String email, String password) async {
     try {
       final response = await http.post(
@@ -287,6 +292,7 @@ class AuthService {
       return false;
     }
   }
+  
 
   Future<bool> logoutAllDevices() async {
     try {
