@@ -25,16 +25,12 @@ class PengeluaranService {
     };
   }
 
-  // GET /api/pengeluaran
-  // MODIFIED: Now accepts a filter map
+
   Future<List<Pengeluaran>> getPengeluaran(Map<String, String> filters) async {
     try {
-      // --- START OF MODIFICATION ---
-      // Build the URI with query parameters
       final uri = Uri.parse('$baseUrl/pengeluaran').replace(
         queryParameters: filters.isEmpty ? null : filters,
       );
-      // --- END OF MODIFICATION ---
 
       final response = await http.get(
         uri,
@@ -132,7 +128,6 @@ class PengeluaranService {
     }
   }
 
-  // DELETE /api/pengeluaran/{id}
   Future<bool> deletePengeluaran(String id) async {
     try {
       final response = await http.delete(

@@ -2,11 +2,9 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart'; // Add 'intl' to your pubspec.yaml for date formatting
+import 'package:intl/intl.dart'; 
 import 'package:jawarapbl/services/auth_services.dart';
 import 'package:jawarapbl/shared/models/user_model.dart';
-// Note: We are also editing fields from the 'Warga' model,
-// so controllers for them are included here.
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});

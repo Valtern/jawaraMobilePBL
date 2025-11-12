@@ -1,5 +1,3 @@
-// lib/shared/models/pengeluaran_model.dart
-
 import 'package:jawarapbl/shared/models/user_model.dart';
 
 class Pengeluaran {

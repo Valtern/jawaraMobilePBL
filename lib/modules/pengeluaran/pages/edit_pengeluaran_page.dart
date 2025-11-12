@@ -1,5 +1,3 @@
-// lib/modules/pengeluaran/pages/edit_pengeluaran_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:jawarapbl/modules/pengeluaran/widgets/widgetTambah.dart';
 import 'package:jawarapbl/shared/models/pengeluaran_model.dart';

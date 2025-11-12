@@ -3,18 +3,16 @@ import 'cetaklaporan.dart';
 import 'semuapemasukan.dart';
 import 'semuapengeluaran.dart';
 
-// Ganti nama kelas dari PesanWargaTabsPage menjadi LaporanKeuanganTabsPage
 class LaporanKeuanganTabsPage extends StatelessWidget {
   const LaporanKeuanganTabsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3, // Jumlah tab: Cetak Laporan, Pemasukan, Pengeluaran
+      length: 3, 
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Laporan Keuangan'),
-          // backgroundColor: Colors.deepPurple, // Contoh warna AppBar
           foregroundColor: const Color.fromARGB(255, 0, 0, 0),
           bottom: const TabBar(
             indicatorColor: Color(0xFF673AB7),

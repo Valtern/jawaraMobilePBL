@@ -1,5 +1,3 @@
-// lib/modules/pengeluaran/pages/pegeluaran_tabs_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:jawarapbl/modules/pengeluaran/pages/daftar.dart';
 import 'package:jawarapbl/modules/pengeluaran/pages/tambah.dart';

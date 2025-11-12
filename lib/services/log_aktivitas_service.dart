@@ -5,7 +5,7 @@ import 'package:jawarapbl/shared/models/log_aktivitas_model.dart';
 
 class LogAktivitasService {
   final String _baseUrl = AuthService().baseUrl;
-  final AuthService _authService = AuthService(); // Keep: Instance to get the token
+  final AuthService _authService = AuthService(); 
 
   Future<List<LogAktivitas>> getLogAktivitas({
     String? kategori,
@@ -14,7 +14,6 @@ class LogAktivitasService {
     int? userId,
   }) async {
     try {
-      // Keep: Token retrieval for authentication
       final token = await _authService.getToken(); 
       if (token == null) {
         print('Error fetching log aktivitas: Auth token is missing.');
@@ -23,7 +22,6 @@ class LogAktivitasService {
       
       var uri = Uri.parse('$_baseUrl/log-aktivitas');
       
-      // Add query parameters for filtering
       Map<String, String> queryParams = {};
       if (kategori != null && kategori.isNotEmpty) queryParams['kategori'] = kategori;
       if (startDate != null && startDate.isNotEmpty) queryParams['start_date'] = startDate;

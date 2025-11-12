@@ -9,7 +9,7 @@ class User {
   final String status;
 
   final String? tempatLahir;
-  final String? tanggalLahir; // Stored as String (YYYY-MM-DD)
+  final String? tanggalLahir;
   final String? jenisKelamin;
   final String? agama;
   final String? statusPerkawinan;
@@ -24,7 +24,6 @@ class User {
     this.fotoIdentitas,
     required this.role,
     required this.status,
-    // Add to constructor
     this.tempatLahir,
     this.tanggalLahir,
     this.jenisKelamin,
@@ -34,7 +33,6 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    // Check if 'warga' data exists
     final wargaData = json['warga'] as Map<String, dynamic>?;
 
     return User(

@@ -17,7 +17,6 @@ class ChannelTransferService {
     return headers;
   }
 
-  // LIST with filters: bank_name, account_number, account_name
   Future<List<dynamic>> getChannelTransferList({
     String? bankName,
     String? accountNumber,
