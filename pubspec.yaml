@@ -66,6 +66,8 @@ flutter:
   assets:
     - assets/images/school.jpg
     - assets/images/profile-placeholder.png
+    - assets/fonts/Poppins-Regular.ttf
+    - assets/fonts/Poppins-Bold.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:
