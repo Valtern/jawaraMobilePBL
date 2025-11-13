@@ -24,11 +24,11 @@ class LaporanPdfGenerator {
         pageFormat: PdfPageFormat.a4,
         build: (pw.Context context) {
           double total = 0;
-          items.forEach((item) {
+          for (var item in items) {
             total += (item.tipe == LaporanItemTipe.pemasukan)
                 ? item.nominal
                 : -item.nominal;
-          });
+          }
 
           return [
             _buildHeader(context, dariTanggal, sampaiTanggal, kategori, font, boldFont),

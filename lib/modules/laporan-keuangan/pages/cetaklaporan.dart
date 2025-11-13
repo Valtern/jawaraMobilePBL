@@ -272,7 +272,7 @@ class _CetakLaporanPageState extends State<CetakLaporanPage> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedKategori,
+              initialValue: _selectedKategori,
               decoration: const InputDecoration(
                 hintText: '-- Pilih Kategori --',
                 border: OutlineInputBorder(),

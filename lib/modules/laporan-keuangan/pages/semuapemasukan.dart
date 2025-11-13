@@ -513,7 +513,7 @@ class _PemasukanFilterSheetState
         Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: selectedValue,
+          initialValue: selectedValue,
           decoration: const InputDecoration(
             hintText: 'Semua Kategori',
             border: OutlineInputBorder(),
