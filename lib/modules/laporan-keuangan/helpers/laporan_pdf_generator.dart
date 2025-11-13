@@ -1,5 +1,5 @@
-import 'dart:typed_data'; // Required for Uint8List
-import 'package:flutter/services.dart' show rootBundle;
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -8,77 +8,136 @@ import '../models/cetaklaporan_model.dart';
 
 class LaporanPdfGenerator {
   static Future<void> generateAndPrintPdf(
+    BuildContext context,
     List<LaporanItem> items,
     DateTime dariTanggal,
     DateTime sampaiTanggal,
     String kategori,
   ) async {
-    print("--- [1] STARTING PROCESS ---");
+    String currentStep = 'Starting';
     
-    final pdf = pw.Document();
-    final formatCurrency = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
-
-    // 1. Load Fonts (Pre-load them safely)
-    pw.Font font;
-    pw.Font boldFont;
-
     try {
-      print("--- [2] LOADING FONTS ---");
-      final fontData = await rootBundle.load('assets/fonts/Poppins-Regular.ttf');
-      font = pw.Font.ttf(fontData);
+      currentStep = 'Creating PDF document';
+      final pdf = pw.Document();
+      
+      currentStep = 'Setting up currency format';
+      final formatCurrency = NumberFormat.currency(
+        locale: 'id_ID',
+        symbol: 'Rp ',
+        decimalDigits: 0,
+      );
 
-      final boldFontData = await rootBundle.load('assets/fonts/Poppins-Bold.ttf');
-      boldFont = pw.Font.ttf(boldFontData);
-      print("--- [2] FONTS LOADED ---");
-    } catch (e) {
-      print("--- [!] FONT ERROR: $e ---");
-      // Fallback to standard fonts if assets fail
-      font = pw.Font.courier();
-      boldFont = pw.Font.courierBold();
+      currentStep = 'Loading fonts';
+      final font = pw.Font.helvetica();
+      final boldFont = pw.Font.helveticaBold();
+
+      currentStep = 'Calculating total';
+      double total = 0;
+      for (var item in items) {
+        total += (item.tipe == LaporanItemTipe.pemasukan)
+            ? item.nominal
+            : -item.nominal;
+      }
+
+      currentStep = 'Building PDF page';
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return [
+              _buildHeader(
+                  context, dariTanggal, sampaiTanggal, kategori, font, boldFont),
+              _buildTable(context, items, font, boldFont, formatCurrency),
+              pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
+              _buildTotals(context, total, font, boldFont, formatCurrency),
+            ];
+          },
+        ),
+      );
+
+      currentStep = 'Generating PDF bytes';
+      
+      // Show loading dialog NOW, right before the slow operation
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => WillPopScope(
+            onWillPop: () async => false,
+            child: const Center(
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Membuat PDF...'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
+      final Uint8List bytes = await pdf.save();
+
+      currentStep = 'Closing dialog';
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      currentStep = 'Opening print preview';
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => bytes,
+        name: 'Laporan_Keuangan_${DateFormat('dd-MM-yyyy').format(DateTime.now())}',
+      );
+      
+      currentStep = 'Complete';
+      
+    } catch (e, stackTrace) {
+      // Close dialog if open
+      if (context.mounted) {
+        try {
+          Navigator.of(context).pop();
+        } catch (_) {}
+        
+        await Future.delayed(const Duration(milliseconds: 100));
+        
+        // Show error with current step
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Error'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Failed at step: $currentStep'),
+                  const SizedBox(height: 8),
+                  Text('Error: $e'),
+                  const SizedBox(height: 8),
+                  const Text('Stack trace:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('$stackTrace', style: const TextStyle(fontSize: 10)),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     }
-
-    // 2. Build PDF Structure
-    print("--- [3] BUILDING PDF PAGE ---");
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          double total = 0;
-          for (var item in items) {
-            total += (item.tipe == LaporanItemTipe.pemasukan)
-                ? item.nominal
-                : -item.nominal;
-          }
-
-          return [
-            _buildHeader(
-                context, dariTanggal, sampaiTanggal, kategori, font, boldFont),
-            _buildTable(context, items, font, boldFont, formatCurrency),
-            pw.Divider(thickness: 1, borderStyle: pw.BorderStyle.dashed),
-            _buildTotals(context, total, font, boldFont, formatCurrency),
-          ];
-        },
-      ),
-    );
-
-    // 3. CRITICAL FIX: Generate bytes BEFORE calling layoutPdf
-    // This prevents the "Preparing" spinner from timing out.
-    print("--- [4] GENERATING BYTES (Heavy Task) ---");
-    final Uint8List bytes = await pdf.save();
-    print("--- [4] BYTES GENERATED: ${bytes.length} bytes ---");
-
-    // 4. Hand off to Printer
-    print("--- [5] OPENING PRINT PREVIEW ---");
-    await Printing.layoutPdf(
-      // Simple callback that just returns the already-generated bytes
-      onLayout: (PdfPageFormat format) async => bytes,
-      name: 'Laporan_Keuangan_${DateFormat('dd-MM-yyyy').format(DateTime.now())}',
-    );
-    print("--- [6] DONE ---");
   }
 
   static pw.Widget _buildHeader(

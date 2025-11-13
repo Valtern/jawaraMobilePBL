@@ -188,22 +188,23 @@ class _CetakLaporanPageState extends State<CetakLaporanPage> {
     });
   }
 
-  Future<void> _printLaporan() async {
-    if (_selectedItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Tidak ada item yang dipilih untuk dicetak.')),
-      );
-      return;
-    }
-
-    await LaporanPdfGenerator.generateAndPrintPdf(
-      _selectedItems.toList(),
-      _dariTanggal ?? DateTime(2000), // Use a default start if null
-      _sampaiTanggal ?? DateTime.now(), // Use today as default end if null
-      _selectedKategori ?? 'Semua',
+Future<void> _printLaporan() async {
+  if (_selectedItems.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text('Tidak ada item yang dipilih untuk dicetak.')),
     );
+    return;
   }
+
+  await LaporanPdfGenerator.generateAndPrintPdf(
+    context, 
+    _selectedItems.toList(),
+    _dariTanggal ?? DateTime(2000), // Use a default start if null
+    _sampaiTanggal ?? DateTime.now(), // Use today as default end if null
+    _selectedKategori ?? 'Semua',
+  );
+}
 
   @override
   Widget build(BuildContext context) {
