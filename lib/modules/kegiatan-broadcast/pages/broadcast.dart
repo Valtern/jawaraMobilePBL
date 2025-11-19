@@ -1,19 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:jawarapbl/modules/kegiatan-broadcast/data/sample_data.dart';
-import 'package:jawarapbl/modules/kegiatan-broadcast/models/broadcast.dart';
 import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
-import 'package:jawarapbl/shared/widgets/inputs/select_input.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
+import 'package:jawarapbl/services/kegiatanBroadcast_service.dart';
 
-class BroadcastListView extends StatelessWidget {
+class BroadcastListView extends StatefulWidget {
   const BroadcastListView({super.key});
+
+  @override
+  State<BroadcastListView> createState() => _BroadcastListViewState();
+}
+
+class _BroadcastListViewState extends State<BroadcastListView> {
+  final KegiatanBroadcastService _service = KegiatanBroadcastService();
+  String? _filterJudul;
 
   void _showAddBroadcastSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
+        final judulCtl = TextEditingController();
+        final isiCtl = TextEditingController();
         return Padding(
           padding: EdgeInsets.only(
             left: 16,
@@ -45,18 +53,12 @@ class BroadcastListView extends StatelessWidget {
                   ],
                 ),
                 TextInput(
+                  controller: judulCtl,
                   label: 'Judul Pesan',
                   prefixIcon: const Icon(Icons.campaign),
                 ),
                 TextInput(
-                  label: 'Pengirim',
-                  prefixIcon: const Icon(Icons.person),
-                ),
-                TextInput(
-                  label: 'Tanggal',
-                  prefixIcon: const Icon(Icons.calendar_today),
-                ),
-                TextInput(
+                  controller: isiCtl,
                   label: 'Isi Pesan',
                   prefixIcon: const Icon(Icons.message),
                   maxLines: 3,
@@ -65,7 +67,41 @@ class BroadcastListView extends StatelessWidget {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () async {
+                          final judul = judulCtl.text.trim();
+                          final isi = isiCtl.text.trim();
+                          if (judul.isEmpty || isi.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Judul dan isi pesan wajib diisi',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          final ok = await _service.createBroadcast({
+                            'judul': judul,
+                            'isi_pesan': isi,
+                          });
+                          if (ok) {
+                            if (mounted) {
+                              Navigator.of(context).pop();
+                              setState(() {});
+                              ScaffoldMessenger.of(this.context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Broadcast berhasil dikirim'),
+                                ),
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Gagal mengirim broadcast'),
+                              ),
+                            );
+                          }
+                        },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
@@ -79,7 +115,10 @@ class BroadcastListView extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          judulCtl.clear();
+                          isiCtl.clear();
+                        },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
@@ -102,8 +141,6 @@ class BroadcastListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final broadcastList = KegiatanBroadcastSamples.broadcastList;
-
     return Stack(
       children: [
         Column(
@@ -119,6 +156,9 @@ class BroadcastListView extends StatelessWidget {
                     showModalBottomSheet(
                       context: context,
                       builder: (BuildContext context) {
+                        final judulCtl = TextEditingController(
+                          text: _filterJudul ?? '',
+                        );
                         return Container(
                           padding: const EdgeInsets.all(16),
                           width: double.infinity,
@@ -127,36 +167,27 @@ class BroadcastListView extends StatelessWidget {
                             spacing: 12,
                             children: [
                               TextInput(
-                                label: 'Cari broadcast...',
+                                controller: judulCtl,
+                                label: 'Cari broadcast (judul)...',
                                 prefixIcon: const Icon(Icons.search),
-                              ),
-                              SelectInput<String>(
-                                label: 'Pengirim',
-                                prefixIcon: const Icon(Icons.person),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'Sekretariat RW',
-                                    child: Text('Sekretariat RW'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'Ketua RT 01',
-                                    child: Text('Ketua RT 01'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'Admin Jawara Pintar',
-                                    child: Text('Admin Jawara Pintar'),
-                                  ),
-                                ],
-                                onChanged: (value) {},
                               ),
                               const Spacer(),
                               Row(
                                 children: [
                                   Expanded(
                                     child: ElevatedButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        setState(() {
+                                          _filterJudul =
+                                              judulCtl.text.trim().isEmpty
+                                              ? null
+                                              : judulCtl.text.trim();
+                                        });
+                                        Navigator.of(context).pop();
+                                      },
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: const [
                                           Icon(Icons.check),
                                           SizedBox(width: 4),
@@ -168,9 +199,15 @@ class BroadcastListView extends StatelessWidget {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: OutlinedButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        setState(() {
+                                          _filterJudul = null;
+                                        });
+                                        Navigator.of(context).pop();
+                                      },
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: const [
                                           Icon(Icons.refresh),
                                           SizedBox(width: 4),
@@ -191,16 +228,63 @@ class BroadcastListView extends StatelessWidget {
               ],
             ),
             Expanded(
-              child: CardListView<Broadcast>(
-                shrinkWrap: false,
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
-                items: broadcastList,
-                itemBuilder: (context, broadcast) {
-                  return ListTile(
-                    leading: const Icon(Icons.campaign, color: Colors.deepPurple),
-                    title: Text(broadcast.title),
-                    subtitle: Text('${broadcast.sender} • ${broadcast.date}'),
-                    trailing: const Icon(Icons.chevron_right),
+              child: FutureBuilder<List<dynamic>>(
+                future: _service.getBroadcastList(judul: _filterJudul),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Gagal memuat data: ${snapshot.error}'),
+                    );
+                  }
+                  final items = snapshot.data ?? [];
+                  if (items.isEmpty) {
+                    return const Center(child: Text('Belum ada broadcast'));
+                  }
+                  return CardListView<dynamic>(
+                    shrinkWrap: false,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
+                    items: items,
+                    itemBuilder: (context, item) {
+                      final map = item as Map<String, dynamic>;
+                      final judul = (map['judul'] ?? '').toString();
+                      final isi = (map['isi_pesan'] ?? '').toString();
+                      final user = map['user'];
+                      String pengirim = '';
+                      if (user is Map<String, dynamic>) {
+                        pengirim = (user['name'] ?? user['email'] ?? '')
+                            .toString();
+                      }
+                      final createdAt = (map['created_at'] ?? '').toString();
+                      return ListTile(
+                        leading: const Icon(
+                          Icons.campaign,
+                          color: Colors.deepPurple,
+                        ),
+                        title: Text(judul.isEmpty ? '-' : judul),
+                        subtitle: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (pengirim.isNotEmpty || createdAt.isNotEmpty)
+                              Text(
+                                [
+                                  if (pengirim.isNotEmpty) pengirim,
+                                  if (createdAt.isNotEmpty) createdAt,
+                                ].join(' • '),
+                              ),
+                            if (isi.isNotEmpty)
+                              Text(
+                                isi,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
+                      );
+                    },
                   );
                 },
               ),
