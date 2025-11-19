@@ -4,6 +4,7 @@ import 'package:jawarapbl/shared/widgets/inputs/select_input.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
 import 'package:jawarapbl/services/pemasukan_service.dart';
+import 'package:jawarapbl/services/dataWargaRumah_service.dart';
 
 class TagihanListView extends StatefulWidget {
   const TagihanListView({super.key});
@@ -14,9 +15,11 @@ class TagihanListView extends StatefulWidget {
 
 class _TagihanListViewState extends State<TagihanListView> {
   final PemasukanService _service = PemasukanService();
+  final DataWargaRumahService _wargaService = DataWargaRumahService();
   String? _filterPaymentStatus; // 'paid' atau 'unpaid'
   String? _filterPeriode;
   List<dynamic> _kategoriIuranList = [];
+  List<dynamic> _keluargaList = [];
 
   String _formatCurrency(num value) => 'Rp ${value.toStringAsFixed(0)}';
 
@@ -32,6 +35,7 @@ class _TagihanListViewState extends State<TagihanListView> {
   void initState() {
     super.initState();
     _loadKategoriIuran();
+    _loadKeluarga();
   }
 
   Future<void> _loadKategoriIuran() async {
@@ -43,8 +47,21 @@ class _TagihanListViewState extends State<TagihanListView> {
     }
   }
 
+  Future<void> _loadKeluarga() async {
+    final list = await _wargaService.getKeluargaList();
+    if (mounted) {
+      setState(() {
+        _keluargaList = list;
+      });
+    }
+  }
+
   void _showAddTagihanSheet(BuildContext context) {
     String? selectedKategoriId;
+    String? selectedKeluargaId;
+    final nominalCtl = TextEditingController();
+    final periodeCtl = TextEditingController();
+    String? statusLabel; // 'Sudah Dibayar' / 'Belum Dibayar'
 
     showModalBottomSheet(
       context: context,
@@ -80,21 +97,29 @@ class _TagihanListViewState extends State<TagihanListView> {
                     ),
                   ],
                 ),
-                TextInput(
+                SelectInput<String>(
                   label: 'Nama Keluarga',
                   prefixIcon: const Icon(Icons.family_restroom),
-                ),
-                SelectInput<String>(
-                  label: 'Status Keluarga',
-                  prefixIcon: const Icon(Icons.verified_user),
-                  items: const [
-                    DropdownMenuItem(value: 'Aktif', child: Text('Aktif')),
-                    DropdownMenuItem(
-                      value: 'Tidak Aktif',
-                      child: Text('Tidak Aktif'),
-                    ),
-                  ],
-                  onChanged: (value) {},
+                  value: selectedKeluargaId,
+                  items: _keluargaList
+                      .map((item) {
+                        final map = item as Map<String, dynamic>;
+                        final id = map['id'];
+                        final name = (map['nama_keluarga'] ?? map['name'] ?? '')
+                            .toString();
+                        if (id == null || name.isEmpty) return null;
+                        return DropdownMenuItem<String>(
+                          value: id.toString(),
+                          child: Text(name),
+                        );
+                      })
+                      .whereType<DropdownMenuItem<String>>()
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedKeluargaId = value;
+                    });
+                  },
                 ),
                 SelectInput<String>(
                   label: 'Jenis Iuran',
@@ -120,21 +145,20 @@ class _TagihanListViewState extends State<TagihanListView> {
                   },
                 ),
                 TextInput(
-                  label: 'Kode Tagihan',
-                  prefixIcon: const Icon(Icons.qr_code),
-                ),
-                TextInput(
+                  controller: nominalCtl,
                   label: 'Nominal',
                   prefixIcon: const Icon(Icons.attach_money),
                   keyboardType: TextInputType.number,
                 ),
                 TextInput(
+                  controller: periodeCtl,
                   label: 'Periode Tagihan',
                   prefixIcon: const Icon(Icons.calendar_month),
                 ),
                 SelectInput<String>(
                   label: 'Status Pembayaran',
                   prefixIcon: const Icon(Icons.payments),
+                  value: statusLabel,
                   items: const [
                     DropdownMenuItem(
                       value: 'Sudah Dibayar',
@@ -145,13 +169,67 @@ class _TagihanListViewState extends State<TagihanListView> {
                       child: Text('Belum Dibayar'),
                     ),
                   ],
-                  onChanged: (value) {},
+                  onChanged: (value) {
+                    setState(() {
+                      statusLabel = value;
+                    });
+                  },
                 ),
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () async {
+                          if (selectedKeluargaId == null ||
+                              selectedKategoriId == null ||
+                              (statusLabel ?? '').isEmpty ||
+                              nominalCtl.text.trim().isEmpty ||
+                              periodeCtl.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Keluarga, jenis iuran, nominal, periode, dan status pembayaran wajib diisi',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          final nominal =
+                              double.tryParse(nominalCtl.text.trim()) ?? 0;
+                          final paymentStatus = statusLabel == 'Sudah Dibayar'
+                              ? 'paid'
+                              : 'unpaid';
+
+                          final payload = {
+                            'keluarga_id': int.parse(selectedKeluargaId!),
+                            'kategori_iuran_id': int.parse(selectedKategoriId!),
+                            'nominal': nominal,
+                            'periode': periodeCtl.text.trim(),
+                            'payment_status': paymentStatus,
+                          };
+
+                          final ok = await _service.createTagihan(payload);
+                          if (ok) {
+                            if (mounted) {
+                              Navigator.of(context).pop();
+                              setState(() {});
+                              ScaffoldMessenger.of(this.context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Tagihan berhasil dibuat'),
+                                ),
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Gagal membuat tagihan. Periksa data dan coba lagi.',
+                                ),
+                              ),
+                            );
+                          }
+                        },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
@@ -339,7 +417,10 @@ class _TagihanListViewState extends State<TagihanListView> {
                     items: items,
                     itemBuilder: (context, item) {
                       final map = item as Map<String, dynamic>;
-                      final id = map['id'] as int?;
+                      final int? id = map['id'] is int
+                          ? map['id'] as int
+                          : int.tryParse(map['id']?.toString() ?? '');
+
                       final keluarga = map['keluarga'];
                       String familyName = '';
                       bool familyActive = true;
@@ -354,12 +435,14 @@ class _TagihanListViewState extends State<TagihanListView> {
                           familyActive = !status.toLowerCase().contains('non');
                         }
                       }
+
                       final kategori =
                           (map['kategori_iuran'] ?? map['kategoriIuran']);
                       String kategoriName = '';
                       if (kategori is Map<String, dynamic>) {
                         kategoriName = (kategori['name'] ?? '').toString();
                       }
+
                       final periode = (map['periode'] ?? '').toString();
                       final nominal = map['nominal'] is num
                           ? map['nominal'] as num
@@ -367,58 +450,66 @@ class _TagihanListViewState extends State<TagihanListView> {
                                 0;
                       final paymentStatus = (map['payment_status'] ?? 'unpaid')
                           .toString();
-                      return ListTile(
-                        isThreeLine: true,
-                        leading: Icon(
-                          Icons.home,
-                          color: familyActive ? Colors.green : Colors.red,
-                        ),
-                        title: Text(
-                          familyName.isEmpty ? 'Keluarga -' : familyName,
-                        ),
-                        subtitle: Column(
-                          mainAxisSize: MainAxisSize.min,
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              [
-                                if (kategoriName.isNotEmpty) kategoriName,
-                                if (periode.isNotEmpty) periode,
-                              ].join(' • '),
+                            Icon(
+                              Icons.home,
+                              color: familyActive ? Colors.green : Colors.red,
                             ),
-                          ],
-                        ),
-                        trailing: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              _formatCurrency(nominal),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: Colors.deepPurple,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Chip(
-                                    label: Text(
-                                      _paymentStatusLabel(paymentStatus),
-                                    ),
-                                    backgroundColor: _paymentStatusColor(
-                                      paymentStatus,
-                                    ).withOpacity(0.15),
-                                    labelStyle: TextStyle(
-                                      color: _paymentStatusColor(paymentStatus),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    familyName.isEmpty
+                                        ? 'Keluarga -'
+                                        : familyName,
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    [
+                                      if (kategoriName.isNotEmpty) kategoriName,
+                                      if (periode.isNotEmpty) periode,
+                                    ].join(' • '),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  _formatCurrency(nominal),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.deepPurple,
+                                  ),
                                 ),
-                                if (id != null) ...[
-                                  const SizedBox(width: 4),
+                                const SizedBox(height: 4),
+                                Chip(
+                                  label: Text(
+                                    _paymentStatusLabel(paymentStatus),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  backgroundColor: _paymentStatusColor(
+                                    paymentStatus,
+                                  ).withOpacity(0.15),
+                                  labelStyle: TextStyle(
+                                    color: _paymentStatusColor(paymentStatus),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (id != null)
                                   PopupMenuButton<String>(
                                     onSelected: (value) async {
                                       if (value == 'delete') {
@@ -458,7 +549,6 @@ class _TagihanListViewState extends State<TagihanListView> {
                                       ),
                                     ],
                                   ),
-                                ],
                               ],
                             ),
                           ],
