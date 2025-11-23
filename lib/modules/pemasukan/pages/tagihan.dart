@@ -154,6 +154,23 @@ class _TagihanListViewState extends State<TagihanListView> {
                   controller: periodeCtl,
                   label: 'Periode Tagihan',
                   prefixIcon: const Icon(Icons.calendar_month),
+                  readOnly: true,
+                  onTap: () async {
+                    FocusScope.of(context).unfocus();
+                    final now = DateTime.now();
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: now,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      final y = picked.year.toString().padLeft(4, '0');
+                      final m = picked.month.toString().padLeft(2, '0');
+                      final d = picked.day.toString().padLeft(2, '0');
+                      periodeCtl.text = '$y-$m-$d';
+                    }
+                  },
                 ),
                 SelectInput<String>(
                   label: 'Status Pembayaran',
