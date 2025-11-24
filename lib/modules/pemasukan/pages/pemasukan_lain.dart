@@ -95,6 +95,23 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                       controller: tanggalCtl,
                       label: 'Tanggal (YYYY-MM-DD)',
                       prefixIcon: const Icon(Icons.calendar_today),
+                      readOnly: true,
+                      onTap: () async {
+                        FocusScope.of(context).unfocus();
+                        final now = DateTime.now();
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: now,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          final y = picked.year.toString().padLeft(4, '0');
+                          final m = picked.month.toString().padLeft(2, '0');
+                          final d = picked.day.toString().padLeft(2, '0');
+                          tanggalCtl.text = '$y-$m-$d';
+                        }
+                      },
                     ),
                     TextInput(
                       controller: nominalCtl,

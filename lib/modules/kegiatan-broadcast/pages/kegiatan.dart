@@ -95,6 +95,23 @@ class _KegiatanListViewState extends State<KegiatanListView> {
                       controller: dateCtl,
                       label: 'Tanggal Pelaksanaan (YYYY-MM-DD HH:MM:SS)',
                       prefixIcon: const Icon(Icons.calendar_month),
+                      readOnly: true,
+                      onTap: () async {
+                        FocusScope.of(context).unfocus();
+                        final now = DateTime.now();
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: now,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          final y = picked.year.toString().padLeft(4, '0');
+                          final m = picked.month.toString().padLeft(2, '0');
+                          final d = picked.day.toString().padLeft(2, '0');
+                          dateCtl.text = '$y-$m-$d';
+                        }
+                      },
                     ),
                     TextInput(
                       controller: descCtl,
