@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart'; 
 import 'package:jawarapbl/modules/manajemen-pengguna/widgets/pengguna_card.dart';
 import 'package:jawarapbl/services/user_management_service.dart';
+import 'package:jawarapbl/services/auth_services.dart'; // Imported AuthService
 
 class EditPenggunaForm extends StatefulWidget {
   final PenggunaData user;
@@ -16,9 +17,9 @@ class EditPenggunaForm extends StatefulWidget {
 class _EditPenggunaFormState extends State<EditPenggunaForm> {
   final _formKey = GlobalKey<FormState>();
   final _service = UserManagementService();
+  final _authService = AuthService(); // Initialize AuthService to access URLs
   final ImagePicker _picker = ImagePicker();
 
-  // User Controllers
   late TextEditingController _nameCtrl;
   late TextEditingController _emailCtrl;
   late TextEditingController _nikCtrl;
@@ -26,7 +27,6 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
   final _passwordCtrl = TextEditingController();
   final _confirmPasswordCtrl = TextEditingController();
 
-  // Warga Controllers
   final _tempatLahirCtrl = TextEditingController();
   final _pekerjaanCtrl = TextEditingController();
   DateTime? _selectedTanggalLahir;
@@ -34,7 +34,6 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
   String? selectedRole;
   String? selectedStatus;
   
-  // Warga Dropdowns
   String? selectedGender;
   String? selectedAgama;
   String? selectedKawin;
@@ -52,7 +51,6 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
   @override
   void initState() {
     super.initState();
-    // Initialize with basic data from list
     _nameCtrl = TextEditingController(text: widget.user.nama);
     _emailCtrl = TextEditingController(text: widget.user.email);
     _nikCtrl = TextEditingController(text: widget.user.nik ?? '');
@@ -60,7 +58,6 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
     selectedRole = widget.user.role;
     selectedStatus = widget.user.status;
     
-    // Fetch detailed data (including Warga info)
     _fetchFullData();
   }
 
@@ -68,7 +65,6 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
     try {
       final data = await _service.getUser(widget.user.id);
       if (data != null && mounted) {
-        // If 'warga' data exists in the response
         if (data['warga'] != null) {
           final warga = data['warga'];
           setState(() {
@@ -144,7 +140,6 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
                 _buildHeader(),
                 const SizedBox(height: 24),
                 
-                // --- USER DATA SECTION ---
                 const Text("Data Akun", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepPurple)),
                 const Divider(),
                 const SizedBox(height: 16),
@@ -154,14 +149,12 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
                 _buildTextField(label: 'Nomor HP', hint: '08...', controller: _phoneCtrl, icon: Icons.phone, keyboardType: TextInputType.phone),
 
                 const SizedBox(height: 16),
-                // --- WARGA DATA SECTION (Only if NIK is present usually, but we show always) ---
                 const Text("Data Kependudukan (Warga)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.deepPurple)),
                 const Divider(),
                 const SizedBox(height: 16),
                 
                 _buildTextField(label: 'Tempat Lahir', hint: 'Kota Kelahiran', controller: _tempatLahirCtrl, icon: Icons.location_city),
                 
-                // Date Picker
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Column(
@@ -270,7 +263,10 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
             image: _selectedImage != null
               ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover)
               : (widget.user.fotoIdentitas != null
-                  ? DecorationImage(image: NetworkImage("http://10.0.2.2:8000/storage/${widget.user.fotoIdentitas}"), fit: BoxFit.cover)
+                  ? DecorationImage(
+                      image: NetworkImage("${_authService.storageUrl}/${widget.user.fotoIdentitas}"), // FIXED HERE
+                      fit: BoxFit.cover
+                    )
                   : null),
           ),
           child: (_selectedImage == null && widget.user.fotoIdentitas == null)
@@ -334,6 +330,7 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
           Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
+            isExpanded: true, // Prevents overflow
             value: value,
             items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
             onChanged: onChanged,
@@ -363,7 +360,6 @@ class _EditPenggunaFormState extends State<EditPenggunaForm> {
       status: selectedStatus,
       fotoIdentitas: _selectedImage,
       
-      // Warga Data
       tempatLahir: _tempatLahirCtrl.text.trim(),
       tanggalLahir: _selectedTanggalLahir != null ? DateFormat('yyyy-MM-dd').format(_selectedTanggalLahir!) : null,
       jenisKelamin: selectedGender,
