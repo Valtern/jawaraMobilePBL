@@ -1,8 +1,6 @@
-// lib/pages/penerimaan_warga_page.dart
 import 'package:flutter/material.dart';
 import 'package:jawarapbl/services/auth_services.dart';
 import '../models/penerimaanwarga_model.dart';
-import '../widgets/penerimaanwarga_widget.dart';
 
 final AuthService authService = AuthService();
 
@@ -79,12 +77,14 @@ class _PenerimaanWargaPageState extends State<PenerimaanWargaPage> {
       builder: (_) => DeleteConfirmationDialog(
         item: item,
         onConfirm: () async {
-          final ok = await authService.deletePenerimaan(item.id ?? 0);
+          // Fixed: Removed dead null check (?? 0)
+          final ok = await authService.deletePenerimaan(item.id);
           if (ok) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Pendaftaran ${item.nama ?? ''} dihapus'),
+                  // Fixed: Removed dead null check (?? '')
+                  content: Text('Pendaftaran ${item.nama} dihapus'),
                 ),
               );
               _refresh();
@@ -174,8 +174,9 @@ class _PenerimaanWargaPageState extends State<PenerimaanWargaPage> {
                           ),
                           elevation: 2,
                           child: ListTile(
-                            title: Text(item.nama ?? ''),
-                            subtitle: Text(item.email ?? ''),
+                            // Fixed: Removed dead null checks
+                            title: Text(item.nama),
+                            subtitle: Text(item.email),
                             trailing: PopupMenuButton<String>(
                               onSelected: (action) {
                                 switch (action) {
@@ -301,15 +302,17 @@ class DetailPenerimaanPage extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Fixed: Removed dead null check
                         Text(
-                          item.nama ?? '',
+                          item.nama,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
                         ),
+                        // Fixed: Removed dead null check
                         Text(
-                          item.email ?? '',
+                          item.email,
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 14,
@@ -320,12 +323,13 @@ class DetailPenerimaanPage extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                _buildDetailRow('NIK', item.nik ?? ''),
-                _buildDetailRow('Jenis Kelamin', item.jenisKelamin ?? ''),
-                _buildDetailRow('Tanggal Dibuat', item.tanggalDibuat ?? ''),
+                // Fixed: Removed dead null checks below
+                _buildDetailRow('NIK', item.nik),
+                _buildDetailRow('Jenis Kelamin', item.jenisKelamin),
+                _buildDetailRow('Tanggal Dibuat', item.tanggalDibuat),
                 _buildDetailRow(
                   'Status Pendaftaran',
-                  item.statusRegistrasi ?? '',
+                  item.statusRegistrasi,
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -370,9 +374,6 @@ class DetailPenerimaanPage extends StatelessWidget {
 // ---------------------------
 // Edit / Verifikasi Page
 // ---------------------------
-// ---------------------------
-// Edit / Verifikasi Page
-// ---------------------------
 class EditPenerimaanWargaPage extends StatefulWidget {
   final PenerimaanWarga item;
   const EditPenerimaanWargaPage({super.key, required this.item});
@@ -394,8 +395,8 @@ class _EditPenerimaanWargaPageState extends State<EditPenerimaanWargaPage> {
 
     final status = widget.item.statusRegistrasi;
 
-    // fallback jika null atau tidak valid
-    if (status == null || !allowedStatus.contains(status)) {
+    // Fixed: Removed dead code and simplified
+    if (!allowedStatus.contains(status)) {
       currentStatus = 'menunggu';
     } else {
       currentStatus = status;
@@ -403,8 +404,9 @@ class _EditPenerimaanWargaPageState extends State<EditPenerimaanWargaPage> {
   }
 
   Future<void> save() async {
+    // Fixed: Removed dead null check (?? 0)
     final ok = await authService.updateStatusPenerimaan(
-      widget.item.id ?? 0,
+      widget.item.id,
       currentStatus,
     );
 
@@ -443,11 +445,12 @@ class _EditPenerimaanWargaPageState extends State<EditPenerimaanWargaPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            field("Nama", widget.item.nama ?? ''),
-            field("Email", widget.item.email ?? ''),
-            field("NIK", widget.item.nik ?? ''),
-            field("Jenis Kelamin", widget.item.jenisKelamin ?? ''),
-            field("Status Saat Ini", widget.item.statusRegistrasi ?? ''),
+            // Fixed: Removed dead null checks
+            field("Nama", widget.item.nama),
+            field("Email", widget.item.email),
+            field("NIK", widget.item.nik),
+            field("Jenis Kelamin", widget.item.jenisKelamin),
+            field("Status Saat Ini", widget.item.statusRegistrasi),
 
             // ===========================
             // DROPDOWN FIX
@@ -496,7 +499,8 @@ class DeleteConfirmationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text("Hapus Data"),
-      content: Text("Yakin ingin menghapus ${item.nama ?? ''}?"),
+      // Fixed: Removed dead null check
+      content: Text("Yakin ingin menghapus ${item.nama}?"),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
