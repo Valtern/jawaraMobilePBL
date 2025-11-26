@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:jawarapbl/services/auth_services.dart';
 import 'package:jawarapbl/shared/models/log_aktivitas_model.dart';
+import 'package:jawarapbl/modules/penerimaan-warga/models/penerimaanwarga_model.dart';
 
 class LogAktivitasService {
   final String _baseUrl = AuthService().baseUrl;

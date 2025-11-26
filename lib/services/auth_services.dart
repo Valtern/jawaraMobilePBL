@@ -3,11 +3,12 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jawarapbl/shared/models/user_model.dart';
+import 'package:jawarapbl/modules/penerimaan-warga/models/penerimaanwarga_model.dart';
 
 class AuthService {
   // change to your local ipv4 address and the port to any unused port
-  String get baseUrl => 'http://192.168.50.192:8000/api';
-  String get storageUrl => 'http://192.168.50.192:8000/storage';
+  String get baseUrl => 'http://192.168.0.6:8000/api';
+  String get storageUrl => 'http://192.168.0.6:8000/storage';
 
   // this one is the domain im running with localtunnel, change it accordingly if you made changes to the api.
   // simply comment below and uncomment the above to run on local network
@@ -283,6 +284,112 @@ class AuthService {
         await prefs.remove('token');
         await prefs.remove('role');
       } catch (_) {}
+      return false;
+    }
+  }
+
+  // Penerimaan Warga API Methods
+  Future<List<PenerimaanWarga>> getPenerimaanWarga() async {
+    try {
+      final token = await getToken();
+      final response = await http.get(
+        Uri.parse('$baseUrl/penerimaan-warga'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((item) => PenerimaanWarga.fromJson(item)).toList();
+      } else {
+        throw Exception('Gagal memuat data: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in getPenerimaanWarga: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> updateStatusPenerimaan(int id, String status) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/penerimaan-warga/$id/status'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'status_registrasi': status}),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error in updateStatusPenerimaan: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updatePenerimaan(int id, Map<String, dynamic> body) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception("Not authenticated");
+      }
+
+      final response = await http.put(
+        Uri.parse("$baseUrl/penerimaan-warga/$id"),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(body),
+      );
+
+      print("UPDATE STATUS: ${response.statusCode}");
+      print("BODY: ${response.body}");
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print("UPDATE ERROR: $e");
+      return false;
+    }
+  }
+
+  Future<bool> deletePenerimaan(int id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final response = await http.delete(
+        Uri.parse('$baseUrl/penerimaan-warga/$id'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      print('Error in deletePenerimaan: $e');
       return false;
     }
   }
