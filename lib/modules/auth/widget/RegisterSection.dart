@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jawarapbl/services/auth_services.dart';
+import 'package:jawarapbl/services/dataWargaRumah_service.dart';
 import 'package:jawarapbl/modules/auth/pages/ktp_camera_page.dart';
 
 class RegisterSection extends StatefulWidget {
@@ -15,6 +16,7 @@ class RegisterSection extends StatefulWidget {
 class _RegisterSectionState extends State<RegisterSection> {
   final _formKey = GlobalKey<FormState>();
   final _authService = AuthService();
+  final _dataWargaRumahService = DataWargaRumahService();
 
   final _namaController = TextEditingController();
   final _nikController = TextEditingController();
@@ -22,8 +24,14 @@ class _RegisterSectionState extends State<RegisterSection> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _alamatController = TextEditingController();
 
   String? _jenisKelamin;
+  int? _selectedRumahId;
+  String? _statusKepemilikan;
+  
+  List<dynamic> _rumahList = [];
+
   File? _fotoKtp;
   File? _fotoProfil;
   bool _isLoading = false;
@@ -33,6 +41,21 @@ class _RegisterSectionState extends State<RegisterSection> {
   final ImagePicker _picker = ImagePicker();
 
   @override
+  void initState() {
+    super.initState();
+    _fetchRumahOptions();
+  }
+
+  Future<void> _fetchRumahOptions() async {
+    final data = await _dataWargaRumahService.getRumahOptions();
+    if (mounted) {
+      setState(() {
+        _rumahList = data;
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _namaController.dispose();
     _nikController.dispose();
@@ -40,6 +63,7 @@ class _RegisterSectionState extends State<RegisterSection> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _alamatController.dispose();
     super.dispose();
   }
 
@@ -83,7 +107,7 @@ class _RegisterSectionState extends State<RegisterSection> {
         try {
           final picked = await _picker.pickImage(
             source: ImageSource.gallery,
-            imageQuality: 50,
+            imageQuality: 70,
             maxWidth: 1024,
           );
           if (picked != null) {
@@ -97,7 +121,7 @@ class _RegisterSectionState extends State<RegisterSection> {
         try {
           final picked = await _picker.pickImage(
             source: ImageSource.camera,
-            imageQuality: 50,
+            imageQuality: 70,
             maxWidth: 1024,
           );
           if (picked != null) {
@@ -118,8 +142,8 @@ class _RegisterSectionState extends State<RegisterSection> {
         try {
           final picked = await _picker.pickImage(
             source: ImageSource.gallery,
-            imageQuality: 50,
-            maxWidth: 1024,
+            imageQuality: 90, 
+            maxWidth: 2048,
           );
           if (picked != null) {
             setState(() => _fotoKtp = File(picked.path));
@@ -157,6 +181,11 @@ class _RegisterSectionState extends State<RegisterSection> {
 
       setState(() => _isLoading = true);
 
+      // Logic: Manual Address takes priority over Dropdown if both somehow exist,
+      // but our UI logic ensures they are mutually exclusive.
+      String? finalAlamat = _alamatController.text.isNotEmpty ? _alamatController.text : null;
+      int? finalRumahId = (finalAlamat == null) ? _selectedRumahId : null;
+
       String? errorMessage = await _authService.register(
         name: _namaController.text,
         nik: _nikController.text,
@@ -165,6 +194,8 @@ class _RegisterSectionState extends State<RegisterSection> {
         password: _passwordController.text,
         passwordConfirmation: _confirmPasswordController.text,
         jenisKelamin: _jenisKelamin!,
+        rumahId: finalRumahId,
+        alamat: finalAlamat,
         fotoProfil: _fotoProfil,
         fotoKtp: _fotoKtp,
       );
@@ -264,36 +295,93 @@ class _RegisterSectionState extends State<RegisterSection> {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildDropdownField(
+              
+              _buildDropdownField<String>(
                 label: 'Jenis Kelamin',
                 hint: '-- Pilih Jenis Kelamin --',
-                items: ['Laki-laki', 'Perempuan'],
+                items: ['Laki-laki', 'Perempuan'].map((e) => 
+                  DropdownMenuItem(value: e, child: Text(e))
+                ).toList(),
                 value: _jenisKelamin,
                 onChanged: (val) => setState(() => _jenisKelamin = val),
               ),
+              
               const SizedBox(height: 16),
-              _buildDropdownField(
+              
+              // --- House Selection Logic ---
+              // UPDATED: Shows Clear button if selected
+              _buildDropdownField<int>(
                 label: 'Pilih Rumah yang Sudah Ada',
-                hint: '-- Pilih Rumah --',
-                items: ['Rumah A', 'Rumah B'],
-                onChanged: (val) {},
-                validator: (val) => null,
+                hint: _rumahList.isEmpty ? 'Memuat data...' : '-- Pilih Rumah --',
+                items: _rumahList.map<DropdownMenuItem<int>>((item) {
+                  return DropdownMenuItem<int>(
+                    value: item['id'],
+                    child: Text(item['alamat'] ?? 'Rumah #${item['id']}'),
+                  );
+                }).toList(),
+                value: _selectedRumahId,
+                onChanged: (val) {
+                  setState(() {
+                     _selectedRumahId = val;
+                     // STRICT LOGIC: If House Selected -> Clear Manual Address
+                     if(val != null) {
+                       _alamatController.clear();
+                     }
+                  });
+                },
+                validator: (val) => null, 
+                suffixIcon: _selectedRumahId != null 
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: Colors.grey),
+                      onPressed: () {
+                        setState(() => _selectedRumahId = null);
+                      },
+                    )
+                  : null,
               ),
-              const SizedBox(height: 16),
+              
+              const SizedBox(height: 8),
+              const Center(child: Text('--- ATAU ---', style: TextStyle(color: Colors.grey))),
+              const SizedBox(height: 8),
+              
+              // UPDATED: Shows Clear button if typing
               _buildTextField(
-                label: 'Alamat Rumah (Jika Tidak Ada di List)',
+                controller: _alamatController,
+                label: 'Masukkan Alamat Baru (Jika tidak ada di list)',
                 hint: 'Blok 5A / No. 10',
-                controller: TextEditingController(),
                 validator: (val) => null,
+                onChanged: (val) {
+                  // STRICT LOGIC: If Manual Address Typed -> Clear Selected House
+                  if(val.isNotEmpty && _selectedRumahId != null) {
+                    setState(() => _selectedRumahId = null);
+                  }
+                },
+                suffixIcon: _alamatController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: Colors.grey),
+                      onPressed: () {
+                        setState(() {
+                          _alamatController.clear();
+                          // When cleared, we can optionally reset focus or state, 
+                          // but the main requirement is just to clear the text.
+                        });
+                      },
+                    )
+                  : null,
               ),
+              
               const SizedBox(height: 16),
-              _buildDropdownField(
+              _buildDropdownField<String>(
                 label: 'Status kepemilikan rumah',
                 hint: '-- Pilih Status --',
-                items: ['Milik Sendiri', 'Sewa'],
-                onChanged: (val) {},
+                items: ['Milik Sendiri', 'Sewa', 'Kos', 'Kontrak'].map((e) => 
+                   DropdownMenuItem(value: e, child: Text(e))
+                ).toList(),
+                value: _statusKepemilikan,
+                onChanged: (val) => setState(() => _statusKepemilikan = val),
                 validator: (val) => null,
               ),
+              
               const SizedBox(height: 16),
 
               _buildFileUploadField(
@@ -368,6 +456,7 @@ class _RegisterSectionState extends State<RegisterSection> {
     Widget? suffixIcon,
     String? Function(String?)? validator,
     IconData? icon,
+    void Function(String)? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,6 +467,7 @@ class _RegisterSectionState extends State<RegisterSection> {
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: icon != null ? Icon(icon, color: Colors.grey) : null,
@@ -400,37 +490,31 @@ class _RegisterSectionState extends State<RegisterSection> {
     );
   }
 
-  Widget _buildDropdownField({
+  Widget _buildDropdownField<T>({
     required String label,
     required String hint,
-    required List<String> items,
-    String? value,
-    void Function(String?)? onChanged,
-    String? Function(String?)? validator,
+    required List<DropdownMenuItem<T>> items,
+    T? value,
+    void Function(T?)? onChanged,
+    String? Function(T?)? validator,
+    Widget? suffixIcon, // Added suffixIcon support
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
+        DropdownButtonFormField<T>(
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            suffixIcon: suffixIcon, // Use suffixIcon here
           ),
-          initialValue: value,
+          value: value,
           hint: Text(hint),
           onChanged: onChanged,
-          items: items.map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(value: value, child: Text(value));
-          }).toList(),
-          validator: validator ??
-              (value) {
-                if (value == null) {
-                  return 'Mohon pilih salah satu';
-                }
-                return null;
-              },
+          items: items,
+          validator: validator,
         ),
       ],
     );

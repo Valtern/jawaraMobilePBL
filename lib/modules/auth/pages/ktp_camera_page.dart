@@ -24,7 +24,8 @@ class _KtpCameraPageState extends State<KtpCameraPage> {
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) return;
-      _controller = CameraController(cameras.first, ResolutionPreset.high, enableAudio: false);
+      // REVERTED: 'max' is too large (10MB+). 'veryHigh' (1080p/4K) is stable for uploads and good for OCR.
+      _controller = CameraController(cameras.first, ResolutionPreset.veryHigh, enableAudio: false);
       _initializeControllerFuture = _controller!.initialize();
       await _initializeControllerFuture;
       if (mounted) setState(() => _isCameraInitialized = true);

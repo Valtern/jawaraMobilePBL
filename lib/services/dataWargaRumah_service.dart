@@ -32,6 +32,31 @@ class DataWargaRumahService {
     return jsonDecode(resp.body)['message'] ?? 'Terjadi kesalahan server.';
   }
 
+  // --- ADDED: Public Fetch for Registration ---
+  Future<List<dynamic>> getRumahOptions() async {
+    try {
+      // Use simple headers without Token if not available
+      final headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+      
+      final uri = Uri.parse('$_baseUrl/rumahs-options');
+      final resp = await http.get(uri, headers: headers);
+      
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body);
+        if (data is Map && data.containsKey('data')) {
+           return (data['data'] as List<dynamic>);
+        }
+      }
+    } catch (e) {
+      print('Exception in getRumahOptions: $e');
+    }
+    return [];
+  }
+  // --------------------------------------------
+
   Future<List<dynamic>> getWargaList({
     String? namaLengkap,
     String? nik,
@@ -48,11 +73,9 @@ class DataWargaRumahService {
       final resp = await http.get(uri, headers: headers);
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        // Assuming data structure is { "success": true, "data": [...] }
         if (data is Map && data.containsKey('data')) {
            return (data['data'] as List<dynamic>);
         }
-        // Fallback for if API just returns [...]
         if (data is List) {
           return data;
         }
@@ -122,10 +145,6 @@ class DataWargaRumahService {
     }
     return [];
   }
-
-  // GET Single... (No changes needed, but good practice to add error handling)
-  
-  // --- ✅ MODIFIED CREATE/UPDATE/DELETE FUNCTIONS ---
 
   Future<String?> createWarga(Map<String, dynamic> payload) async {
     try {

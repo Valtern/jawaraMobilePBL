@@ -56,6 +56,7 @@ class AuthService {
     }
   }
 
+  // --- MODIFIED: Added rumahId and alamat parameters ---
   Future<String?> register({
     required String name,
     required String nik,
@@ -64,6 +65,8 @@ class AuthService {
     required String password,
     required String passwordConfirmation,
     required String jenisKelamin,
+    int? rumahId,       // Added
+    String? alamat,     // Added
     required File? fotoProfil,
     required File? fotoKtp,
   }) async {
@@ -80,6 +83,15 @@ class AuthService {
       request.fields['password'] = password;
       request.fields['password_confirmation'] = passwordConfirmation;
       request.fields['jenis_kelamin'] = jenisKelamin;
+
+      // --- ADDED LOGIC ---
+      if (rumahId != null) {
+        request.fields['rumah_id'] = rumahId.toString();
+      }
+      if (alamat != null && alamat.isNotEmpty) {
+        request.fields['alamat'] = alamat;
+      }
+      // -------------------
 
       // Add profile picture file (optional)
       if (fotoProfil != null) {
@@ -102,9 +114,22 @@ class AuthService {
         return null;
       } else if (response.statusCode == 422) {
         final errors = jsonDecode(respStr) as Map<String, dynamic>;
+        
+        // Handle Laravel validation error structure
+        if (errors.containsKey('errors')) {
+           final validationErrors = errors['errors'] as Map<String, dynamic>;
+           final firstErrorKey = validationErrors.keys.first;
+           final firstErrorMessage = (validationErrors[firstErrorKey] as List).first;
+           return firstErrorMessage;
+        }
+
+        // Fallback if structure is different
         final firstErrorKey = errors.keys.first;
-        final firstErrorMessage = (errors[firstErrorKey] as List).first;
-        return firstErrorMessage;
+        if (errors[firstErrorKey] is List) {
+           return (errors[firstErrorKey] as List).first;
+        }
+        return 'Data tidak valid.';
+        
       } else {
         print(respStr);
         return 'Pendaftaran gagal. Terjadi kesalahan server.';
