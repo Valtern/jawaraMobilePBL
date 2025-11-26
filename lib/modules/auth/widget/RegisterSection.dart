@@ -1,8 +1,9 @@
-import 'dart:io'; // Import for File
+import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jawarapbl/services/auth_services.dart';
+import 'package:jawarapbl/modules/auth/pages/ktp_camera_page.dart';
 
 class RegisterSection extends StatefulWidget {
   const RegisterSection({super.key});
@@ -23,36 +24,130 @@ class _RegisterSectionState extends State<RegisterSection> {
   final _confirmPasswordController = TextEditingController();
 
   String? _jenisKelamin;
-  File? _fotoKtp; // Renamed from _fotoIdentitas
-  File? _fotoProfil; // Added for profile picture
+  File? _fotoKtp;
+  File? _fotoProfil;
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   final ImagePicker _picker = ImagePicker();
 
+  @override
+  void dispose() {
+    _namaController.dispose();
+    _nikController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _showPickerOptions({
+    required VoidCallback onGallery,
+    required VoidCallback onCamera,
+  }) async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galeri'),
+              onTap: () {
+                Navigator.pop(context);
+                onGallery();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Kamera'),
+              onTap: () {
+                Navigator.pop(context);
+                onCamera();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickProfileImage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _fotoProfil = File(pickedFile.path);
-      });
-    }
+    await _showPickerOptions(
+      onGallery: () async {
+        try {
+          final picked = await _picker.pickImage(
+            source: ImageSource.gallery,
+            imageQuality: 50,
+            maxWidth: 1024,
+          );
+          if (picked != null) {
+            setState(() => _fotoProfil = File(picked.path));
+          }
+        } catch (e) {
+          debugPrint("Gallery error: $e");
+        }
+      },
+      onCamera: () async {
+        try {
+          final picked = await _picker.pickImage(
+            source: ImageSource.camera,
+            imageQuality: 50,
+            maxWidth: 1024,
+          );
+          if (picked != null) {
+            setState(() => _fotoProfil = File(picked.path));
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kamera tidak tersedia')),
+          );
+        }
+      },
+    );
   }
 
   Future<void> _pickKtpImage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _fotoKtp = File(pickedFile.path);
-      });
-    }
+    await _showPickerOptions(
+      onGallery: () async {
+        try {
+          final picked = await _picker.pickImage(
+            source: ImageSource.gallery,
+            imageQuality: 50,
+            maxWidth: 1024,
+          );
+          if (picked != null) {
+            setState(() => _fotoKtp = File(picked.path));
+          }
+        } catch (e) {
+          debugPrint("Gallery error: $e");
+        }
+      },
+      onCamera: () async {
+        try {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const KtpCameraPage()),
+          );
+          if (result != null && result is File) {
+            setState(() => _fotoKtp = result);
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Gagal membuka kamera custom")),
+          );
+        }
+      },
+    );
   }
 
-  // Method to handle registration
   void _handleRegister() async {
     if (_formKey.currentState!.validate()) {
-      // Check if passwords match
       if (_passwordController.text != _confirmPasswordController.text) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Password tidak cocok!')),
@@ -60,11 +155,8 @@ class _RegisterSectionState extends State<RegisterSection> {
         return;
       }
 
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
-      // MODIFICATION: Changed logic to handle String?
       String? errorMessage = await _authService.register(
         name: _namaController.text,
         nik: _nikController.text,
@@ -73,42 +165,23 @@ class _RegisterSectionState extends State<RegisterSection> {
         password: _passwordController.text,
         passwordConfirmation: _confirmPasswordController.text,
         jenisKelamin: _jenisKelamin!,
-        fotoProfil: _fotoProfil, // Pass the profile picture
-        fotoKtp: _fotoKtp, // Pass the KTP picture
+        fotoProfil: _fotoProfil,
+        fotoKtp: _fotoKtp,
       );
 
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
 
-      if (errorMessage == null) {
-        // Success
+      if (errorMessage == null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content:
-                  Text('Pendaftaran berhasil! Menunggu persetujuan admin.')),
+          const SnackBar(content: Text('Pendaftaran berhasil! Menunggu persetujuan admin.')),
         );
-        Navigator.pop(context); // Go back to login
-      } else {
-        // Failure, show the specific error
+        Navigator.pop(context);
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(errorMessage)),
+          SnackBar(content: Text(errorMessage ?? 'Terjadi kesalahan')),
         );
       }
     }
-  }
-
-  @override
-  void dispose() {
-    // Dispose controllers
-    _namaController.dispose();
-    _nikController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
   }
 
   @override
@@ -163,53 +236,66 @@ class _RegisterSectionState extends State<RegisterSection> {
                 controller: _passwordController,
                 label: 'Password',
                 hint: 'Masukkan password',
-                obscureText: true,
+                obscureText: _obscurePassword,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Mohon isi kolom ini';
+                  if (v.length < 4) return 'Password minimal 4 karakter';
+                  return null;
+                },
+                suffixIcon: IconButton(
+                  icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                ),
               ),
               const SizedBox(height: 16),
               _buildTextField(
                 controller: _confirmPasswordController,
                 label: 'Konfirmasi Password',
                 hint: 'Masukkan ulang password',
-                obscureText: true,
+                obscureText: _obscureConfirmPassword,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Mohon isi kolom ini';
+                  if (v != _passwordController.text) return 'Password tidak sama';
+                  return null;
+                },
+                suffixIcon: IconButton(
+                  icon: Icon(_obscureConfirmPassword ? Icons.visibility : Icons.visibility_off),
+                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                ),
               ),
               const SizedBox(height: 16),
               _buildDropdownField(
                 label: 'Jenis Kelamin',
                 hint: '-- Pilih Jenis Kelamin --',
                 items: ['Laki-laki', 'Perempuan'],
-                value: _jenisKelamin, // Add value
-                onChanged: (val) {
-                  // Add onChanged
-                  setState(() {
-                    _jenisKelamin = val;
-                  });
-                },
+                value: _jenisKelamin,
+                onChanged: (val) => setState(() => _jenisKelamin = val),
               ),
               const SizedBox(height: 16),
               _buildDropdownField(
                 label: 'Pilih Rumah yang Sudah Ada',
                 hint: '-- Pilih Rumah --',
                 items: ['Rumah A', 'Rumah B'],
-                onChanged: (val) {}, // Not implemented in backend yet
-                validator: null,
+                onChanged: (val) {},
+                validator: (val) => null,
               ),
               const SizedBox(height: 16),
               _buildTextField(
                 label: 'Alamat Rumah (Jika Tidak Ada di List)',
                 hint: 'Blok 5A / No. 10',
-                validator: null,
+                controller: TextEditingController(),
+                validator: (val) => null,
               ),
               const SizedBox(height: 16),
               _buildDropdownField(
                 label: 'Status kepemilikan rumah',
                 hint: '-- Pilih Status --',
                 items: ['Milik Sendiri', 'Sewa'],
-                onChanged: (val) {}, // Not implemented in backend yet
-                validator: null,
+                onChanged: (val) {},
+                validator: (val) => null,
               ),
               const SizedBox(height: 16),
 
-              // New Profile Picture Upload
               _buildFileUploadField(
                 label: 'Foto Profil (Opsional)',
                 file: _fotoProfil,
@@ -218,9 +304,7 @@ class _RegisterSectionState extends State<RegisterSection> {
               ),
               const SizedBox(height: 16),
 
-              // Modified KTP Upload
               _buildFileUploadField(
-                // MODIFICATION: Added (Opsional)
                 label: 'Foto Identitas (KTP/KK) (Opsional)',
                 file: _fotoKtp,
                 onTap: _pickKtpImage,
@@ -278,10 +362,12 @@ class _RegisterSectionState extends State<RegisterSection> {
   Widget _buildTextField({
     required String label,
     required String hint,
-    TextEditingController? controller, // Add controller
+    TextEditingController? controller,
     TextInputType? keyboardType,
     bool obscureText = false,
-    String? Function(String?)? validator, // Make validator optional
+    Widget? suffixIcon,
+    String? Function(String?)? validator,
+    IconData? icon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,18 +375,20 @@ class _RegisterSectionState extends State<RegisterSection> {
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextFormField(
-          controller: controller, // Assign controller
+          controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
           decoration: InputDecoration(
             hintText: hint,
+            prefixIcon: icon != null ? Icon(icon, color: Colors.grey) : null,
+            suffixIcon: suffixIcon,
             border: const OutlineInputBorder(),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 12,
             ),
           ),
-          validator: validator ?? // Use provided validator or default
+          validator: validator ??
               (value) {
                 if (value == null || value.isEmpty) {
                   return 'Mohon isi kolom ini';
@@ -316,9 +404,9 @@ class _RegisterSectionState extends State<RegisterSection> {
     required String label,
     required String hint,
     required List<String> items,
-    String? value, // Add value
-    void Function(String?)? onChanged, // Add onChanged
-    String? Function(String?)? validator, // Make validator optional
+    String? value,
+    void Function(String?)? onChanged,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,13 +418,13 @@ class _RegisterSectionState extends State<RegisterSection> {
             border: const OutlineInputBorder(),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
           ),
-          initialValue: value, // Assign value
+          initialValue: value,
           hint: Text(hint),
-          onChanged: onChanged, // Assign onChanged
+          onChanged: onChanged,
           items: items.map<DropdownMenuItem<String>>((String value) {
             return DropdownMenuItem<String>(value: value, child: Text(value));
           }).toList(),
-          validator: validator ?? // Use provided validator or default
+          validator: validator ??
               (value) {
                 if (value == null) {
                   return 'Mohon pilih salah satu';
@@ -348,7 +436,6 @@ class _RegisterSectionState extends State<RegisterSection> {
     );
   }
 
-  // This widget is now generic
   Widget _buildFileUploadField({
     required String label,
     required File? file,

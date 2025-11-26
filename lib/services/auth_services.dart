@@ -6,14 +6,16 @@ import 'package:jawarapbl/shared/models/user_model.dart';
 import 'package:jawarapbl/modules/penerimaan-warga/models/penerimaanwarga_model.dart';
 
 class AuthService {
+ String url = 'https://daughter-pro-gardens-backing.trycloudflare.com';
+
   // change to your local ipv4 address and the port to any unused port
   // String get baseUrl => 'http://10.73.137.9:8000/api';
   // String get storageUrl => 'http://10.73.137.9:8000/storage';
 
   // this one is the domain im running with localtunnel, change it accordingly if you made changes to the api.
   // simply comment below and uncomment the above to run on local network
-  String get baseUrl => 'https://name-coverage-suspended-necessity.trycloudflare.com/api';
-  String get storageUrl => 'https://name-coverage-suspended-necessity.trycloudflare.com/storage';
+  String get baseUrl => '$url/api';
+  String get storageUrl => '$url/storage';
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
