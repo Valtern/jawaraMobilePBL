@@ -38,8 +38,8 @@ class _MenusCardState extends State<MenusCard> {
   Widget build(BuildContext context) {
     // Define roles for cleaner usage
     const admin = 'admin';
-    const rw = 'ketua_rw';
-    const rt = 'ketua_rt';
+    const rw = 'rw';           
+    const rt = 'rt';           
     const bendahara = 'bendahara';
     const sekretaris = 'sekretaris';
     // Warga is implicit as basic user, usually only sees 'all' items or specific 'warga' items
