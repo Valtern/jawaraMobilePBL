@@ -6,7 +6,7 @@ import 'package:jawarapbl/shared/models/user_model.dart';
 import 'package:jawarapbl/modules/penerimaan-warga/models/penerimaanwarga_model.dart';
 
 class AuthService {
- String url = 'https://daughter-pro-gardens-backing.trycloudflare.com';
+ String url = 'https://jawara-api-group3.loca.lt';
 
   // change to your local ipv4 address and the port to any unused port
   // String get baseUrl => 'http://10.73.137.9:8000/api';
