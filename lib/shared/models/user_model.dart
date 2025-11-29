@@ -4,10 +4,10 @@ class User {
   final String email;
   final String? nik;
   final String? phone;
-  final String? fotoIdentitas;
   final String role;
-  final String status;
-  
+  final String status; 
+  final String? fotoIdentitas;
+  final String? fotoKtp; 
 
   final String? tempatLahir;
   final String? tanggalLahir;
@@ -15,8 +15,9 @@ class User {
   final String? agama;
   final String? statusPerkawinan;
   final String? pekerjaan;
-  final int? wargaId;
+  final int? wargaId; 
   
+  final bool isFaceLoginEnabled;
 
   User({
     required this.id,
@@ -24,9 +25,10 @@ class User {
     required this.email,
     this.nik,
     this.phone,
-    this.fotoIdentitas,
     required this.role,
     required this.status,
+    this.fotoIdentitas,
+    this.fotoKtp,
     this.tempatLahir,
     this.tanggalLahir,
     this.jenisKelamin,
@@ -34,29 +36,35 @@ class User {
     this.statusPerkawinan,
     this.pekerjaan,
     this.wargaId,
+    this.isFaceLoginEnabled = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // Check if 'warga' relationship exists in JSON
     final wargaData = json['warga'] as Map<String, dynamic>?;
-
+    
     return User(
       id: json['id'],
       name: json['name'],
       email: json['email'],
       nik: json['nik'],
       phone: json['phone'],
+      role: json['role'] ?? 'warga',
+      status: json['status'] ?? 'active', // Provide default if missing
       fotoIdentitas: json['foto_identitas'],
-      role: json['role'],
-      status: json['status'],
+      fotoKtp: json['foto_ktp'],
       
-      // Use data from the nested 'warga' object if it exists
+      // Flatten wargas data
       tempatLahir: wargaData?['tempat_lahir'],
       tanggalLahir: wargaData?['tanggal_lahir'],
       jenisKelamin: wargaData?['jenis_kelamin'],
       agama: wargaData?['agama'],
       statusPerkawinan: wargaData?['status_perkawinan'],
       pekerjaan: wargaData?['pekerjaan'],
-      wargaId: wargaData?['id'],
+      wargaId: wargaData?['id'], // This fixes the undefined_getter error
+      
+      // Parse Boolean (Laravel might send 1/0 or true/false)
+      isFaceLoginEnabled: json['is_face_login_enabled'] == 1 || json['is_face_login_enabled'] == true,
     );
   }
 }

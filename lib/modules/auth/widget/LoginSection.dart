@@ -56,7 +56,7 @@ class _LoginFormState extends State<LoginForm> {
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Login Failed. Please check email and password.'),
+          content: Text('Login gagal. Periksa email dan password Anda.'),
         ),
       );
     }
@@ -90,9 +90,27 @@ class _LoginFormState extends State<LoginForm> {
 
           _isLoading
               ? const CircularProgressIndicator()
-              : ElevatedButton(
-                  onPressed: _handleLogin,
-                  child: const Text('Login'),
+              : Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: _handleLogin,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      child: const Text('Login'),
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/face-login');
+                      },
+                      icon: const Icon(Icons.face),
+                      label: const Text('Login dengan Wajah'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                    ),
+                  ],
                 ),
 
           const SizedBox(height: 16),
@@ -103,7 +121,7 @@ class _LoginFormState extends State<LoginForm> {
                 MaterialPageRoute(builder: (context) => const RegisterPage()),
               );
             },
-            child: const Text("Don't have an account? Register"),
+            child: const Text("Tidak punya akun? Daftar di sini"),
           ),
         ],
       ),

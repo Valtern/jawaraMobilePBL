@@ -29,7 +29,7 @@ class _RegisterSectionState extends State<RegisterSection> {
   String? _jenisKelamin;
   int? _selectedRumahId;
   String? _statusKepemilikan;
-  
+
   List<dynamic> _rumahList = [];
 
   File? _fotoKtp;
@@ -142,7 +142,7 @@ class _RegisterSectionState extends State<RegisterSection> {
         try {
           final picked = await _picker.pickImage(
             source: ImageSource.gallery,
-            imageQuality: 90, 
+            imageQuality: 90,
             maxWidth: 2048,
           );
           if (picked != null) {
@@ -181,12 +181,11 @@ class _RegisterSectionState extends State<RegisterSection> {
 
       setState(() => _isLoading = true);
 
-      // Logic: Manual Address takes priority over Dropdown if both somehow exist,
-      // but our UI logic ensures they are mutually exclusive.
-      String? finalAlamat = _alamatController.text.isNotEmpty ? _alamatController.text : null;
+      String? finalAlamat =
+          _alamatController.text.isNotEmpty ? _alamatController.text : null;
       int? finalRumahId = (finalAlamat == null) ? _selectedRumahId : null;
 
-      String? errorMessage = await _authService.register(
+      final result = await _authService.register(
         name: _namaController.text,
         nik: _nikController.text,
         email: _emailController.text,
@@ -202,15 +201,47 @@ class _RegisterSectionState extends State<RegisterSection> {
 
       setState(() => _isLoading = false);
 
-      if (errorMessage == null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pendaftaran berhasil! Menunggu persetujuan admin.')),
-        );
-        Navigator.pop(context);
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage ?? 'Terjadi kesalahan')),
-        );
+      if (mounted) {
+        if (result['success'] == true) {
+          final userId = result['userId'];
+
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Registrasi Berhasil'),
+              content: const Text(
+                  'Apakah anda ingin mendaftarkan wajah untuk login cepat?'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Nanti Saja'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    if (userId != null) {
+                      Navigator.pushReplacementNamed(context, '/face-enroll',
+                          arguments: userId);
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text('Ya, Daftar Wajah'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content:
+                    Text(result['message'] ?? 'Terjadi kesalahan tidak diketahui')),
+          );
+        }
       }
     }
   }
@@ -235,7 +266,6 @@ class _RegisterSectionState extends State<RegisterSection> {
                 style: TextStyle(color: Colors.grey[600], fontSize: 16),
               ),
               const SizedBox(height: 32),
-
               _buildTextField(
                 controller: _namaController,
                 label: 'Nama Lengkap',
@@ -274,8 +304,10 @@ class _RegisterSectionState extends State<RegisterSection> {
                   return null;
                 },
                 suffixIcon: IconButton(
-                  icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  icon: Icon(
+                      _obscurePassword ? Icons.visibility : Icons.visibility_off),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
               const SizedBox(height: 16),
@@ -290,29 +322,28 @@ class _RegisterSectionState extends State<RegisterSection> {
                   return null;
                 },
                 suffixIcon: IconButton(
-                  icon: Icon(_obscureConfirmPassword ? Icons.visibility : Icons.visibility_off),
-                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                  icon: Icon(_obscureConfirmPassword
+                      ? Icons.visibility
+                      : Icons.visibility_off),
+                  onPressed: () => setState(
+                      () => _obscureConfirmPassword = !_obscureConfirmPassword),
                 ),
               ),
               const SizedBox(height: 16),
-              
               _buildDropdownField<String>(
                 label: 'Jenis Kelamin',
                 hint: '-- Pilih Jenis Kelamin --',
-                items: ['Laki-laki', 'Perempuan'].map((e) => 
-                  DropdownMenuItem(value: e, child: Text(e))
-                ).toList(),
+                items: ['Laki-laki', 'Perempuan']
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
                 value: _jenisKelamin,
                 onChanged: (val) => setState(() => _jenisKelamin = val),
               ),
-              
               const SizedBox(height: 16),
-              
-              // --- House Selection Logic ---
-              // UPDATED: Shows Clear button if selected
               _buildDropdownField<int>(
                 label: 'Pilih Rumah yang Sudah Ada',
-                hint: _rumahList.isEmpty ? 'Memuat data...' : '-- Pilih Rumah --',
+                hint:
+                    _rumahList.isEmpty ? 'Memuat data...' : '-- Pilih Rumah --',
                 items: _rumahList.map<DropdownMenuItem<int>>((item) {
                   return DropdownMenuItem<int>(
                     value: item['id'],
@@ -322,68 +353,60 @@ class _RegisterSectionState extends State<RegisterSection> {
                 value: _selectedRumahId,
                 onChanged: (val) {
                   setState(() {
-                     _selectedRumahId = val;
-                     // STRICT LOGIC: If House Selected -> Clear Manual Address
-                     if(val != null) {
-                       _alamatController.clear();
-                     }
+                    _selectedRumahId = val;
+                    if (val != null) {
+                      _alamatController.clear();
+                    }
                   });
                 },
-                validator: (val) => null, 
-                suffixIcon: _selectedRumahId != null 
-                  ? IconButton(
-                      icon: const Icon(Icons.clear, color: Colors.grey),
-                      onPressed: () {
-                        setState(() => _selectedRumahId = null);
-                      },
-                    )
-                  : null,
+                validator: (val) => null,
+                suffixIcon: _selectedRumahId != null
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () {
+                          setState(() => _selectedRumahId = null);
+                        },
+                      )
+                    : null,
               ),
-              
               const SizedBox(height: 8),
-              const Center(child: Text('--- ATAU ---', style: TextStyle(color: Colors.grey))),
+              const Center(
+                  child: Text('--- ATAU ---',
+                      style: TextStyle(color: Colors.grey))),
               const SizedBox(height: 8),
-              
-              // UPDATED: Shows Clear button if typing
               _buildTextField(
                 controller: _alamatController,
                 label: 'Masukkan Alamat Baru (Jika tidak ada di list)',
                 hint: 'Blok 5A / No. 10',
                 validator: (val) => null,
                 onChanged: (val) {
-                  // STRICT LOGIC: If Manual Address Typed -> Clear Selected House
-                  if(val.isNotEmpty && _selectedRumahId != null) {
+                  if (val.isNotEmpty && _selectedRumahId != null) {
                     setState(() => _selectedRumahId = null);
                   }
                 },
                 suffixIcon: _alamatController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear, color: Colors.grey),
-                      onPressed: () {
-                        setState(() {
-                          _alamatController.clear();
-                          // When cleared, we can optionally reset focus or state, 
-                          // but the main requirement is just to clear the text.
-                        });
-                      },
-                    )
-                  : null,
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () {
+                          setState(() {
+                            _alamatController.clear();
+                          });
+                        },
+                      )
+                    : null,
               ),
-              
               const SizedBox(height: 16),
               _buildDropdownField<String>(
                 label: 'Status kepemilikan rumah',
                 hint: '-- Pilih Status --',
-                items: ['Milik Sendiri', 'Sewa', 'Kos', 'Kontrak'].map((e) => 
-                   DropdownMenuItem(value: e, child: Text(e))
-                ).toList(),
+                items: ['Milik Sendiri', 'Sewa', 'Kos', 'Kontrak']
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
                 value: _statusKepemilikan,
                 onChanged: (val) => setState(() => _statusKepemilikan = val),
                 validator: (val) => null,
               ),
-              
               const SizedBox(height: 16),
-
               _buildFileUploadField(
                 label: 'Foto Profil (Opsional)',
                 file: _fotoProfil,
@@ -391,16 +414,13 @@ class _RegisterSectionState extends State<RegisterSection> {
                 hint: 'Upload foto profil (.png/.jpg)',
               ),
               const SizedBox(height: 16),
-
               _buildFileUploadField(
                 label: 'Foto Identitas (KTP/KK) (Opsional)',
                 file: _fotoKtp,
                 onTap: _pickKtpImage,
                 hint: 'Upload foto KTP/KK (.png/.jpg)',
               ),
-
               const SizedBox(height: 32),
-
               ElevatedButton(
                 onPressed: _isLoading ? null : _handleRegister,
                 style: ElevatedButton.styleFrom(
@@ -417,7 +437,6 @@ class _RegisterSectionState extends State<RegisterSection> {
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
               ),
-
               const SizedBox(height: 24),
               Center(
                 child: RichText(
@@ -497,7 +516,7 @@ class _RegisterSectionState extends State<RegisterSection> {
     T? value,
     void Function(T?)? onChanged,
     String? Function(T?)? validator,
-    Widget? suffixIcon, // Added suffixIcon support
+    Widget? suffixIcon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -508,7 +527,7 @@ class _RegisterSectionState extends State<RegisterSection> {
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            suffixIcon: suffixIcon, // Use suffixIcon here
+            suffixIcon: suffixIcon,
           ),
           value: value,
           hint: Text(hint),

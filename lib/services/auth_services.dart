@@ -6,9 +6,8 @@ import 'package:jawarapbl/shared/models/user_model.dart';
 import 'package:jawarapbl/modules/penerimaan-warga/models/penerimaanwarga_model.dart';
 
 class AuthService {
-  String url = 'https://jawara-api-group3.loca.lt';
+  String url = 'https://settings-intended-cluster-betting.trycloudflare.com';
 
-  // this one is the domain im running with localtunnel, change it accordingly if you made changes to the api.
   String get baseUrl => '$url/api';
   String get storageUrl => '$url/storage';
 
@@ -50,8 +49,7 @@ class AuthService {
     }
   }
 
-  // --- MODIFIED: Added rumahId and alamat parameters ---
-  Future<String?> register({
+  Future<Map<String, dynamic>> register({
     required String name,
     required String nik,
     required String email,
@@ -59,8 +57,8 @@ class AuthService {
     required String password,
     required String passwordConfirmation,
     required String jenisKelamin,
-    int? rumahId, // Added
-    String? alamat, // Added
+    int? rumahId,
+    String? alamat,
     required File? fotoProfil,
     required File? fotoKtp,
   }) async {
@@ -69,7 +67,6 @@ class AuthService {
       var request = http.MultipartRequest('POST', uri)
         ..headers['Accept'] = 'application/json';
 
-      // Add text fields
       request.fields['name'] = name;
       request.fields['nik'] = nik;
       request.fields['email'] = email;
@@ -78,23 +75,19 @@ class AuthService {
       request.fields['password_confirmation'] = passwordConfirmation;
       request.fields['jenis_kelamin'] = jenisKelamin;
 
-      // --- ADDED LOGIC ---
       if (rumahId != null) {
         request.fields['rumah_id'] = rumahId.toString();
       }
       if (alamat != null && alamat.isNotEmpty) {
         request.fields['alamat'] = alamat;
       }
-      // -------------------
 
-      // Add profile picture file (optional)
       if (fotoProfil != null) {
         request.files.add(
           await http.MultipartFile.fromPath('foto_identitas', fotoProfil.path),
         );
       }
 
-      // Add KTP file (optional)
       if (fotoKtp != null) {
         request.files.add(
           await http.MultipartFile.fromPath('foto_ktp', fotoKtp.path),
@@ -105,30 +98,134 @@ class AuthService {
       final respStr = await response.stream.bytesToString();
 
       if (response.statusCode == 201) {
-        return null;
+        final data = jsonDecode(respStr);
+        
+        final prefs = await SharedPreferences.getInstance();
+        if (data['access_token'] != null) {
+          await prefs.setString('token', data['access_token']);
+        }
+        if (data['role'] != null) {
+          await prefs.setString('role', data['role']);
+        }
+
+        return {
+          'success': true,
+          'userId': data['user']['id'],
+        };
       } else if (response.statusCode == 422) {
         final errors = jsonDecode(respStr) as Map<String, dynamic>;
 
-        // Handle Laravel validation error structure
         if (errors.containsKey('errors')) {
           final validationErrors = errors['errors'] as Map<String, dynamic>;
           final firstErrorKey = validationErrors.keys.first;
           final firstErrorMessage =
               (validationErrors[firstErrorKey] as List).first;
-          return firstErrorMessage;
+          return {'success': false, 'message': firstErrorMessage};
         }
 
-        // Fallback if structure is different
         final firstErrorKey = errors.keys.first;
         if (errors[firstErrorKey] is List) {
-          return (errors[firstErrorKey] as List).first;
+          return {
+            'success': false,
+            'message': (errors[firstErrorKey] as List).first
+          };
         }
-        return 'Data tidak valid.';
+        return {'success': false, 'message': 'Data tidak valid.'};
       } else {
-        return 'Pendaftaran gagal. Terjadi kesalahan server.';
+        return {
+          'success': false,
+          'message': 'Pendaftaran gagal. Terjadi kesalahan server.'
+        };
       }
     } catch (e) {
-      return 'Pendaftaran gagal. Periksa koneksi internet Anda.';
+      return {
+        'success': false,
+        'message': 'Pendaftaran gagal. Periksa koneksi internet Anda.'
+      };
+    }
+  }
+  Future<String?> enrollFace(List<File> images, int userId) async {
+    try {
+      print("--- STARTING FACE ENROLLMENT ---");
+      print("Sending ${images.length} images for User ID: $userId");
+
+      for (var img in images) {
+        int size = await img.length();
+        print("Image size: ${(size / 1024).toStringAsFixed(2)} KB");
+      }
+
+      final token = await getToken();
+      var uri = Uri.parse('$baseUrl/biometric/enroll');
+      
+      var request = http.MultipartRequest('POST', uri)
+        ..headers['Authorization'] = 'Bearer $token'
+        ..headers['Accept'] = 'application/json';
+
+      for (var i = 0; i < images.length; i++) {
+        request.files.add(
+          await http.MultipartFile.fromPath('images[]', images[i].path),
+        );
+      }
+
+      request.fields['user_id'] = userId.toString();
+
+      print("Sending request to $uri...");
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      print("Response Code: ${response.statusCode}");
+      print("Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        print("Enrollment Success!");
+        return null; 
+      } else {
+        try {
+          final errData = jsonDecode(response.body);
+          return errData['message'] ?? "Server error: ${response.statusCode}";
+        } catch (_) {
+          return "Server Error: ${response.statusCode} - ${response.reasonPhrase}";
+        }
+      }
+    } catch (e) {
+      print("EXCEPTION DURING ENROLLMENT: $e");
+      return "Connection Error: $e";
+    }
+  }
+
+  Future<String?> loginWithFace(File image, String email) async {
+    try {
+      print("--- STARTING FACE LOGIN ---");
+      print("Email: $email");
+      print("Image size: ${(await image.length()) / 1024} KB");
+
+      var uri = Uri.parse('$baseUrl/login-face');
+      var request = http.MultipartRequest('POST', uri)
+        ..headers['Accept'] = 'application/json'
+        ..headers['bypass-tunnel-reminder'] = 'true';
+
+      request.fields['email'] = email;
+      request.files.add(
+        await http.MultipartFile.fromPath('image', image.path),
+      );
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      print("Login Response Code: ${response.statusCode}");
+      print("Login Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', data['access_token']);
+        await prefs.setString('role', data['role']);
+        return data['role'];
+      }
+      return null;
+    } catch (e) {
+      print("EXCEPTION DURING FACE LOGIN: $e");
+      return null;
     }
   }
 
@@ -159,10 +256,8 @@ class AuthService {
       request.fields['phone'] = phone;
       if (tempatLahir != null) request.fields['tempat_lahir'] = tempatLahir;
       if (tanggalLahir != null) {
-        request.fields['tanggal_lahir'] = tanggalLahir
-            .toIso8601String()
-            .split('T')
-            .first; // Format as YYYY-MM-DD
+        request.fields['tanggal_lahir'] =
+            tanggalLahir.toIso8601String().split('T').first;
       }
       if (jenisKelamin != null) request.fields['jenis_kelamin'] = jenisKelamin;
       if (agama != null) request.fields['agama'] = agama;
@@ -171,7 +266,6 @@ class AuthService {
       }
       if (pekerjaan != null) request.fields['pekerjaan'] = pekerjaan;
 
-      // Add profile picture file (optional)
       if (fotoProfil != null) {
         request.files.add(
           await http.MultipartFile.fromPath('foto_identitas', fotoProfil.path),
@@ -179,12 +273,11 @@ class AuthService {
       }
 
       var response = await request.send();
-      final respStr = await response.stream.bytesToString(); // Read response
+      final respStr = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
-        return null; // Success
+        return null;
       } else if (response.statusCode == 422) {
-        // Validation Error
         final errors = jsonDecode(respStr) as Map<String, dynamic>;
         final firstErrorKey = errors.keys.first;
         final firstErrorMessage = (errors[firstErrorKey] as List).first;
@@ -226,9 +319,8 @@ class AuthService {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        return null; // Success
+        return null;
       } else if (response.statusCode == 422) {
-        // Validation Error
         final errors = data as Map<String, dynamic>;
         final firstErrorKey = errors.keys.first;
         final firstErrorMessage = (errors[firstErrorKey] as List).first;
@@ -247,14 +339,14 @@ class AuthService {
       final token = prefs.getString('token');
 
       if (token == null) {
-        return null; // User is not logged in
+        return null;
       }
 
       final response = await http.get(
         Uri.parse('$baseUrl/profile'),
         headers: {
           'Accept': 'application/json',
-          'Authorization': 'Bearer $token', // Send the auth token
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -266,6 +358,23 @@ class AuthService {
       }
     } catch (e) {
       return null;
+    }
+  }
+
+  Future<bool> disableBiometric() async {
+    try {
+      final token = await getToken();
+      final response = await http.post(
+        Uri.parse('$baseUrl/biometric/disable'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -284,14 +393,8 @@ class AuthService {
               'bypass-tunnel-reminder': 'true',
             },
           );
-
-          // Log the response for debugging
-          if (response.statusCode != 200) {
-            // non-200 response intentionally ignored
-          }
-        } catch (e) {
-          // server logout failure intentionally ignored
-        }
+          if (response.statusCode != 200) {}
+        } catch (e) {}
       }
 
       await prefs.remove('token');
@@ -308,7 +411,6 @@ class AuthService {
     }
   }
 
-  // Penerimaan Warga API Methods
   Future<List<PenerimaanWarga>> getPenerimaanWarga() async {
     try {
       final token = await getToken();
@@ -422,13 +524,11 @@ class AuthService {
         },
       );
 
-      // Clear local storage
       await prefs.remove('token');
       await prefs.remove('role');
 
       return response.statusCode == 200;
     } catch (e) {
-      // Still clear local storage
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('token');

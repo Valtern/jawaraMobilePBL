@@ -18,6 +18,8 @@ import 'package:jawarapbl/modules/log-aktivitas/pages/log_aktivitas_page.dart';
 import 'package:jawarapbl/modules/manajemen-pengguna/pages/manajemen_pengguna_tabs_page.dart';
 import 'package:jawarapbl/modules/auth/pages/register.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:jawarapbl/modules/auth/pages/face_enrollment_page.dart';
+import 'package:jawarapbl/modules/auth/pages/face_login_page.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -66,6 +68,11 @@ class MyApp extends StatelessWidget {
         // Auth Routes
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
+        '/face-enroll': (context) {
+          final userId = ModalRoute.of(context)!.settings.arguments as int;
+          return FaceEnrollmentPage(userId: userId);
+        },
+        '/face-login': (context) => const FaceLoginPage(),
         '/home': (context) =>
             const MainLayout(body: DashboardPage(), currentIndex: 0),
         // Data Warga Rumah Routes
