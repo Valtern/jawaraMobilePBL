@@ -5,6 +5,7 @@ import 'package:jawarapbl/shared/models/log_aktivitas_model.dart';
 
 class LogAktivitasService {
   final String _baseUrl = AuthService().baseUrl;
+  final AuthService _authService = AuthService(); 
 
   Future<List<LogAktivitas>> getLogAktivitas({
     String? kategori,
@@ -13,9 +14,14 @@ class LogAktivitasService {
     int? userId,
   }) async {
     try {
+      final token = await _authService.getToken(); 
+      if (token == null) {
+        print('Error fetching log aktivitas: Auth token is missing.');
+        return [];
+      }
+      
       var uri = Uri.parse('$_baseUrl/log-aktivitas');
       
-      // Add query parameters for filtering
       Map<String, String> queryParams = {};
       if (kategori != null && kategori.isNotEmpty) queryParams['kategori'] = kategori;
       if (startDate != null && startDate.isNotEmpty) queryParams['start_date'] = startDate;
@@ -28,7 +34,12 @@ class LogAktivitasService {
 
       final response = await http.get(
         uri,
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        // Keep: Authorization header for API access
+        headers: {
+          'Content-Type': 'application/json', 
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
@@ -38,9 +49,15 @@ class LogAktivitasService {
           return logList.map((json) => LogAktivitas.fromJson(json)).toList();
         }
       }
+      if (response.statusCode != 200) {
+        print('Error fetching log aktivitas: HTTP Status ${response.statusCode}');
+      } else {
+        print('Error fetching log aktivitas: API responded with success: false');
+      }
+      
       return [];
     } catch (e) {
-      print('Error fetching log aktivitas: $e');
+      print('Error fetching log aktivitas: $e'); 
       return [];
     }
   }
@@ -51,17 +68,34 @@ class LogAktivitasService {
     required String deskripsi,
   }) async {
     try {
+      // Keep: Token retrieval for authentication
+      final token = await _authService.getToken(); 
+      if (token == null) {
+        print('Error creating log aktivitas: Auth token is missing.');
+        return false;
+      }
+      
       final response = await http.post(
         Uri.parse('$_baseUrl/log-aktivitas'),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        // Keep: Authorization header for API access
+        headers: {
+          'Content-Type': 'application/json', 
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
         body: jsonEncode({
           'user_id': userId,
           'kategori': kategori,
           'deskripsi': deskripsi,
         }),
       );
+      print('LOG_AKTIVITAS create -> status: ${response.statusCode}');
+      try {
+        print('LOG_AKTIVITAS create -> body: ${response.body}');
+      } catch (_) {}
 
-      return response.statusCode == 201;
+      // Some APIs may return 200 instead of 201 on success
+      return response.statusCode == 201 || response.statusCode == 200;
     } catch (e) {
       print('Error creating log aktivitas: $e');
       return false;
@@ -70,9 +104,18 @@ class LogAktivitasService {
 
   Future<List<String>> getKategoriList() async {
     try {
+      final token = await _authService.getToken(); 
+      final headers = {
+        'Content-Type': 'application/json', 
+        'Accept': 'application/json',
+      };
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
       final response = await http.get(
         Uri.parse('$_baseUrl/log-aktivitas/kategori-list'),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        headers: headers,
       );
 
       if (response.statusCode == 200) {

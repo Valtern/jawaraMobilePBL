@@ -22,7 +22,7 @@ This project was developed collaboratively, with each member responsible for spe
 
 * **Income Management (Pemasukan)** 💰:.
 
-* **Activities and Broadcasts (Kegiatan dan Broadcast)** 📢: 
+* **Activities and Broadcasts (Kegiatan dan Broadcast)** 📢: Saran nambah notifikasi ke semua user
 
 * **Channel Transfer** 🔄: 
 
@@ -30,7 +30,7 @@ This project was developed collaboratively, with each member responsible for spe
 
 * **Financial Reports (Laporan Keuangan)** 📊: 
 
-* **Resident Messages (Pesan Warga)** 💬: 
+* **Resident Messages (Pesan Warga)** 💬: Saran nambah notifikasi ke semua user
 
 * **Resident Admissions (Penerimaan Warga)** 🧍‍♂️: 
 

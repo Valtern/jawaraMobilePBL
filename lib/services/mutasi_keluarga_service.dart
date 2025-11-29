@@ -12,7 +12,6 @@ class MutasiKeluargaService {
     return prefs.getString('token');
   }
 
-  // This helper function builds the required headers, including the token
   Future<Map<String, String>> _getHeaders() async {
     final token = await _getToken();
     return {
@@ -24,7 +23,7 @@ class MutasiKeluargaService {
 
   Future<List<MutasiKeluarga>> getMutasiKeluarga() async {
     try {
-      final headers = await _getHeaders(); // Use auth headers
+      final headers = await _getHeaders(); 
       final response = await http.get(
         Uri.parse('$_baseUrl/mutasi-keluarga'),
         headers: headers,

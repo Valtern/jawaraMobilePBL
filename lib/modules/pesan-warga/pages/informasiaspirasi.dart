@@ -1,532 +1,375 @@
 import 'package:flutter/material.dart';
-import 'package:jawarapbl/modules/pesan-warga/models/informasiaspirasi_model.dart';
-import 'package:jawarapbl/modules/pesan-warga/widgets/informasiaspirasi_widget.dart'; // Menggunakan AspirasiCard dari sini
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:jawarapbl/services/auth_services.dart';
+import 'package:jawarapbl/services/pesan_service.dart';
+import 'package:jawarapbl/shared/models/user_model.dart';
+import '../models/informasiaspirasi_model.dart';
+import 'detail_aspirasi_page.dart';
+import '../widgets/informasiaspirasi_widget.dart';
+import 'edit_aspirasi_page.dart';
 
-// Halaman Detail Aspirasi (Tidak Berubah)
-class DetailAspirasiPage extends StatelessWidget {
-  final AspirasiWarga item;
-  const DetailAspirasiPage({super.key, required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text('Kembali', style: TextStyle(fontSize: 16)),
-        titleSpacing: 0,
-        foregroundColor: Colors.black,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 0, // Card tanpa bayangan
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Detail Informasi / Aspirasi Warga',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-                _buildDetailRow('Judul:', item.judul),
-                _buildDetailRow(
-                  'Deskripsi:',
-                  item.deskripsi,
-                  isDescription: true,
-                ),
-                _buildDetailRow('Status:', item.status),
-                _buildDetailRow('Dibuat oleh:', item.pengirim),
-                _buildDetailRow('Tanggal Dibuat:', item.tanggalDibuat),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(
-    String label,
-    String value, {
-    bool isDescription = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: isDescription ? 16 : 15,
-              color: Colors.black87,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Halaman Edit Aspirasi (Tidak Berubah)
-class EditAspirasiPage extends StatefulWidget {
-  final AspirasiWarga item;
-  const EditAspirasiPage({super.key, required this.item});
+class AspirasiWargaPage extends StatefulWidget {
+  const AspirasiWargaPage({super.key});
 
   @override
-  State<EditAspirasiPage> createState() => _EditAspirasiPageState();
+  State<AspirasiWargaPage> createState() => _AspirasiWargaPageState();
 }
 
-class _EditAspirasiPageState extends State<EditAspirasiPage> {
-  late String _status;
+class _AspirasiWargaPageState extends State<AspirasiWargaPage> {
+  final PesanService _pesanService = PesanService();
+  late Future<List<AspirasiWarga>> _futureData;
+  String _selectedFilter = 'Semua';
+  
+  User? _currentUser;
+  bool _isLoadingUser = true;
+  bool _isManagement = false;
 
   @override
   void initState() {
     super.initState();
-    _status = widget.item.status;
+    _loadAllData();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+  Future<void> _loadAllData() async {
+    setState(() {
+      _isLoadingUser = true;
+      _isManagement = false;
+    });
+    try {
+      _currentUser = await AuthService().getProfile();
+      final role = _currentUser?.role;
+      if (role == 'admin' || role == 'rw' || role == 'rt') {
+        _isManagement = true;
+      }
+    } catch (e) {
+      // Handle error
+    }
+    setState(() {
+      _futureData = _fetchAspirasi();
+      _isLoadingUser = false;
+    });
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      _futureData = _fetchAspirasi();
+    });
+  }
+
+  Future<List<AspirasiWarga>> _fetchAspirasi() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AuthService().baseUrl}/aspirasi-warga'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ${await AuthService().getToken()}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        final List<AspirasiWarga> hasil = data
+            .map((e) => AspirasiWarga.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return hasil;
+      } else {
+        throw Exception('Gagal memuat data aspirasi warga');
+      }
+    } catch (e) {
+      throw Exception('Terjadi kesalahan: $e');
+    }
+  }
+  
+  void _handleAspirasiAction(String action, AspirasiWarga item) {
+    if (action == 'Detail') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DetailAspirasiPage(item: item),
         ),
-        title: const Text('Kembali', style: TextStyle(fontSize: 16)),
-        titleSpacing: 0,
-        foregroundColor: Colors.black,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Edit Informasi Aspirasi Warga',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
+      );
+    }
+    if (action == 'Edit Konten') {
+      _navigateToEdit(item);
+    }
+    if (action == 'Ubah Status') {
+      _showStatusUpdateDialog(item);
+    }
+    if (action == 'Hapus') {
+      _confirmDelete(item);
+    }
+  }
 
-                // Judul Pesan
-                const Text('Judul Pesan'),
-                const SizedBox(height: 8),
-                TextFormField(
-                  initialValue: widget.item.judul,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Deskripsi Pesan
-                const Text('Deskripsi Pesan'),
-                const SizedBox(height: 8),
-                TextFormField(
-                  initialValue: widget.item.deskripsi,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Status
-                const Text('Status'),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: _status,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Diterima',
-                      child: Text('Diterima'),
-                    ),
-                    DropdownMenuItem(value: 'Ditunda', child: Text('Ditunda')),
-                    DropdownMenuItem(value: 'Ditolak', child: Text('Ditolak')),
-                  ],
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        _status = newValue;
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Tombol Update
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Logika update data
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Aspirasi "${widget.item.judul}" berhasil di-Update ke status $_status',
-                          ),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF673AB7), // Warna ungu
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Update',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+  void _navigateToEdit(AspirasiWarga item) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditAspirasiPage(aspirasi: item),
       ),
     );
+
+    if (result != null) {
+      _refreshData();
+    }
   }
-}
 
-// Dialog Filter
-class FilterDialog extends StatelessWidget {
-  const FilterDialog({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
-      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'Filter Pesan Warga',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Judul'),
-            const SizedBox(height: 8),
-            TextFormField(
-              decoration: const InputDecoration(
-                hintText: 'Cari judul...',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text('Status'),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                hintText: '-- Pilih Status --',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'Diterima', child: Text('Diterima')),
-                DropdownMenuItem(value: 'Ditunda', child: Text('Ditunda')),
-                DropdownMenuItem(value: 'Ditolak', child: Text('Ditolak')),
-              ],
-              onChanged: (String? newValue) {},
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-      // --- PERUBAHAN DI BAGIAN ACTIONS ---
-      actions: <Widget>[
-        // Tombol Reset Filter (Berada di kiri, menggunakan OutlinedButton agar lebih rapih)
-        // Kita menggunakan Row dan MainAxisAlignment.spaceBetween untuk memisahkan kedua tombol
-        SizedBox(
-          height: 48, // Menyamakan tinggi dengan tombol 'Terapkan'
-          child: OutlinedButton(
-            // Mengganti TextButton dengan OutlinedButton (atau bisa tetap TextButton)
-            onPressed: () {
-              // Logika Reset Filter
-              Navigator.of(context).pop();
-            },
-            style: OutlinedButton.styleFrom(
-              // Menghilangkan border karena desain Anda di gambar tidak memiliki border yang jelas
-              side: BorderSide.none,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-            ),
-            child: const Text(
-              'Reset Filter',
-              style: TextStyle(
-                color: Colors.black54,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-          ),
-        ),
-
-        // Tombol Terapkan (Berada di kanan)
-        ElevatedButton(
-          onPressed: () {
-            // Logika Terapkan Filter
-            Navigator.of(context).pop();
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Filter Diterapkan')));
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF673AB7), // Warna ungu
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            minimumSize: const Size(
-              120,
-              48,
-            ), // Menentukan ukuran minimum tombol
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: const Text('Terapkan', style: TextStyle(color: Colors.white)),
-        ),
-      ],
-    );
-  }
-}
-
-// Halaman Utama Daftar Aspirasi (DIUBAH total)
-class AspirasiWargaPage extends StatelessWidget {
-  const AspirasiWargaPage({super.key});
-
-  // Data tiruan (mock data) berdasarkan gambar yang Anda berikan
-  final List<AspirasiWarga> _data = const [
-    AspirasiWarga(
-      id: 1,
-      pengirim: 'Habibie Ed Dien',
-      judul: 'tes',
-      status: 'Diterima',
-      deskripsi: 'Ini adalah deskripsi aspirasi dari Habibie Ed Dien.',
-      tanggalDibuat: '28 September 2025',
-    ),
-    AspirasiWarga(
-      id: 2,
-      pengirim: 'Budi Santoso',
-      judul: 'Permintaan Penerangan Jalan',
-      status: 'Ditunda',
-      deskripsi:
-          'Mohon dipertimbangkan untuk pemasangan lampu jalan di Blok C.',
-      tanggalDibuat: '01 Oktober 2025',
-    ),
-  ];
-
-  void _handleAction(BuildContext context, String action, AspirasiWarga item) {
-    switch (action) {
-      case 'Detail':
-        // Navigasi ke halaman detail
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DetailAspirasiPage(item: item),
-          ),
-        );
-        break;
-      case 'Edit':
-        // Navigasi ke halaman edit
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => EditAspirasiPage(item: item)),
-        );
-        break;
-      case 'Hapus':
-        // Tampilkan dialog konfirmasi hapus
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
+  void _showStatusUpdateDialog(AspirasiWarga item) {
+    String selectedStatus = item.status;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Konfirmasi Hapus'),
-              content: Text(
-                'Apakah Anda yakin ingin menghapus aspirasi "${item.judul}"?',
+              title: const Text('Ubah Status Aspirasi'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile<String>(
+                    title: const Text('Pending'),
+                    value: 'Pending',
+                    groupValue: selectedStatus,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedStatus = value!;
+                      });
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text('Diterima'),
+                    value: 'Diterima',
+                    groupValue: selectedStatus,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedStatus = value!;
+                      });
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text('Ditolak'),
+                    value: 'Ditolak',
+                    groupValue: selectedStatus,
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedStatus = value!;
+                      });
+                    },
+                  ),
+                ],
               ),
-              actions: <Widget>[
+              actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => Navigator.pop(context),
                   child: const Text('Batal'),
                 ),
                 TextButton(
                   onPressed: () {
-                    // Lakukan logika penghapusan data di sini
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Aspirasi "${item.judul}" dihapus'),
-                      ),
-                    );
+                    Navigator.pop(context);
+                    _updateStatus(item, selectedStatus);
                   },
-                  child: const Text(
-                    'Hapus',
-                    style: TextStyle(color: Colors.red),
-                  ),
+                  child: const Text('Simpan'),
                 ),
               ],
             );
           },
         );
-        break;
+      },
+    );
+  }
+
+  void _updateStatus(AspirasiWarga item, String newStatus) async {
+    try {
+      await _pesanService.updateAspirasiStatus(
+        id: item.id,
+        status: newStatus,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Status aspirasi berhasil diperbarui.'),
+              backgroundColor: Colors.green),
+        );
+      }
+      _refreshData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
-  void _showFilterDialog(BuildContext context) {
+  void _confirmDelete(AspirasiWarga item) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return const FilterDialog();
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Aspirasi'),
+        content: Text('Anda yakin ingin menghapus aspirasi "${item.judul}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteAspirasi(item.id);
+            },
+            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteAspirasi(int id) async {
+    try {
+      await _pesanService.deleteAspirasi(id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Aspirasi berhasil dihapus.'),
+              backgroundColor: Colors.green),
+        );
+      }
+      _refreshData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  List<AspirasiWarga> _applyFilter(List<AspirasiWarga> data) {
+    if (_selectedFilter == 'Semua') return data;
+    return data
+        .where(
+          (item) => item.status.toLowerCase() == _selectedFilter.toLowerCase(),
+        )
+        .toList();
+  }
+
+  void _showFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final List<String> options = [
+          'Semua',
+          'Pending',
+          'Diterima',
+          'Ditolak',
+        ];
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Filter Status Aspirasi',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              ...options.map(
+                (opt) => RadioListTile<String>(
+                  value: opt,
+                  groupValue: _selectedFilter,
+                  title: Text(opt),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedFilter = value!;
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Tombol Filter
-          Align(
-            alignment: Alignment.topRight,
-            child: SizedBox(
-              height: 40,
-              width: 40,
-              child: ElevatedButton(
-                onPressed: () => _showFilterDialog(context),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  backgroundColor: const Color(0xFF673AB7), // Warna ungu
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Icon(
-                  Icons.filter_list,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Daftar Data (Hanya ListView.builder yang memanggil AspirasiCard)
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _data.length,
-            itemBuilder: (context, index) {
-              final item = _data[index];
-              return Padding(
-                padding: const EdgeInsets.only(
-                  bottom: 16.0,
-                ), // Beri jarak antar Card
-                child: AspirasiCard(
-                  // MENGGUNAKAN AspirasiCard
-                  item: item,
-                  onAction: (action, item) =>
-                      _handleAction(context, action, item),
-                ),
-              );
-            },
-          ),
-
-          // Pagination (Mock Up)
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              IconButton(
-                onPressed: null, // Dinonaktifkan
-                icon: const Icon(
-                  Icons.arrow_back_ios,
-                  size: 16,
-                  color: Colors.grey,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF673AB7), // Warna ungu
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  '1',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: null,
-                icon: const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Colors.grey,
-                ),
+              TextButton.icon(
+                icon: const Icon(Icons.filter_list),
+                label: Text(_selectedFilter),
+                onPressed: _showFilterDialog,
               ),
             ],
           ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: _isLoadingUser
+              ? const Center(child: CircularProgressIndicator())
+              : FutureBuilder<List<AspirasiWarga>>(
+                  future: _futureData,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Terjadi kesalahan: ${snapshot.error}'),
+                      );
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('Belum ada aspirasi.'));
+                    }
+
+                    final filtered = _applyFilter(snapshot.data!);
+
+                    if (filtered.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'Tidak ada aspirasi dengan status $_selectedFilter.',
+                        ),
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: _refreshData,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          final item = filtered[index];
+                          final isOwner = _currentUser != null &&
+                              _currentUser!.wargaId == item.wargaId;
+                          
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: AspirasiCard(
+                              item: item,
+                              isOwner: isOwner,
+                              isManagement: _isManagement,
+                              onAction: _handleAspirasiAction,
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }

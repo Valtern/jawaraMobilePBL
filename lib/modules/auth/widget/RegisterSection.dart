@@ -1,8 +1,10 @@
-import 'dart:io'; // Import for File
+import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:jawarapbl/services/auth_services.dart'; 
+import 'package:jawarapbl/services/auth_services.dart';
+import 'package:jawarapbl/services/dataWargaRumah_service.dart';
+import 'package:jawarapbl/modules/auth/pages/ktp_camera_page.dart';
 
 class RegisterSection extends StatefulWidget {
   const RegisterSection({super.key});
@@ -13,7 +15,8 @@ class RegisterSection extends StatefulWidget {
 
 class _RegisterSectionState extends State<RegisterSection> {
   final _formKey = GlobalKey<FormState>();
-  final _authService = AuthService(); 
+  final _authService = AuthService();
+  final _dataWargaRumahService = DataWargaRumahService();
 
   final _namaController = TextEditingController();
   final _nikController = TextEditingController();
@@ -21,27 +24,154 @@ class _RegisterSectionState extends State<RegisterSection> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _alamatController = TextEditingController();
 
   String? _jenisKelamin;
-  File? _fotoIdentitas;
+  int? _selectedRumahId;
+  String? _statusKepemilikan;
+  
+  List<dynamic> _rumahList = [];
+
+  File? _fotoKtp;
+  File? _fotoProfil;
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   final ImagePicker _picker = ImagePicker();
 
-  Future<void> _pickImage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+  @override
+  void initState() {
+    super.initState();
+    _fetchRumahOptions();
+  }
+
+  Future<void> _fetchRumahOptions() async {
+    final data = await _dataWargaRumahService.getRumahOptions();
+    if (mounted) {
       setState(() {
-        _fotoIdentitas = File(pickedFile.path);
+        _rumahList = data;
       });
     }
   }
 
-  // Method to handle registration
+  @override
+  void dispose() {
+    _namaController.dispose();
+    _nikController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _alamatController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _showPickerOptions({
+    required VoidCallback onGallery,
+    required VoidCallback onCamera,
+  }) async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galeri'),
+              onTap: () {
+                Navigator.pop(context);
+                onGallery();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Kamera'),
+              onTap: () {
+                Navigator.pop(context);
+                onCamera();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickProfileImage() async {
+    await _showPickerOptions(
+      onGallery: () async {
+        try {
+          final picked = await _picker.pickImage(
+            source: ImageSource.gallery,
+            imageQuality: 70,
+            maxWidth: 1024,
+          );
+          if (picked != null) {
+            setState(() => _fotoProfil = File(picked.path));
+          }
+        } catch (e) {
+          debugPrint("Gallery error: $e");
+        }
+      },
+      onCamera: () async {
+        try {
+          final picked = await _picker.pickImage(
+            source: ImageSource.camera,
+            imageQuality: 70,
+            maxWidth: 1024,
+          );
+          if (picked != null) {
+            setState(() => _fotoProfil = File(picked.path));
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kamera tidak tersedia')),
+          );
+        }
+      },
+    );
+  }
+
+  Future<void> _pickKtpImage() async {
+    await _showPickerOptions(
+      onGallery: () async {
+        try {
+          final picked = await _picker.pickImage(
+            source: ImageSource.gallery,
+            imageQuality: 90, 
+            maxWidth: 2048,
+          );
+          if (picked != null) {
+            setState(() => _fotoKtp = File(picked.path));
+          }
+        } catch (e) {
+          debugPrint("Gallery error: $e");
+        }
+      },
+      onCamera: () async {
+        try {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const KtpCameraPage()),
+          );
+          if (result != null && result is File) {
+            setState(() => _fotoKtp = result);
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Gagal membuka kamera custom")),
+          );
+        }
+      },
+    );
+  }
+
   void _handleRegister() async {
     if (_formKey.currentState!.validate()) {
-      // Check if passwords match
       if (_passwordController.text != _confirmPasswordController.text) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Password tidak cocok!')),
@@ -49,11 +179,14 @@ class _RegisterSectionState extends State<RegisterSection> {
         return;
       }
 
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
-      bool success = await _authService.register(
+      // Logic: Manual Address takes priority over Dropdown if both somehow exist,
+      // but our UI logic ensures they are mutually exclusive.
+      String? finalAlamat = _alamatController.text.isNotEmpty ? _alamatController.text : null;
+      int? finalRumahId = (finalAlamat == null) ? _selectedRumahId : null;
+
+      String? errorMessage = await _authService.register(
         name: _namaController.text,
         nik: _nikController.text,
         email: _emailController.text,
@@ -61,36 +194,25 @@ class _RegisterSectionState extends State<RegisterSection> {
         password: _passwordController.text,
         passwordConfirmation: _confirmPasswordController.text,
         jenisKelamin: _jenisKelamin!,
-        fotoIdentitas: _fotoIdentitas,
+        rumahId: finalRumahId,
+        alamat: finalAlamat,
+        fotoProfil: _fotoProfil,
+        fotoKtp: _fotoKtp,
       );
 
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
 
-      if (success) {
+      if (errorMessage == null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Pendaftaran berhasil! Menunggu persetujuan admin.')),
         );
-        Navigator.pop(context); // Go back to login
-      } else {
+        Navigator.pop(context);
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pendaftaran gagal. Periksa kembali data Anda.')),
+          SnackBar(content: Text(errorMessage ?? 'Terjadi kesalahan')),
         );
       }
     }
-  }
-
-  @override
-  void dispose() {
-    // Dispose controllers
-    _namaController.dispose();
-    _nikController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
   }
 
   @override
@@ -128,73 +250,159 @@ class _RegisterSectionState extends State<RegisterSection> {
               ),
               const SizedBox(height: 16),
               _buildTextField(
-                controller: _emailController, 
+                controller: _emailController,
                 label: 'Email',
                 hint: 'Masukkan email aktif',
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
               _buildTextField(
-                controller: _phoneController, 
+                controller: _phoneController,
                 label: 'No Telepon',
                 hint: '08xxxxxxxxxx',
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 16),
               _buildTextField(
-                controller: _passwordController, 
+                controller: _passwordController,
                 label: 'Password',
                 hint: 'Masukkan password',
-                obscureText: true,
+                obscureText: _obscurePassword,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Mohon isi kolom ini';
+                  if (v.length < 4) return 'Password minimal 4 karakter';
+                  return null;
+                },
+                suffixIcon: IconButton(
+                  icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                ),
               ),
               const SizedBox(height: 16),
               _buildTextField(
-                controller: _confirmPasswordController, 
+                controller: _confirmPasswordController,
                 label: 'Konfirmasi Password',
                 hint: 'Masukkan ulang password',
-                obscureText: true,
+                obscureText: _obscureConfirmPassword,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Mohon isi kolom ini';
+                  if (v != _passwordController.text) return 'Password tidak sama';
+                  return null;
+                },
+                suffixIcon: IconButton(
+                  icon: Icon(_obscureConfirmPassword ? Icons.visibility : Icons.visibility_off),
+                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                ),
               ),
               const SizedBox(height: 16),
-              _buildDropdownField(
+              
+              _buildDropdownField<String>(
                 label: 'Jenis Kelamin',
                 hint: '-- Pilih Jenis Kelamin --',
-                items: ['Laki-laki', 'Perempuan'],
-                value: _jenisKelamin, // Add value
-                onChanged: (val) { // Add onChanged
+                items: ['Laki-laki', 'Perempuan'].map((e) => 
+                  DropdownMenuItem(value: e, child: Text(e))
+                ).toList(),
+                value: _jenisKelamin,
+                onChanged: (val) => setState(() => _jenisKelamin = val),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // --- House Selection Logic ---
+              // UPDATED: Shows Clear button if selected
+              _buildDropdownField<int>(
+                label: 'Pilih Rumah yang Sudah Ada',
+                hint: _rumahList.isEmpty ? 'Memuat data...' : '-- Pilih Rumah --',
+                items: _rumahList.map<DropdownMenuItem<int>>((item) {
+                  return DropdownMenuItem<int>(
+                    value: item['id'],
+                    child: Text(item['alamat'] ?? 'Rumah #${item['id']}'),
+                  );
+                }).toList(),
+                value: _selectedRumahId,
+                onChanged: (val) {
                   setState(() {
-                    _jenisKelamin = val;
+                     _selectedRumahId = val;
+                     // STRICT LOGIC: If House Selected -> Clear Manual Address
+                     if(val != null) {
+                       _alamatController.clear();
+                     }
                   });
                 },
+                validator: (val) => null, 
+                suffixIcon: _selectedRumahId != null 
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: Colors.grey),
+                      onPressed: () {
+                        setState(() => _selectedRumahId = null);
+                      },
+                    )
+                  : null,
               ),
-              const SizedBox(height: 16),
-              _buildDropdownField(
-                label: 'Pilih Rumah yang Sudah Ada',
-                hint: '-- Pilih Rumah --',
-                items: ['Rumah A', 'Rumah B'],
-                onChanged: (val) {}, // Not implemented in backend yet
-                validator: null, 
-              ),
-              const SizedBox(height: 16),
+              
+              const SizedBox(height: 8),
+              const Center(child: Text('--- ATAU ---', style: TextStyle(color: Colors.grey))),
+              const SizedBox(height: 8),
+              
+              // UPDATED: Shows Clear button if typing
               _buildTextField(
-                label: 'Alamat Rumah (Jika Tidak Ada di List)',
+                controller: _alamatController,
+                label: 'Masukkan Alamat Baru (Jika tidak ada di list)',
                 hint: 'Blok 5A / No. 10',
-                validator: null, 
+                validator: (val) => null,
+                onChanged: (val) {
+                  // STRICT LOGIC: If Manual Address Typed -> Clear Selected House
+                  if(val.isNotEmpty && _selectedRumahId != null) {
+                    setState(() => _selectedRumahId = null);
+                  }
+                },
+                suffixIcon: _alamatController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: Colors.grey),
+                      onPressed: () {
+                        setState(() {
+                          _alamatController.clear();
+                          // When cleared, we can optionally reset focus or state, 
+                          // but the main requirement is just to clear the text.
+                        });
+                      },
+                    )
+                  : null,
               ),
+              
               const SizedBox(height: 16),
-              _buildDropdownField(
+              _buildDropdownField<String>(
                 label: 'Status kepemilikan rumah',
                 hint: '-- Pilih Status --',
-                items: ['Milik Sendiri', 'Sewa'],
-                onChanged: (val) {}, // Not implemented in backend yet
-                validator: null, 
+                items: ['Milik Sendiri', 'Sewa', 'Kos', 'Kontrak'].map((e) => 
+                   DropdownMenuItem(value: e, child: Text(e))
+                ).toList(),
+                value: _statusKepemilikan,
+                onChanged: (val) => setState(() => _statusKepemilikan = val),
+                validator: (val) => null,
+              ),
+              
+              const SizedBox(height: 16),
+
+              _buildFileUploadField(
+                label: 'Foto Profil (Opsional)',
+                file: _fotoProfil,
+                onTap: _pickProfileImage,
+                hint: 'Upload foto profil (.png/.jpg)',
               ),
               const SizedBox(height: 16),
-              _buildFileUploadField(label: 'Foto Identitas'),
+
+              _buildFileUploadField(
+                label: 'Foto Identitas (KTP/KK) (Opsional)',
+                file: _fotoKtp,
+                onTap: _pickKtpImage,
+                hint: 'Upload foto KTP/KK (.png/.jpg)',
+              ),
 
               const SizedBox(height: 32),
 
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleRegister, 
+                onPressed: _isLoading ? null : _handleRegister,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   minimumSize: const Size.fromHeight(50),
@@ -211,7 +419,7 @@ class _RegisterSectionState extends State<RegisterSection> {
               ),
 
               const SizedBox(height: 24),
-               Center(
+              Center(
                 child: RichText(
                   text: TextSpan(
                     style: const TextStyle(color: Colors.black, fontSize: 14),
@@ -242,10 +450,13 @@ class _RegisterSectionState extends State<RegisterSection> {
   Widget _buildTextField({
     required String label,
     required String hint,
-    TextEditingController? controller, // Add controller
+    TextEditingController? controller,
     TextInputType? keyboardType,
     bool obscureText = false,
-    String? Function(String?)? validator, // Make validator optional
+    Widget? suffixIcon,
+    String? Function(String?)? validator,
+    IconData? icon,
+    void Function(String)? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,18 +464,21 @@ class _RegisterSectionState extends State<RegisterSection> {
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextFormField(
-          controller: controller, // Assign controller
+          controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
+            prefixIcon: icon != null ? Icon(icon, color: Colors.grey) : null,
+            suffixIcon: suffixIcon,
             border: const OutlineInputBorder(),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 12,
             ),
           ),
-          validator: validator ?? // Use provided validator or default
+          validator: validator ??
               (value) {
                 if (value == null || value.isEmpty) {
                   return 'Mohon isi kolom ini';
@@ -276,50 +490,49 @@ class _RegisterSectionState extends State<RegisterSection> {
     );
   }
 
-  Widget _buildDropdownField({
+  Widget _buildDropdownField<T>({
     required String label,
     required String hint,
-    required List<String> items,
-    String? value, // Add value
-    void Function(String?)? onChanged, // Add onChanged
-    String? Function(String?)? validator, // Make validator optional
+    required List<DropdownMenuItem<T>> items,
+    T? value,
+    void Function(T?)? onChanged,
+    String? Function(T?)? validator,
+    Widget? suffixIcon, // Added suffixIcon support
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
+        DropdownButtonFormField<T>(
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            suffixIcon: suffixIcon, // Use suffixIcon here
           ),
-          value: value, // Assign value
+          value: value,
           hint: Text(hint),
-          onChanged: onChanged, // Assign onChanged
-          items: items.map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(value: value, child: Text(value));
-          }).toList(),
-          validator: validator ?? // Use provided validator or default
-              (value) {
-                if (value == null) {
-                  return 'Mohon pilih salah satu';
-                }
-                return null;
-              },
+          onChanged: onChanged,
+          items: items,
+          validator: validator,
         ),
       ],
     );
   }
 
-  Widget _buildFileUploadField({required String label}) {
+  Widget _buildFileUploadField({
+    required String label,
+    required File? file,
+    required VoidCallback onTap,
+    required String hint,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         GestureDetector(
-          onTap: _pickImage,
+          onTap: onTap,
           child: Container(
             height: 120,
             width: double.infinity,
@@ -331,11 +544,11 @@ class _RegisterSectionState extends State<RegisterSection> {
                 style: BorderStyle.solid,
               ),
             ),
-            child: _fotoIdentitas != null 
+            child: file != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(8.0),
                     child: Image.file(
-                      _fotoIdentitas!,
+                      file,
                       fit: BoxFit.cover,
                     ),
                   )
@@ -349,7 +562,7 @@ class _RegisterSectionState extends State<RegisterSection> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Upload foto KK/KTP (.png/.jpg)',
+                        hint,
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                     ],

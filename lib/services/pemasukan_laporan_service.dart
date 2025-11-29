@@ -1,0 +1,78 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:jawarapbl/services/auth_services.dart';
+import 'package:jawarapbl/shared/models/api_pemasukan_lain_model.dart';
+import 'package:jawarapbl/shared/models/api_tagihan_model.dart';
+import 'package:jawarapbl/modules/laporan-keuangan/models/semuapemasukan_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class PemasukanLaporanService {
+  final AuthService _authService = AuthService();
+  String get baseUrl => _authService.baseUrl;
+
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  Future<Map<String, String>> getAuthHeaders() async {
+    final token = await _getToken();
+    return {
+      'Authorization': 'Bearer $token',
+      'Accept': 'application/json',
+    };
+  }
+
+  Future<List<PemasukanModel>> getLaporanPemasukan() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/pemasukan'),
+      headers: await getAuthHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body);
+
+      final List tagihanData = body['tagihan'] ?? [];
+      final List pemasukanLainData = body['pemasukanLain'] ?? [];
+
+      List<PemasukanModel> combinedList = [];
+
+      for (var item in tagihanData) {
+        final apiItem = ApiTagihan.fromJson(item);
+
+        final String dateString = apiItem.dueDate ?? apiItem.createdAt;
+        final DateTime tanggal = DateTime.parse(dateString);
+
+        combinedList.add(PemasukanModel(
+          no: apiItem.id,
+          nama: 'Iuran Warga - ${apiItem.periode}',
+          jenisPemasukan: 'Iuran Warga',
+          tanggal: DateFormat('dd/MM/yyyy').format(tanggal),
+          nominal: double.tryParse(apiItem.nominal) ?? 0.0,
+          tanggalSort: tanggal,
+        ));
+      }
+
+      for (var item in pemasukanLainData) {
+        final apiItem = ApiPemasukanLain.fromJson(item);
+        final DateTime tanggal = DateTime.parse(apiItem.tanggal);
+
+        combinedList.add(PemasukanModel(
+          no: apiItem.id,
+          nama: apiItem.name,
+          jenisPemasukan: apiItem.jenis,
+          tanggal: DateFormat('dd/MM/yyyy').format(tanggal),
+          nominal: double.tryParse(apiItem.nominal) ?? 0.0,
+          tanggalSort: tanggal,
+        ));
+      }
+
+      combinedList.sort((a, b) => b.tanggalSort.compareTo(a.tanggalSort));
+
+      return combinedList;
+    } else {
+      throw Exception('Gagal memuat data pemasukan laporan');
+    }
+  }
+}

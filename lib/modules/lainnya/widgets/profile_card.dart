@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 class ProfileCard extends StatelessWidget {
   final String name;
   final String email;
-  final String? imageUrl; 
+  final String? imageUrl;
 
   const ProfileCard({
     super.key,
     required this.name,
     required this.email,
-    this.imageUrl, 
+    this.imageUrl,
   });
 
   @override
@@ -35,9 +35,10 @@ class ProfileCard extends StatelessWidget {
                         width: 60,
                         height: 60,
                         loadingBuilder: (context, child, progress) {
-                          return progress == null
-                              ? child
-                              : const CircularProgressIndicator();
+                          if (progress == null) {
+                            return child;
+                          }
+                          return const CircularProgressIndicator();
                         },
                         errorBuilder: (context, error, stackTrace) {
                           return Icon(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:jawarapbl/modules/manajemen-pengguna/pages/tambah_pengguna_page.dart';
 import 'package:jawarapbl/modules/manajemen-pengguna/pages/edit_pengguna_page.dart';
 import 'package:jawarapbl/modules/manajemen-pengguna/widgets/pengguna_card.dart';
 import 'package:jawarapbl/services/user_management_service.dart';
@@ -88,24 +87,6 @@ class _DaftarPenggunaContentState extends State<DaftarPenggunaContent> {
                     color: Colors.deepPurple,
                   ),
                   overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const TambahPenggunaPage(),
-                    ),
-                  ).then((_) => _refreshUsers());
-                },
-                icon: const Icon(Icons.add),
-                label: const Text("Tambah"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ],

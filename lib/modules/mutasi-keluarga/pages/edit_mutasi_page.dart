@@ -167,7 +167,7 @@ class _EditMutasiPageState extends State<EditMutasiPage> {
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        value: _keluargaList.any((k) => k.id == _selectedKeluarga.id)
+        initialValue: _keluargaList.any((k) => k.id == _selectedKeluarga.id)
             ? _keluargaList.firstWhere((k) => k.id == _selectedKeluarga.id)
             : (_keluargaList.isNotEmpty ? _keluargaList.first : null),
         isExpanded: true,
@@ -212,7 +212,7 @@ class _EditMutasiPageState extends State<EditMutasiPage> {
           labelText: 'Jenis Mutasi',
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        value: _selectedJenisMutasi,
+        initialValue: _selectedJenisMutasi,
         items: _jenisMutasiOptions.map((jenis) {
           return DropdownMenuItem(value: jenis, child: Text(jenis));
         }).toList(),

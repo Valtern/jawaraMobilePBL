@@ -1,221 +1,171 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
+import 'package:jawarapbl/services/dashboard_service.dart';
 
-class KeuanganDashboardContent extends StatelessWidget {
+class KeuanganDashboardContent extends StatefulWidget {
   const KeuanganDashboardContent({super.key});
 
   @override
+  State<KeuanganDashboardContent> createState() =>
+      _KeuanganDashboardContentState();
+}
+
+class _KeuanganDashboardContentState extends State<KeuanganDashboardContent> {
+  final DashboardService _service = DashboardService();
+  late Future<Map<String, dynamic>> _statsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _statsFuture = _service.getDashboardStats();
+  }
+
+  String formatRupiah(dynamic value) {
+    double numValue = 0;
+    if (value is String) {
+      numValue = double.tryParse(value) ?? 0;
+    } else if (value is num) {
+      numValue = value.toDouble();
+    }
+    
+    final formatCurrency = NumberFormat.currency(
+        locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    return formatCurrency.format(numValue);
+  }
+
+  // Helper to safely convert API list data to List<double>
+  List<double> _parseChartData(List<dynamic>? data) {
+    if (data == null) return List.filled(12, 0.0);
+    return data.map((e) {
+      if (e is String) {
+        return double.tryParse(e) ?? 0.0;
+      } else if (e is num) {
+        return e.toDouble();
+      }
+      return 0.0;
+    }).toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInfoCards(),
-          const SizedBox(height: 24),
-          _buildCharts(),
-        ],
-      ),
-    );
-  }
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _statsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text("Gagal memuat data: ${snapshot.error}"));
+        }
 
-  Widget _buildInfoCards() {
-    return const Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: InfoCard(
-            title: 'Total Pemasukan',
-            value: 'Rp 15.750.000',
-            icon: Icons.arrow_downward,
-            color: Colors.blue,
-          ),
-        ),
-        SizedBox(width: 16),
-        Expanded(
-          child: InfoCard(
-            title: 'Total Pengeluaran',
-            value: 'Rp 4.280.000',
-            icon: Icons.arrow_upward,
-            color: Colors.green,
-          ),
-        ),
-        SizedBox(width: 16),
-        Expanded(
-          child: InfoCard(
-            title: 'Jumlah Transaksi',
-            value: '128',
-            icon: Icons.swap_horiz,
-            color: Colors.orange,
-          ),
-        ),
-      ],
-    );
-  }
+        final data = snapshot.data?['keuangan'] ?? {};
+        
+        // Safe access to totals
+        final totalMasuk = data['total_pemasukan'] ?? 0;
+        final totalKeluar = data['total_pengeluaran'] ?? 0;
 
-  Widget _buildCharts() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: ChartCard(
-                title: 'Pemasukan per Bulan',
-                child: _buildBarChart(
-                  data: [8, 10, 14, 15],
-                  color: Colors.lightBlueAccent,
+        // SAFE PARSING LOGIC APPLIED HERE
+        final chartMasuk = _parseChartData(data['chart_pemasukan'] as List?);
+        final chartKeluar = _parseChartData(data['chart_pengeluaran'] as List?);
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Summary Cards
+              Row(
+                children: [
+                  Expanded(
+                      child: _buildInfoCard('Pemasukan',
+                          formatRupiah(totalMasuk), Icons.arrow_downward, Colors.blue)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                      child: _buildInfoCard('Pengeluaran',
+                          formatRupiah(totalKeluar), Icons.arrow_upward, Colors.red)),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Charts
+              SizedBox(
+                height: 200,
+                child: BarChart(
+                  BarChartData(
+                    gridData: FlGridData(show: false),
+                    titlesData: FlTitlesData(
+                      leftTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            const months = [
+                              'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+                            ];
+                            if (value.toInt() >= 0 && value.toInt() < 12) {
+                              return Text(months[value.toInt()],
+                                  style: const TextStyle(fontSize: 10));
+                            }
+                            return const Text('');
+                          },
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: List.generate(12, (index) {
+                      return BarChartGroupData(
+                        x: index,
+                        barRods: [
+                          BarChartRodData(
+                              toY: chartMasuk[index],
+                              color: Colors.blue,
+                              width: 6),
+                          BarChartRodData(
+                              toY: chartKeluar[index],
+                              color: Colors.red,
+                              width: 6),
+                        ],
+                      );
+                    }),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ChartCard(
-                title: 'Pengeluaran per Bulan',
-                child: _buildBarChart(
-                  data: [5, 7, 6, 8],
-                  color: Colors.redAccent,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: ChartCard(
-                title: 'Pemasukan Berdasarkan Kategori',
-                child: _buildPieChart(
-                  data: [
-                    {'value': 40.0, 'color': Colors.blue},
-                    {'value': 30.0, 'color': Colors.yellow},
-                    {'value': 15.0, 'color': Colors.pink},
-                    {'value': 15.0, 'color': Colors.green},
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ChartCard(
-                title: 'Pengeluaran Berdasarkan Kategori',
-                child: _buildPieChart(
-                  data: [
-                    {'value': 25.0, 'color': Colors.purple},
-                    {'value': 25.0, 'color': Colors.orange},
-                    {'value': 20.0, 'color': Colors.red},
-                    {'value': 30.0, 'color': Colors.teal},
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBarChart({required List<double> data, required Color color}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: data.map((value) {
-        return Flexible(
-          child: FractionallySizedBox(
-            heightFactor: value / 20,
-            child: Container(color: color),
+              const Center(
+                  child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text("Grafik Keuangan Tahun Ini",
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ))
+            ],
           ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildPieChart({required List<Map<String, dynamic>> data}) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: data.map((entry) {
-            return Flexible(
-              flex: (entry['value'] as double).toInt(),
-              child: Container(height: 20, color: entry['color'] as Color),
-            );
-          }).toList(),
         );
       },
     );
   }
-}
 
-class InfoCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const InfoCard({
-    super.key,
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildInfoCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(title, style: TextStyle(color: color)),
-              ),
-              Icon(icon, color: color),
-            ],
-          ),
+          Icon(icon, color: color),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ChartCard extends StatelessWidget {
-  final String title;
-  final Widget child;
-
-  const ChartCard({super.key, required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 300,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          Expanded(child: child),
+          Text(title, style: TextStyle(color: color)),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold, color: color)),
         ],
       ),
     );

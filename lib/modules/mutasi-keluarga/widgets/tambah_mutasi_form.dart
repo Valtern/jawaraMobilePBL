@@ -151,7 +151,7 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
         hint: const Text('Pilih keluarga'),
-        value: _keluargaList.any((k) => _selectedKeluarga?.id == k.id)
+        initialValue: _keluargaList.any((k) => _selectedKeluarga?.id == k.id)
             ? _selectedKeluarga
             : null,
         isExpanded: true,

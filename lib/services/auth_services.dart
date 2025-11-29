@@ -3,16 +3,24 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jawarapbl/shared/models/user_model.dart';
+import 'package:jawarapbl/modules/penerimaan-warga/models/penerimaanwarga_model.dart';
 
 class AuthService {
-  // change to your local ipv4 address and the port to any unused port
-  String get baseUrl => 'http://192.168.1.8:8000/api';
-  String get storageUrl => 'http://192.168.1.8:8000/storage';
+  String url = 'http://192.168.1.14:8000';
 
   // this one is the domain im running with localtunnel, change it accordingly if you made changes to the api.
-  // simply comment below and uncomment the above to run on local network
-  // String get baseUrl => 'https://jawara-api.loca.lt/api';
-  // String get storageUrl => 'https://jawara-api.loca.lt/storage';
+  String get baseUrl => '$url/api';
+  String get storageUrl => '$url/storage';
+
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  Future<String?> getRole() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('role');
+  }
 
   Future<String?> login(String email, String password) async {
     try {
@@ -21,7 +29,7 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'bypass-tunnel-reminder': 'true'
+          'bypass-tunnel-reminder': 'true',
         },
         body: jsonEncode({'email': email, 'password': password}),
       );
@@ -38,12 +46,12 @@ class AuthService {
         return null;
       }
     } catch (e) {
-      print(e.toString());
       return null;
     }
   }
 
-  Future<bool> register({
+  // --- MODIFIED: Added rumahId and alamat parameters ---
+  Future<String?> register({
     required String name,
     required String nik,
     required String email,
@@ -51,7 +59,10 @@ class AuthService {
     required String password,
     required String passwordConfirmation,
     required String jenisKelamin,
-    required File? fotoIdentitas,
+    int? rumahId, // Added
+    String? alamat, // Added
+    required File? fotoProfil,
+    required File? fotoKtp,
   }) async {
     try {
       var uri = Uri.parse('$baseUrl/register');
@@ -67,28 +78,166 @@ class AuthService {
       request.fields['password_confirmation'] = passwordConfirmation;
       request.fields['jenis_kelamin'] = jenisKelamin;
 
-      // Add file
-      if (fotoIdentitas != null) {
+      // --- ADDED LOGIC ---
+      if (rumahId != null) {
+        request.fields['rumah_id'] = rumahId.toString();
+      }
+      if (alamat != null && alamat.isNotEmpty) {
+        request.fields['alamat'] = alamat;
+      }
+      // -------------------
+
+      // Add profile picture file (optional)
+      if (fotoProfil != null) {
         request.files.add(
-          await http.MultipartFile.fromPath(
-            'foto_identitas',
-            fotoIdentitas.path,
-          ),
+          await http.MultipartFile.fromPath('foto_identitas', fotoProfil.path),
+        );
+      }
+
+      // Add KTP file (optional)
+      if (fotoKtp != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('foto_ktp', fotoKtp.path),
         );
       }
 
       var response = await request.send();
+      final respStr = await response.stream.bytesToString();
 
       if (response.statusCode == 201) {
-        return true;
+        return null;
+      } else if (response.statusCode == 422) {
+        final errors = jsonDecode(respStr) as Map<String, dynamic>;
+
+        // Handle Laravel validation error structure
+        if (errors.containsKey('errors')) {
+          final validationErrors = errors['errors'] as Map<String, dynamic>;
+          final firstErrorKey = validationErrors.keys.first;
+          final firstErrorMessage =
+              (validationErrors[firstErrorKey] as List).first;
+          return firstErrorMessage;
+        }
+
+        // Fallback if structure is different
+        final firstErrorKey = errors.keys.first;
+        if (errors[firstErrorKey] is List) {
+          return (errors[firstErrorKey] as List).first;
+        }
+        return 'Data tidak valid.';
       } else {
-        final respStr = await response.stream.bytesToString();
-        print(respStr);
-        return false;
+        return 'Pendaftaran gagal. Terjadi kesalahan server.';
       }
     } catch (e) {
-      print(e.toString());
-      return false;
+      return 'Pendaftaran gagal. Periksa koneksi internet Anda.';
+    }
+  }
+
+  Future<String?> updateProfile({
+    required String name,
+    required String phone,
+    required String? tempatLahir,
+    required DateTime? tanggalLahir,
+    required String? jenisKelamin,
+    required String? agama,
+    required String? statusPerkawinan,
+    required String? pekerjaan,
+    required File? fotoProfil,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) {
+        return 'Anda tidak login.';
+      }
+
+      var uri = Uri.parse('$baseUrl/profile/update');
+      var request = http.MultipartRequest('POST', uri)
+        ..headers['Accept'] = 'application/json'
+        ..headers['Authorization'] = 'Bearer $token';
+
+      request.fields['name'] = name;
+      request.fields['phone'] = phone;
+      if (tempatLahir != null) request.fields['tempat_lahir'] = tempatLahir;
+      if (tanggalLahir != null) {
+        request.fields['tanggal_lahir'] = tanggalLahir
+            .toIso8601String()
+            .split('T')
+            .first; // Format as YYYY-MM-DD
+      }
+      if (jenisKelamin != null) request.fields['jenis_kelamin'] = jenisKelamin;
+      if (agama != null) request.fields['agama'] = agama;
+      if (statusPerkawinan != null) {
+        request.fields['status_perkawinan'] = statusPerkawinan;
+      }
+      if (pekerjaan != null) request.fields['pekerjaan'] = pekerjaan;
+
+      // Add profile picture file (optional)
+      if (fotoProfil != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('foto_identitas', fotoProfil.path),
+        );
+      }
+
+      var response = await request.send();
+      final respStr = await response.stream.bytesToString(); // Read response
+
+      if (response.statusCode == 200) {
+        return null; // Success
+      } else if (response.statusCode == 422) {
+        // Validation Error
+        final errors = jsonDecode(respStr) as Map<String, dynamic>;
+        final firstErrorKey = errors.keys.first;
+        final firstErrorMessage = (errors[firstErrorKey] as List).first;
+        return firstErrorMessage;
+      } else {
+        return 'Update gagal. Terjadi kesalahan server.';
+      }
+    } catch (e) {
+      return 'Update gagal. Periksa koneksi internet Anda.';
+    }
+  }
+
+  Future<String?> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) {
+        return 'Anda tidak login.';
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/profile/change-password'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'old_password': oldPassword,
+          'new_password': newPassword,
+          'new_password_confirmation': newPasswordConfirmation,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return null; // Success
+      } else if (response.statusCode == 422) {
+        // Validation Error
+        final errors = data as Map<String, dynamic>;
+        final firstErrorKey = errors.keys.first;
+        final firstErrorMessage = (errors[firstErrorKey] as List).first;
+        return firstErrorMessage;
+      } else {
+        return data['message'] ?? 'Gagal mengubah password.';
+      }
+    } catch (e) {
+      return 'Update gagal. Periksa koneksi internet Anda.';
     }
   }
 
@@ -111,13 +260,181 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return User.fromJson(data); // Parse and return the User
+        return User.fromJson(data);
       } else {
-        return null; // Failed to fetch
+        return null;
       }
     } catch (e) {
-      print(e.toString());
       return null;
+    }
+  }
+
+  Future<bool> logout() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token != null) {
+        try {
+          final response = await http.post(
+            Uri.parse('$baseUrl/logout'),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+              'bypass-tunnel-reminder': 'true',
+            },
+          );
+
+          // Log the response for debugging
+          if (response.statusCode != 200) {
+            // non-200 response intentionally ignored
+          }
+        } catch (e) {
+          // server logout failure intentionally ignored
+        }
+      }
+
+      await prefs.remove('token');
+      await prefs.remove('role');
+
+      return true;
+    } catch (e) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('token');
+        await prefs.remove('role');
+      } catch (_) {}
+      return false;
+    }
+  }
+
+  // Penerimaan Warga API Methods
+  Future<List<PenerimaanWarga>> getPenerimaanWarga() async {
+    try {
+      final token = await getToken();
+      final response = await http.get(
+        Uri.parse('$baseUrl/penerimaan-warga'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((item) => PenerimaanWarga.fromJson(item)).toList();
+      } else {
+        throw Exception('Gagal memuat data: ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<bool> updateStatusPenerimaan(int id, String status) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/penerimaan-warga/$id/status'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'status_registrasi': status}),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updatePenerimaan(int id, Map<String, dynamic> body) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception("Not authenticated");
+      }
+
+      final response = await http.put(
+        Uri.parse("$baseUrl/penerimaan-warga/$id"),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(body),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> deletePenerimaan(int id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final response = await http.delete(
+        Uri.parse('$baseUrl/penerimaan-warga/$id'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> logoutAllDevices() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        return false;
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/logout-all'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'bypass-tunnel-reminder': 'true',
+        },
+      );
+
+      // Clear local storage
+      await prefs.remove('token');
+      await prefs.remove('role');
+
+      return response.statusCode == 200;
+    } catch (e) {
+      // Still clear local storage
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('token');
+        await prefs.remove('role');
+      } catch (_) {}
+      return false;
     }
   }
 }
