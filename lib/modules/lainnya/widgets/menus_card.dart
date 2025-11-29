@@ -28,7 +28,6 @@ class _MenusCardState extends State<MenusCard> {
   }
 
   bool _canAccess(List<String> allowedRoles) {
-    // If role is not loaded yet, hide everything except 'all' (optional)
     if (_role == null) return false;
     if (allowedRoles.contains('all')) return true;
     return allowedRoles.contains(_role);
@@ -36,13 +35,11 @@ class _MenusCardState extends State<MenusCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Define roles for cleaner usage
     const admin = 'admin';
     const rw = 'rw';           
     const rt = 'rt';           
     const bendahara = 'bendahara';
     const sekretaris = 'sekretaris';
-    // Warga is implicit as basic user, usually only sees 'all' items or specific 'warga' items
 
     final List<Map<String, dynamic>> menuConfiguration = [
       {
@@ -71,7 +68,7 @@ class _MenusCardState extends State<MenusCard> {
         ),
       },
       {
-        'roles': [admin, rw, rt, sekretaris],
+        'roles': ['all'],
         'widget': ListTile(
           leading: const Icon(Icons.calendar_month),
           title: const Text('Kegiatan & Broadcast'),
@@ -160,7 +157,6 @@ class _MenusCardState extends State<MenusCard> {
       },
     ];
 
-    // Filter menu items based on role
     final List<Widget> visibleMenuItems = menuConfiguration
         .where((item) => _canAccess(item['roles'] as List<String>))
         .map((item) => item['widget'] as Widget)

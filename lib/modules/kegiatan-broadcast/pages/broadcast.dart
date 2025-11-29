@@ -3,6 +3,7 @@ import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
 import 'package:jawarapbl/services/kegiatanBroadcast_service.dart';
+import 'package:jawarapbl/services/auth_services.dart';
 
 class BroadcastListView extends StatefulWidget {
   const BroadcastListView({super.key});
@@ -13,7 +14,24 @@ class BroadcastListView extends StatefulWidget {
 
 class _BroadcastListViewState extends State<BroadcastListView> {
   final KegiatanBroadcastService _service = KegiatanBroadcastService();
+  final AuthService _authService = AuthService();
+  String? _role;
   String? _filterJudul;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+  Future<void> _loadUserRole() async {
+    final role = await _authService.getRole();
+    if (mounted) {
+      setState(() {
+        _role = role;
+      });
+    }
+  }
 
   void _showAddBroadcastSheet(BuildContext context) {
     showModalBottomSheet(
@@ -141,6 +159,8 @@ class _BroadcastListViewState extends State<BroadcastListView> {
 
   @override
   Widget build(BuildContext context) {
+    final bool canAdd = ['admin', 'rw', 'rt'].contains(_role);
+
     return Stack(
       children: [
         Column(
@@ -291,16 +311,17 @@ class _BroadcastListViewState extends State<BroadcastListView> {
             ),
           ],
         ),
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: FloatingActionButton(
-            heroTag: 'add-broadcast',
-            backgroundColor: Colors.deepPurple,
-            onPressed: () => _showAddBroadcastSheet(context),
-            child: const Icon(Icons.add, color: Colors.white),
+        if (canAdd)
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: FloatingActionButton(
+              heroTag: 'add-broadcast',
+              backgroundColor: Colors.deepPurple,
+              onPressed: () => _showAddBroadcastSheet(context),
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
           ),
-        ),
       ],
     );
   }

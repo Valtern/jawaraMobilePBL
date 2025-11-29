@@ -49,33 +49,35 @@ class DaftarPengeluaranPageState extends State<DaftarPengeluaranPage> {
   void _onDelete(Pengeluaran item) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Hapus Pengeluaran'),
         content: Text('Anda yakin ingin menghapus "${item.nama}"?'),
         actions: [
           TextButton(
             child: const Text('Batal'),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
           ),
           TextButton(
             child: const Text('Hapus', style: TextStyle(color: Colors.red)),
             onPressed: () async {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
               final success =
                   await _service.deletePengeluaran(item.id.toString());
-              if (success && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Berhasil dihapus'),
-                      backgroundColor: Colors.green),
-                );
-                refreshData();
-              } else if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Gagal menghapus'),
-                      backgroundColor: Colors.red),
-                );
+              if (mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Berhasil dihapus'),
+                        backgroundColor: Colors.green),
+                  );
+                  refreshData();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Gagal menghapus'),
+                        backgroundColor: Colors.red),
+                  );
+                }
               }
             },
           ),
@@ -87,7 +89,6 @@ class DaftarPengeluaranPageState extends State<DaftarPengeluaranPage> {
   void _showFilterModal() {
     showModalBottomSheet(
       context: context,
-      // REMOVED: isScrollControlled
       builder: (BuildContext context) {
         return _FilterBottomSheet(
           initialFilters: _currentFilters,
@@ -196,7 +197,6 @@ class DaftarPengeluaranPageState extends State<DaftarPengeluaranPage> {
   }
 }
 
-// STATEFUL BOTTOM SHEET FOR FILTERS
 class _FilterBottomSheet extends StatefulWidget {
   final Map<String, String> initialFilters;
   final Function(Map<String, String>) onApply;
@@ -300,21 +300,18 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // MODIFIED: Updated styling to match reference code
     return Container(
       padding: const EdgeInsets.all(16),
       width: double.infinity,
       color: Colors.white,
       child: Column(
-        spacing: 12, // MODIFIED: Using spacing instead of SizedBox
+        spacing: 12, 
         children: [
-          // MODIFIED: Using TextInput widget
           TextInput(
             label: 'Cari Nama Pengeluaran',
             prefixIcon: const Icon(Icons.search),
             controller: _namaController,
           ),
-          // MODIFIED: Using SelectInput widget
           SelectInput<String>(
             label: 'Jenis Pengeluaran',
             prefixIcon: const Icon(Icons.category),
@@ -331,7 +328,6 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
               });
             },
           ),
-          // Date pickers remain as TextFormField for tap functionality
           TextFormField(
             controller: _startDateController,
             readOnly: true,
@@ -372,8 +368,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
             contentPadding: EdgeInsets.zero,
             dense: true,
           ),
-          const Spacer(), // MODIFIED: Using Spacer instead of fixed height
-          // MODIFIED: Added icons to buttons
+          const Spacer(), 
           Row(
             children: [
               Expanded(
