@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle; // Add this import
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -27,9 +28,15 @@ class LaporanPdfGenerator {
         decimalDigits: 0,
       );
 
-      currentStep = 'Loading fonts';
-      final font = pw.Font.helvetica();
-      final boldFont = pw.Font.helveticaBold();
+      // --- CHANGE START: Load Local Fonts ---
+      // This prevents reliance on default font loaders and matches your app theme
+      currentStep = 'Loading assets';
+      final fontData = await rootBundle.load("assets/fonts/Poppins-Regular.ttf");
+      final fontBoldData = await rootBundle.load("assets/fonts/Poppins-Bold.ttf");
+      
+      final font = pw.Font.ttf(fontData);
+      final boldFont = pw.Font.ttf(fontBoldData);
+      // --- CHANGE END ---
 
       currentStep = 'Calculating total';
       double total = 0;
@@ -43,6 +50,11 @@ class LaporanPdfGenerator {
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
+          // Use the loaded fonts here
+          theme: pw.ThemeData.withFont(
+            base: font,
+            bold: boldFont,
+          ),
           build: (pw.Context context) {
             return [
               _buildHeader(
@@ -57,7 +69,6 @@ class LaporanPdfGenerator {
 
       currentStep = 'Generating PDF bytes';
       
-      // Show loading dialog NOW, right before the slow operation
       if (context.mounted) {
         showDialog(
           context: context,
@@ -90,6 +101,7 @@ class LaporanPdfGenerator {
         Navigator.of(context).pop();
       }
 
+      // Small delay to ensure dialog animation finishes
       await Future.delayed(const Duration(milliseconds: 200));
 
       currentStep = 'Opening print preview';
@@ -100,16 +112,12 @@ class LaporanPdfGenerator {
       
       currentStep = 'Complete';
       
-    } catch (e, stackTrace) {
-      // Close dialog if open
+    } catch (e) {
       if (context.mounted) {
         try {
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(); // Close loading dialog
         } catch (_) {}
         
-        await Future.delayed(const Duration(milliseconds: 100));
-        
-        // Show error with current step
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -122,9 +130,6 @@ class LaporanPdfGenerator {
                   Text('Failed at step: $currentStep'),
                   const SizedBox(height: 8),
                   Text('Error: $e'),
-                  const SizedBox(height: 8),
-                  const Text('Stack trace:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text('$stackTrace', style: const TextStyle(fontSize: 10)),
                 ],
               ),
             ),
@@ -177,6 +182,7 @@ class LaporanPdfGenerator {
     pw.Font boldFont,
     NumberFormat formatCurrency,
   ) {
+    
     final headers = [
       'Tanggal',
       'Nama Item',

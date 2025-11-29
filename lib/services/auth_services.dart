@@ -6,7 +6,7 @@ import 'package:jawarapbl/shared/models/user_model.dart';
 import 'package:jawarapbl/modules/penerimaan-warga/models/penerimaanwarga_model.dart';
 
 class AuthService {
-  String url = 'http://192.168.1.14:8000';
+  String url = 'https://jawara-api-group3.loca.lt';
 
   // this one is the domain im running with localtunnel, change it accordingly if you made changes to the api.
   String get baseUrl => '$url/api';
