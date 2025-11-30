@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 
 class KtpCameraPage extends StatefulWidget {
   const KtpCameraPage({super.key});
@@ -11,8 +12,9 @@ class KtpCameraPage extends StatefulWidget {
 
 class _KtpCameraPageState extends State<KtpCameraPage> {
   CameraController? _controller;
-  Future<void>? _initializeControllerFuture;
+  bool _isProcessing = false;
   bool _isCameraInitialized = false;
+  bool _isFlashOn = false; 
 
   @override
   void initState() {
@@ -21,16 +23,32 @@ class _KtpCameraPageState extends State<KtpCameraPage> {
   }
 
   Future<void> _initializeCamera() async {
+    final cameras = await availableCameras();
+    final backCamera = cameras.firstWhere(
+      (c) => c.lensDirection == CameraLensDirection.back,
+      orElse: () => cameras.first,
+    );
+
+    _controller = CameraController(
+      backCamera,
+      ResolutionPreset.high, 
+      enableAudio: false,
+    );
+
+    await _controller!.initialize();
+    
+    _toggleFlash(true);
+
+    if (mounted) setState(() => _isCameraInitialized = true);
+  }
+
+  Future<void> _toggleFlash(bool enable) async {
+    if (_controller == null) return;
     try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) return;
-      // REVERTED: 'max' is too large (10MB+). 'veryHigh' (1080p/4K) is stable for uploads and good for OCR.
-      _controller = CameraController(cameras.first, ResolutionPreset.veryHigh, enableAudio: false);
-      _initializeControllerFuture = _controller!.initialize();
-      await _initializeControllerFuture;
-      if (mounted) setState(() => _isCameraInitialized = true);
+      await _controller!.setFlashMode(enable ? FlashMode.torch : FlashMode.off);
+      if (mounted) setState(() => _isFlashOn = enable);
     } catch (e) {
-      debugPrint('Camera error: $e');
+      debugPrint("Flash error: $e");
     }
   }
 
@@ -40,13 +58,42 @@ class _KtpCameraPageState extends State<KtpCameraPage> {
     super.dispose();
   }
 
-  Future<void> _takePicture() async {
+  Future<void> _takePictureAndCrop() async {
+    if (_controller == null || _isProcessing) return;
+    setState(() => _isProcessing = true);
+
     try {
-      await _initializeControllerFuture;
-      final image = await _controller!.takePicture();
-      if (mounted) Navigator.pop(context, File(image.path));
+      final XFile rawImage = await _controller!.takePicture();
+      _toggleFlash(false); // Turn off after snap
+
+      final File imageFile = File(rawImage.path);
+      final bytes = await imageFile.readAsBytes();
+      img.Image? originalImage = img.decodeImage(bytes);
+      
+      if (originalImage != null) {
+        // Crop Center 85%
+        int cropW = (originalImage.width * 0.85).toInt();
+        int cropH = (cropW / 1.58).toInt();
+        
+        if (cropH > originalImage.height) {
+          cropH = (originalImage.height * 0.9).toInt();
+          cropW = (cropH * 1.58).toInt();
+        }
+
+        int offsetX = (originalImage.width - cropW) ~/ 2;
+        int offsetY = (originalImage.height - cropH) ~/ 2;
+
+        img.Image cropped = img.copyCrop(originalImage, x: offsetX, y: offsetY, width: cropW, height: cropH);
+        img.Image resized = img.copyResize(cropped, width: 1000);
+        
+        await imageFile.writeAsBytes(img.encodeJpg(resized, quality: 85));
+        
+        if (mounted) Navigator.pop(context, imageFile);
+      }
     } catch (e) {
-      debugPrint('Capture error: $e');
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error')));
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -54,44 +101,65 @@ class _KtpCameraPageState extends State<KtpCameraPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: !_isCameraInitialized
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                Center(child: CameraPreview(_controller!)),
-                Center(
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.85,
-                    height: (MediaQuery.of(context).size.width * 0.85) / 1.58,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      border: Border.all(color: Colors.white, width: 2.0),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Text('Sejajarkan KTP', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 30, left: 0, right: 0,
-                  child: Center(
-                    child: FloatingActionButton(
-                      onPressed: _takePicture,
-                      backgroundColor: Colors.white,
-                      child: const Icon(Icons.camera_alt, color: Colors.black),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 40, left: 16,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-              ],
+      body: Stack(
+        children: [
+          if (_isCameraInitialized) Center(child: CameraPreview(_controller!)),
+          if (_isCameraInitialized) _buildOverlay(context),
+          
+          // Flash Toggle Button (Top Right)
+          Positioned(
+            top: 50,
+            right: 20,
+            child: IconButton(
+              icon: Icon(_isFlashOn ? Icons.flash_on : Icons.flash_off, color: Colors.white, size: 30),
+              onPressed: () => _toggleFlash(!_isFlashOn),
             ),
+          ),
+
+          const Positioned(
+            top: 100,
+            left: 0, right: 0,
+            child: Text("Posisikan KTP di dalam kotak", 
+              textAlign: TextAlign.center, 
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)
+            ),
+          ),
+
+          if (_isProcessing)
+            Container(color: Colors.black54, child: const Center(child: CircularProgressIndicator(color: Colors.white))),
+
+          Positioned(
+            bottom: 40, left: 0, right: 0,
+            child: Center(
+              child: GestureDetector(
+                onTap: _takePictureAndCrop,
+                child: Container(
+                  width: 70, height: 70,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white, border: Border.all(color: Colors.grey, width: 4)),
+                  child: const Icon(Icons.camera_alt, size: 30, color: Colors.black),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildOverlay(BuildContext context) {
+    return LayoutBuilder(builder: (ctx, cons) {
+      final double boxWidth = cons.maxWidth * 0.85;
+      final double boxHeight = boxWidth / 1.58;
+      return Stack(children: [
+        ColorFiltered(
+          colorFilter: const ColorFilter.mode(Colors.black54, BlendMode.srcOut),
+          child: Stack(children: [
+            Container(decoration: const BoxDecoration(color: Colors.transparent, backgroundBlendMode: BlendMode.dstOut)),
+            Center(child: Container(width: boxWidth, height: boxHeight, decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(12)))),
+          ]),
+        ),
+        Center(child: Container(width: boxWidth, height: boxHeight, decoration: BoxDecoration(border: Border.all(color: Colors.white, width: 2), borderRadius: BorderRadius.circular(12))))
+      ]);
+    });
   }
 }

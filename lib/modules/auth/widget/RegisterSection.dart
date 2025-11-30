@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart'; 
 import 'package:jawarapbl/services/auth_services.dart';
 import 'package:jawarapbl/services/dataWargaRumah_service.dart';
 import 'package:jawarapbl/modules/auth/pages/ktp_camera_page.dart';
@@ -37,6 +40,7 @@ class _RegisterSectionState extends State<RegisterSection> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isScanningKTP = false;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -48,11 +52,7 @@ class _RegisterSectionState extends State<RegisterSection> {
 
   Future<void> _fetchRumahOptions() async {
     final data = await _dataWargaRumahService.getRumahOptions();
-    if (mounted) {
-      setState(() {
-        _rumahList = data;
-      });
-    }
+    if (mounted) setState(() => _rumahList = data);
   }
 
   @override
@@ -100,8 +100,8 @@ class _RegisterSectionState extends State<RegisterSection> {
       ),
     );
   }
-
-  Future<void> _pickProfileImage() async {
+  
+    Future<void> _pickProfileImage() async {
     await _showPickerOptions(
       onGallery: () async {
         try {
@@ -139,37 +139,66 @@ class _RegisterSectionState extends State<RegisterSection> {
   Future<void> _pickKtpImage() async {
     await _showPickerOptions(
       onGallery: () async {
-        try {
-          final picked = await _picker.pickImage(
-            source: ImageSource.gallery,
-            imageQuality: 90,
-            maxWidth: 2048,
-          );
-          if (picked != null) {
-            setState(() => _fotoKtp = File(picked.path));
-          }
-        } catch (e) {
-          debugPrint("Gallery error: $e");
+        final picked = await _picker.pickImage(source: ImageSource.gallery);
+        if (picked != null) {
+          File image = File(picked.path);
+          setState(() => _fotoKtp = image);
+          _performOCR(image);
         }
       },
       onCamera: () async {
-        try {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const KtpCameraPage()),
-          );
-          if (result != null && result is File) {
-            setState(() => _fotoKtp = result);
-          }
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Gagal membuka kamera custom")),
-          );
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const KtpCameraPage()),
+        );
+        if (result != null && result is File) {
+          setState(() => _fotoKtp = result);
+          _performOCR(result);
         }
       },
     );
   }
 
+  Future<void> _performOCR(File image) async {
+    setState(() => _isScanningKTP = true);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Memindai KTP... Mohon tunggu')),
+    );
+
+    final result = await _authService.scanKTP(image);
+
+    setState(() => _isScanningKTP = false);
+
+    if (result != null) {
+      if (result['nik'] != null) _nikController.text = result['nik'];
+      if (result['name'] != null) _namaController.text = result['name'];
+      if (result['gender'] != null) setState(() => _jenisKelamin = result['gender']);
+
+      if (result['face_image'] != null) {
+        try {
+          Uint8List bytes = base64Decode(result['face_image']);
+          final tempDir = await getTemporaryDirectory();
+          File file = await File('${tempDir.path}/profile_from_ktp.jpg').create();
+          file.writeAsBytesSync(bytes);
+          setState(() {
+            _fotoProfil = file; // Set the decoded face as profile picture
+          });
+        } catch (e) {
+          debugPrint("Error decoding face image: $e");
+        }
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data KTP berhasil dipindai!')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal membaca KTP. Silakan isi manual.')),
+      );
+    }
+  }
+  
   void _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       if (_passwordController.text != _confirmPasswordController.text) {
@@ -420,6 +449,11 @@ class _RegisterSectionState extends State<RegisterSection> {
                 onTap: _pickKtpImage,
                 hint: 'Upload foto KTP/KK (.png/.jpg)',
               ),
+                if (_isScanningKTP)
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: LinearProgressIndicator(),
+                  ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _isLoading ? null : _handleRegister,

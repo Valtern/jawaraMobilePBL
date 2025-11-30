@@ -6,7 +6,8 @@ import 'package:jawarapbl/shared/models/user_model.dart';
 import 'package:jawarapbl/modules/penerimaan-warga/models/penerimaanwarga_model.dart';
 
 class AuthService {
-  String url = 'https://settings-intended-cluster-betting.trycloudflare.com';
+  // Replace with your actual backend URL
+  String url = 'https://zum-working-cardiac-easter.trycloudflare.com';
 
   String get baseUrl => '$url/api';
   String get storageUrl => '$url/storage';
@@ -503,6 +504,27 @@ class AuthService {
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
       return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> scanKTP(File imageFile) async {
+    try {
+      var uri = Uri.parse('$baseUrl/ocr/ktp'); 
+      
+      var request = http.MultipartRequest('POST', uri)
+        ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+        
+      var response = await request.send();
+      final respStr = await response.stream.bytesToString();
+      final data = jsonDecode(respStr);
+
+      if (response.statusCode == 200 && data['status'] == 'success') {
+        return data['data']; 
+      }
+      return null;
+    } catch (e) {
+      print("OCR Error: $e");
+      return null;
     }
   }
 
