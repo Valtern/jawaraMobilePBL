@@ -7,7 +7,7 @@ import 'package:jawarapbl/modules/penerimaan-warga/models/penerimaanwarga_model.
 
 class AuthService {
   // Replace with your actual backend URL
-  String url = 'https://zum-working-cardiac-easter.trycloudflare.com';
+  String url = 'https://jacket-terrace-fate-mime.trycloudflare.com';
 
   String get baseUrl => '$url/api';
   String get storageUrl => '$url/storage';
@@ -230,8 +230,10 @@ class AuthService {
     }
   }
 
-  Future<String?> updateProfile({
+Future<String?> updateProfile({
     required String name,
+    required String email, 
+    required String nik,   
     required String phone,
     required String? tempatLahir,
     required DateTime? tanggalLahir,
@@ -244,9 +246,7 @@ class AuthService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
-      if (token == null) {
-        return 'Anda tidak login.';
-      }
+      if (token == null) return 'Anda tidak login.';
 
       var uri = Uri.parse('$baseUrl/profile/update');
       var request = http.MultipartRequest('POST', uri)
@@ -254,37 +254,37 @@ class AuthService {
         ..headers['Authorization'] = 'Bearer $token';
 
       request.fields['name'] = name;
+      request.fields['email'] = email; 
+      request.fields['nik'] = nik;     
       request.fields['phone'] = phone;
+      
       if (tempatLahir != null) request.fields['tempat_lahir'] = tempatLahir;
       if (tanggalLahir != null) {
-        request.fields['tanggal_lahir'] =
-            tanggalLahir.toIso8601String().split('T').first;
+        request.fields['tanggal_lahir'] = tanggalLahir.toIso8601String().split('T').first;
       }
       if (jenisKelamin != null) request.fields['jenis_kelamin'] = jenisKelamin;
       if (agama != null) request.fields['agama'] = agama;
-      if (statusPerkawinan != null) {
-        request.fields['status_perkawinan'] = statusPerkawinan;
-      }
+      if (statusPerkawinan != null) request.fields['status_perkawinan'] = statusPerkawinan;
       if (pekerjaan != null) request.fields['pekerjaan'] = pekerjaan;
 
       if (fotoProfil != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath('foto_identitas', fotoProfil.path),
-        );
+        request.files.add(await http.MultipartFile.fromPath('foto_identitas', fotoProfil.path));
       }
 
       var response = await request.send();
       final respStr = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
-        return null;
+        return null; 
       } else if (response.statusCode == 422) {
-        final errors = jsonDecode(respStr) as Map<String, dynamic>;
-        final firstErrorKey = errors.keys.first;
-        final firstErrorMessage = (errors[firstErrorKey] as List).first;
-        return firstErrorMessage;
+        final errors = jsonDecode(respStr);
+        if (errors['errors'] != null) {
+            var errorMap = errors['errors'] as Map<String, dynamic>;
+            return errorMap.values.first[0]; 
+        }
+        return 'Data tidak valid.';
       } else {
-        return 'Update gagal. Terjadi kesalahan server.';
+        return 'Update gagal. Server Error: ${response.statusCode}';
       }
     } catch (e) {
       return 'Update gagal. Periksa koneksi internet Anda.';

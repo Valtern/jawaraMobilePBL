@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart'; 
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart'; 
 import 'package:jawarapbl/services/auth_services.dart';
 import 'package:jawarapbl/shared/models/user_model.dart';
+import 'package:jawarapbl/modules/auth/pages/ktp_camera_page.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -42,8 +46,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   
   bool _isLoading = true;
   bool _isPasswordLoading = false;
-  
-  // --- BIOMETRIC STATE ---
+  bool _isScanningKTP = false; 
+
+  // Biometric State
   int? _userId;
   bool _isFaceLoginEnabled = false;
   bool _isBiometricLoading = false;
@@ -61,7 +66,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     if (user != null) {
       _userId = user.id;
-      _isFaceLoginEnabled = user.isFaceLoginEnabled; // Load status
+      _isFaceLoginEnabled = user.isFaceLoginEnabled;
 
       _namaController.text = user.name;
       _phoneController.text = user.phone ?? '';
@@ -114,6 +119,98 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  
+  Future<void> _pickKtpAndScan() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Ambil Foto KTP (Kamera)'),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const KtpCameraPage()),
+                );
+                if (result != null && result is File) {
+                  _performOCR(result);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Pilih dari Galeri'),
+              onTap: () async {
+                Navigator.pop(context);
+                final picked = await _picker.pickImage(source: ImageSource.gallery);
+                if (picked != null) {
+                  _performOCR(File(picked.path));
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _performOCR(File image) async {
+    setState(() => _isScanningKTP = true);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Memindai KTP... Mohon tunggu')),
+    );
+
+    final result = await _authService.scanKTP(image);
+
+    setState(() => _isScanningKTP = false);
+
+    if (result != null) {
+      if (result['nik'] != null) {
+        _nikController.text = result['nik'];
+      }
+      if (result['name'] != null) {
+        _namaController.text = result['name'];
+      }
+      if (result['gender'] != null) {
+        String gender = result['gender'];
+        if (['Laki-laki', 'Perempuan'].contains(gender)) {
+           setState(() => _jenisKelamin = gender);
+        }
+      }
+
+      if (result['face_image'] != null) {
+        try {
+          Uint8List bytes = base64Decode(result['face_image']);
+          final tempDir = await getTemporaryDirectory();
+          File file = await File('${tempDir.path}/profile_from_ktp_update.jpg').create();
+          file.writeAsBytesSync(bytes);
+          
+          setState(() {
+            _fotoProfil = file;
+            _fotoProfilUrl = null; 
+          });
+        } catch (e) {
+          debugPrint("Error decoding face image: $e");
+        }
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data berhasil diisi dari KTP! Silakan periksa kembali.')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal membaca KTP. Pastikan gambar jelas.')),
+      );
+    }
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -126,12 +223,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  void _handleSave() async {
+void _handleSave() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
       String? errorMessage = await _authService.updateProfile(
         name: _namaController.text,
+        email: _emailController.text, 
+        nik: _nikController.text,    
         phone: _phoneController.text,
         tempatLahir: _tempatLahirController.text.isNotEmpty ? _tempatLahirController.text : null,
         tanggalLahir: _tanggalLahir,
@@ -189,11 +288,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  // --- BIOMETRIC ACTIONS ---
-  
   void _navigateToEnrollment() {
     if (_userId != null) {
-      // Navigate to enrollment and refresh data when coming back
       Navigator.pushNamed(context, '/face-enroll', arguments: _userId)
           .then((_) => _loadProfileData());
     }
@@ -246,7 +342,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     const SizedBox(height: 24),
                     _buildAccountInfoCard(), 
                     const SizedBox(height: 16),
-                    _buildBiometricCard(), // <--- NEW CARD ADDED HERE
+                    _buildBiometricCard(),
                     const SizedBox(height: 16),
                     _buildPersonalInfoCard(),
                     const SizedBox(height: 16),
@@ -310,7 +406,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ])));
   }
 
-  // --- NEW WIDGET FOR BIOMETRICS ---
   Widget _buildBiometricCard() {
     return _buildSectionCard(
       title: 'Keamanan Biometrik',
@@ -347,7 +442,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         if (_isBiometricLoading)
           const Center(child: CircularProgressIndicator())
         else if (!_isFaceLoginEnabled)
-          // CASE 1: Not Enabled -> Show "Enable" button
           OutlinedButton.icon(
             onPressed: _navigateToEnrollment,
             icon: const Icon(Icons.add_a_photo),
@@ -359,7 +453,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
           )
         else
-          // CASE 2: Enabled -> Show "Retake" and "Disable"
           Column(
             children: [
               OutlinedButton.icon(
@@ -393,6 +486,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return _buildSectionCard(
       title: 'Informasi Akun',
       children: [
+        OutlinedButton.icon(
+          onPressed: _pickKtpAndScan,
+          icon: const Icon(Icons.document_scanner),
+          label: const Text("Scan KTP (Isi Data Otomatis)"),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(45),
+            foregroundColor: Colors.blue[700],
+            side: BorderSide(color: Colors.blue[700]!),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        if (_isScanningKTP)
+          const Padding(
+            padding: EdgeInsets.only(top: 10.0),
+            child: LinearProgressIndicator(),
+          ),
+        const SizedBox(height: 16),
         _buildTextField(
           controller: _namaController, label: 'Nama Lengkap', hint: 'Masukkan nama lengkap', icon: CupertinoIcons.person_fill,
         ),
@@ -402,11 +512,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         const SizedBox(height: 16),
         _buildTextField(
-          controller: _emailController, label: 'Email', hint: 'email@example.com', icon: CupertinoIcons.mail_solid, readOnly: true, validator: null,
+          controller: _emailController, 
+          label: 'Email', 
+          hint: 'email@example.com', 
+          icon: CupertinoIcons.mail_solid,
+          readOnly: false, 
+          keyboardType: TextInputType.emailAddress,
         ),
         const SizedBox(height: 16),
         _buildTextField(
-          controller: _nikController, label: 'NIK', hint: '16-digit NIK', icon: CupertinoIcons.creditcard_fill, readOnly: true, validator: null,
+          controller: _nikController, 
+          label: 'NIK', 
+          hint: '16-digit NIK', 
+          icon: CupertinoIcons.creditcard_fill,
+          readOnly: false, 
+          keyboardType: TextInputType.number,
         ),
         const Divider(height: 32),
         const Text('Ubah Password', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
