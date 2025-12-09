@@ -7,7 +7,9 @@ import 'package:jawarapbl/modules/penerimaan-warga/models/penerimaanwarga_model.
 
 class AuthService {
   // Replace with your actual backend URL
-  String url = 'https://jacket-terrace-fate-mime.trycloudflare.com';
+  // use http if you using local ip
+  // use https if using hosting server
+  String url = 'http://10.222.219.9:8000';
 
   String get baseUrl => '$url/api';
   String get storageUrl => '$url/storage';
