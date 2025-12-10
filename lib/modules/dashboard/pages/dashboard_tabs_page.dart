@@ -26,9 +26,9 @@ class DashboardPage extends StatelessWidget {
             ),
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: const TabBar(
-              labelColor: Color(0xFF6C5CE7),
+              labelColor: Color(0xFF6938EF),
               unselectedLabelColor: Color(0xFF636E72),
-              indicatorColor: Color(0xFF6C5CE7),
+              indicatorColor: Color(0xFF6938EF),
               indicatorSize: TabBarIndicatorSize.tab,
               labelStyle: TextStyle(
                 fontFamily: 'Poppins',
@@ -49,6 +49,7 @@ class DashboardPage extends StatelessWidget {
           ),
           Expanded(
             child: TabBarView(
+              physics: const ClampingScrollPhysics(),
               children: [
                 KeuanganDashboardContent(),
                 KegiatanDashboardContent(),

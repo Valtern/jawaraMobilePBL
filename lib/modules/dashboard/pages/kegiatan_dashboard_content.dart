@@ -38,15 +38,39 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text("Gagal memuat data: ${snapshot.error}"));
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Center(
+              child: Text(
+                "Gagal memuat data: ${snapshot.error}",
+                style: const TextStyle(fontFamily: 'Poppins'),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
         }
 
-        final rootData = snapshot.data ?? {};
+        if (!snapshot.hasData || snapshot.data == null) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Center(
+              child: Text(
+                'Belum ada data kegiatan',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ),
+          );
+        }
+
+        final rootData = snapshot.data!;
         final data = _safeMap(rootData['kegiatan']);
 
         final total = data['total'] ?? 0;
         final waktu = _safeMap(data['waktu']);
-        // Fix: Use safeMap here to prevent List<dynamic> crash
         final kategori = _safeMap(data['kategori']); 
         final pj = data['pj_terbanyak'] ?? '-';
         
@@ -57,25 +81,105 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
           return 0.0;
         }).toList();
 
+        // Calculate task counts for each category
+        final totalKategori = kategori.values.fold<int>(0, (sum, val) => sum + (val is int ? val : int.tryParse(val.toString()) ?? 0));
+        final selesai = waktu['selesai'] ?? 0;
+        final hariIni = waktu['hari_ini'] ?? 0;
+        final akanDatang = waktu['akan_datang'] ?? 0;
+        final totalWaktu = (selesai is int ? selesai : int.tryParse(selesai.toString()) ?? 0) +
+                          (hariIni is int ? hariIni : int.tryParse(hariIni.toString()) ?? 0) +
+                          (akanDatang is int ? akanDatang : int.tryParse(akanDatang.toString()) ?? 0);
+
+        // Prepare task groups for list
+        final taskGroups = <Map<String, dynamic>>[];
+        
+        // Add total kegiatan first
+        final totalInt = total is int ? total : int.tryParse(total.toString()) ?? 0;
+        if (totalInt > 0) {
+          taskGroups.add({
+            'name': 'Total Kegiatan',
+            'tasks': totalInt,
+            'progress': 100.0,
+            'icon': Icons.event_note,
+            'color': Colors.blue,
+          });
+        }
+        
+        // Add kategori tasks
+        kategori.forEach((key, value) {
+          final count = value is int ? value : int.tryParse(value.toString()) ?? 0;
+          if (count > 0 && totalKategori > 0) {
+            taskGroups.add({
+              'name': key,
+              'tasks': count,
+              'progress': (count / totalKategori * 100).clamp(0.0, 100.0),
+              'icon': Icons.category,
+              'color': _getColorForIndex(taskGroups.length),
+            });
+          }
+        });
+
+        // Add waktu tasks
+        if (totalWaktu > 0) {
+          taskGroups.add({
+            'name': 'Waktu Pelaksanaan',
+            'tasks': totalWaktu,
+            'progress': 50.0,
+            'icon': Icons.schedule,
+            'color': Colors.amber,
+          });
+        }
+
+        // Ensure at least one item for badge count
+        final badgeCount = taskGroups.isEmpty ? 0 : taskGroups.length;
+
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 0.75,
-                children: [
-                  _buildTotalKegiatanCard(total is int ? total : int.tryParse(total.toString()) ?? 0),
-                  _buildKegiatanPerKategoriCard(kategori),
-                  _buildKegiatanByWaktuCard(waktu),
-                  _buildPenanggungJawabCard(pj.toString()),
-                ],
+              // Header with badge
+              _buildSectionHeader('Kegiatan', badgeCount),
+              const SizedBox(height: 8),
+              Text(
+                'Your today\'s task',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  fontStyle: FontStyle.italic,
+                ),
               ),
               const SizedBox(height: 16),
+              
+              // Task Groups List
+              if (taskGroups.isEmpty)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: Text(
+                      'Belum ada data kegiatan',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 14,
+                        color: Color(0xFF636E72),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                ...taskGroups.map((group) => _buildTaskGroupCard(
+                  group['name'] as String,
+                  group['tasks'] as int,
+                  group['progress'] as double,
+                  group['icon'] as IconData,
+                  group['color'] as Color,
+                )).toList(),
+              
+              const SizedBox(height: 24),
+              
+              // Chart Card
               SizedBox(height: 300, child: _buildKegiatanPerBulanCard(chartData)),
             ],
           ),
@@ -84,104 +188,131 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
     );
   }
 
-  Widget _buildTotalKegiatanCard(int total) {
-    return DashboardCard(
-      title: 'Total Kegiatan',
-      icon: Icons.event_note,
-      color: Colors.blue.shade700,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            total.toString(),
-            style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-          ),
-          const Text(
-            'Event terdaftar',
-            style: TextStyle(fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKegiatanPerKategoriCard(Map<String, dynamic> kategoriData) {
-    final List<Color> colors = [Colors.blue, Colors.orange, Colors.red, Colors.purple, Colors.teal];
-    int colorIndex = 0;
-
-    List<Widget> categoryWidgets = kategoriData.entries.map((entry) {
-      final color = colors[colorIndex % colors.length];
-      colorIndex++;
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 4.0),
-        child: _buildKategoriRow(color, '${entry.key}: ${entry.value}'),
-      );
-    }).toList();
-
-    if (categoryWidgets.isEmpty) {
-      categoryWidgets = [const Text("Belum ada data")];
-    }
-
-    return DashboardCard(
-      title: 'Kategori',
-      icon: Icons.category,
-      color: Colors.green.shade700,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: categoryWidgets,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildKategoriRow(Color color, String text) {
+  Widget _buildSectionHeader(String title, int badgeCount) {
     return Row(
       children: [
-        Container(width: 12, height: 12, color: color),
+        Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2D3436),
+          ),
+        ),
         const SizedBox(width: 8),
-        Expanded(
-          child: Text(text, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF6938EF),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            badgeCount.toString(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Poppins',
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildKegiatanByWaktuCard(Map<String, dynamic> waktuData) {
-    return DashboardCard(
-      title: 'Waktu Pelaksanaan',
-      icon: Icons.schedule,
-      color: Colors.amber.shade800,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('Selesai: ${waktuData['selesai'] ?? 0}'),
-          const SizedBox(height: 8),
-          Text(
-            'Hari Ini: ${waktuData['hari_ini'] ?? 0}',
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
-          ),
-          const SizedBox(height: 8),
-          Text('Akan Datang: ${waktuData['akan_datang'] ?? 0}'),
-        ],
-      ),
-    );
+  Color _getColorForIndex(int index) {
+    final colors = [
+      Colors.blue,
+      Colors.orange,
+      Colors.red,
+      Colors.purple,
+      Colors.teal,
+      Colors.pink,
+    ];
+    return colors[index % colors.length];
   }
 
-  Widget _buildPenanggungJawabCard(String nama) {
-    return DashboardCard(
-      title: 'PJ Teraktif',
-      icon: Icons.person,
-      color: Colors.purple.shade700,
-      child: Center(
-        child: Text(
-          nama,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+  Widget _buildTaskGroupCard(String name, int tasks, double progress, IconData icon, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2D3436),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$tasks Tasks',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 60,
+            height: 60,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: CircularProgressIndicator(
+                    value: progress / 100,
+                    strokeWidth: 6,
+                    backgroundColor: color.withOpacity(0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                  ),
+                ),
+                Text(
+                  '${progress.toInt()}%',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
