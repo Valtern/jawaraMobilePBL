@@ -210,10 +210,10 @@ class _RumahListViewState extends State<RumahListView> {
           ],
         ),
         Positioned(
-          bottom: 16,
+          bottom: 80,
           right: 16,
           child: FloatingActionButton(
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: const Color(0xFF6938EF),
             heroTag: 'add-rumah',
             onPressed: () => _showAddRumahSheet(context),
             child: const Icon(Icons.add, color: Colors.white),
@@ -295,6 +295,7 @@ class _AddRumahFormState extends State<_AddRumahForm> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

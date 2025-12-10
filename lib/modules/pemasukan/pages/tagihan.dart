@@ -75,6 +75,7 @@ class _TagihanListViewState extends State<TagihanListView> {
             bottom: MediaQuery.of(context).viewInsets.bottom + 16,
           ),
           child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               spacing: 12,
@@ -627,11 +628,11 @@ class _TagihanListViewState extends State<TagihanListView> {
           ],
         ),
         Positioned(
-          bottom: 0,
-          right: 0,
+          bottom: 80,
+          right: 16,
           child: FloatingActionButton(
             heroTag: 'add-tagihan',
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: const Color(0xFF6938EF),
             onPressed: () => _showAddTagihanSheet(context),
             child: const Icon(Icons.add, color: Colors.white),
           ),

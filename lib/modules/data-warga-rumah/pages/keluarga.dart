@@ -206,11 +206,11 @@ class _KeluargaListViewState extends State<KeluargaListView> {
           ],
         ),
         Positioned(
-          bottom: 16,
+          bottom: 80,
           right: 16,
           child: FloatingActionButton(
             onPressed: () => _showAddKeluargaSheet(context),
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: const Color(0xFF6938EF),
             foregroundColor: Colors.white,
             child: const Icon(Icons.add),
           ),
@@ -312,6 +312,7 @@ class _AddKeluargaFormState extends State<_AddKeluargaForm> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

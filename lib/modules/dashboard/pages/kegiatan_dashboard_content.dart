@@ -57,6 +57,7 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
         }).toList();
 
         return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,12 +164,15 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 12,
-                  color: Color(0xFF636E72),
+              Flexible(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                    color: Color(0xFF636E72),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
@@ -182,13 +186,17 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2D3436),
+          Flexible(
+            child: Text(
+              subtitle,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2D3436),
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const Spacer(),
@@ -236,6 +244,7 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   title,
@@ -245,6 +254,8 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF2D3436),
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -258,6 +269,7 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
               ],
             ),
           ),
+          const SizedBox(width: 8),
           SizedBox(
             width: 60,
             height: 60,

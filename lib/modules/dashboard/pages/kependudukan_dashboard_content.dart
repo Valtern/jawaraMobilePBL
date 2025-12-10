@@ -58,6 +58,7 @@ class _KependudukanDashboardContentState extends State<KependudukanDashboardCont
         double prPct = totalGender == 0 ? 0 : (perempuan / totalGender) * 100;
 
         return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,13 +106,16 @@ class _KependudukanDashboardContentState extends State<KependudukanDashboardCont
                           child: const Icon(Icons.wc, color: Color(0xFF9C27B0), size: 20),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
-                          'Jenis Kelamin',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2D3436),
+                        const Expanded(
+                          child: Text(
+                            'Jenis Kelamin',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2D3436),
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -176,13 +180,16 @@ class _KependudukanDashboardContentState extends State<KependudukanDashboardCont
                           child: const Icon(Icons.favorite, color: Color(0xFFF44336), size: 20),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
-                          'Status Perkawinan',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2D3436),
+                        const Expanded(
+                          child: Text(
+                            'Status Perkawinan',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2D3436),
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -245,13 +252,17 @@ class _KependudukanDashboardContentState extends State<KependudukanDashboardCont
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: color,
+          Flexible(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

@@ -57,6 +57,7 @@ class _KegiatanListViewState extends State<KegiatanListView> {
                 bottom: MediaQuery.of(context).viewInsets.bottom + 16,
               ),
               child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   spacing: 12,
@@ -424,11 +425,11 @@ class _KegiatanListViewState extends State<KegiatanListView> {
         ),
         if (canAdd)
           Positioned(
-            bottom: 0,
-            right: 0,
+            bottom: 80,
+            right: 16,
             child: FloatingActionButton(
               heroTag: 'add-kegiatan',
-              backgroundColor: Colors.deepPurple,
+              backgroundColor: const Color(0xFF6938EF),
               onPressed: () => _showAddKegiatanSheet(context),
               child: const Icon(Icons.add, color: Colors.white),
             ),

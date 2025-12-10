@@ -201,10 +201,10 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
           ],
         ),
         Positioned(
-          bottom: 16,
+          bottom: 80,
           right: 16,
           child: FloatingActionButton(
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: const Color(0xFF6938EF),
             heroTag: 'add-warga',
             onPressed: () => _showAddWargaSheet(context),
             child: const Icon(Icons.add, color: Colors.white),
@@ -339,6 +339,7 @@ class _AddWargaFormState extends State<_AddWargaForm> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

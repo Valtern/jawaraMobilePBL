@@ -2,16 +2,9 @@ import 'package:flutter/material.dart';
 import 'keuangan_dashboard_content.dart';
 import 'kegiatan_dashboard_content.dart';
 import 'kependudukan_dashboard_content.dart';
-import 'package:jawarapbl/services/dashboard_service.dart';
 
-class DashboardPage extends StatefulWidget {
+class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
-
-  @override
-  State<DashboardPage> createState() => _DashboardPageState();
-}
-
-class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +50,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           Expanded(
             child: TabBarView(
+              physics: const ClampingScrollPhysics(),
               children: [
                 KeuanganDashboardContent(),
                 KegiatanDashboardContent(),
