@@ -16,15 +16,15 @@ class BaseListCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            spreadRadius: 1,
-            blurRadius: 5,
+            color: Colors.black.withOpacity(0.04),
+            spreadRadius: 0,
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(color: Colors.grey.shade200),
       ),
       child: child,
     );

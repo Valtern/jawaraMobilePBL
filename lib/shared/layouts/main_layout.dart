@@ -116,7 +116,7 @@ class _MainLayoutState extends State<MainLayout> {
       backgroundColor: widget.backgroundColor,
       extendBody: widget.extendBody,
       body: Container(
-        padding: const EdgeInsets.only(top: 16, bottom: 16, left: 12, right: 12),
+        padding: const EdgeInsets.only(top: 8, bottom: 8, left: 16, right: 16),
         child: content,
       ),
       floatingActionButton: widget.floatingActionButton,
@@ -138,28 +138,42 @@ class _MainLayoutState extends State<MainLayout> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+            spreadRadius: 0,
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
-          selectedItemColor: Colors.deepPurple,
-          unselectedItemColor: Colors.grey,
+          selectedItemColor: const Color(0xFF6C5CE7),
+          unselectedItemColor: Colors.grey[400],
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
           currentIndex: activeIndex,
+          elevation: 0,
+          selectedLabelStyle: const TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w500,
+            fontSize: 12,
+          ),
           onTap: (index) {
             widget.onItemSelected?.call(index);
             if (widget.onItemSelected == null) {

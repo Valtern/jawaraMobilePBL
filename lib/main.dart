@@ -35,33 +35,162 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en', ''),
-        Locale('id', ''), 
-      ],
+      supportedLocales: const [Locale('en', ''), Locale('id', '')],
 
       theme: ThemeData(
-        cardTheme: CardThemeData(color: Colors.white),
+        useMaterial3: true,
+        fontFamily: 'Poppins',
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6938EF),
+          primary: const Color(0xFF6938EF),
+          secondary: const Color(0xFFA29BFE),
+          surface: Colors.white,
+          background: const Color(0xFFF8F9FA),
+          error: const Color(0xFFE74C3C),
+          brightness: Brightness.light,
+        ),
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          shadowColor: Colors.black.withOpacity(0.05),
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: const Color(0xFF6938EF),
             foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
             ),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.deepPurple,
-            side: const BorderSide(color: Colors.deepPurple),
+            foregroundColor: const Color(0xFF6938EF),
+            side: const BorderSide(color: Color(0xFF6938EF), width: 1.5),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
             ),
           ),
         ),
-        scaffoldBackgroundColor: Colors.grey[100],
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF6938EF),
+            textStyle: const TextStyle(
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[50],
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF6938EF), width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE74C3C)),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE74C3C), width: 2),
+          ),
+          labelStyle: TextStyle(
+            fontFamily: 'Poppins',
+            color: Colors.grey[700],
+            fontSize: 14,
+          ),
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
         primarySwatch: Colors.deepPurple,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: false,
+          iconTheme: const IconThemeData(color: Color(0xFF2D3436)),
+          titleTextStyle: const TextStyle(
+            fontFamily: 'Poppins',
+            color: Color(0xFF2D3436),
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.bold,
+          ),
+          displayMedium: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.bold,
+          ),
+          displaySmall: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.bold,
+          ),
+          headlineLarge: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+          ),
+          headlineMedium: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+          ),
+          headlineSmall: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+          ),
+          titleLarge: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+          ),
+          titleMedium: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w500,
+          ),
+          titleSmall: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w500,
+          ),
+          bodyLarge: TextStyle(fontFamily: 'Poppins'),
+          bodyMedium: TextStyle(fontFamily: 'Poppins'),
+          bodySmall: TextStyle(fontFamily: 'Poppins'),
+          labelLarge: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w500,
+          ),
+          labelMedium: TextStyle(fontFamily: 'Poppins'),
+          labelSmall: TextStyle(fontFamily: 'Poppins'),
+        ),
       ),
       initialRoute: '/login',
       routes: {
