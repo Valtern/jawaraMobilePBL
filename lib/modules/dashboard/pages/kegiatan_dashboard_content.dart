@@ -142,15 +142,6 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
               // Header with badge
               _buildSectionHeader('Kegiatan', badgeCount),
               const SizedBox(height: 8),
-              Text(
-                'Your today\'s task',
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
               const SizedBox(height: 16),
               
               // Task Groups List
@@ -274,7 +265,7 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$tasks Tasks',
+                  '$tasks Kegiatan',
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 12,
