@@ -33,6 +33,7 @@ class _MainLayoutState extends State<MainLayout> {
   String? _role;
   final AuthService _authService = AuthService();
   List<_NavigationItem> _visibleItems = [];
+  String? _currentRoute;
 
   // Define roles for clarity
   static const String admin = 'admin';
@@ -77,6 +78,24 @@ class _MainLayoutState extends State<MainLayout> {
     super.initState();
     _updateVisibleItems(); 
     _loadUserRole();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateCurrentRoute();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateCurrentRoute();
+  }
+
+  void _updateCurrentRoute() {
+    final route = ModalRoute.of(context)?.settings.name;
+    if (route != _currentRoute) {
+      setState(() {
+        _currentRoute = route;
+      });
+    }
   }
 
   Future<void> _loadUserRole() async {
@@ -128,10 +147,35 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   Widget _buildBottomNavigationBar(BuildContext context) {
-    // Safety check: ensure activeIndex is valid for the current visible list
+    // Use stored current route or get from ModalRoute
+    final currentRoute = _currentRoute ?? ModalRoute.of(context)?.settings.name;
+    
+    // Find the index of current route in visible items
     int activeIndex = 0;
-    if (widget.currentIndex < _visibleItems.length) {
-      activeIndex = widget.currentIndex;
+    if (currentRoute != null && currentRoute.isNotEmpty) {
+      final foundIndex = _visibleItems.indexWhere(
+        (item) => item.route == currentRoute
+      );
+      if (foundIndex >= 0) {
+        activeIndex = foundIndex;
+      } else {
+        // Route not in visible items, try to map from widget.currentIndex
+        // For non-admin users: map index 3 (lainnya) to index 1
+        if (widget.currentIndex == 3 && _visibleItems.length == 2) {
+          // Non-admin: Dashboard (0), Lainnya (1)
+          activeIndex = 1;
+        } else if (widget.currentIndex < _visibleItems.length) {
+          activeIndex = widget.currentIndex;
+        }
+      }
+    } else {
+      // No route found, use widget.currentIndex with mapping
+      if (widget.currentIndex == 3 && _visibleItems.length == 2) {
+        // Non-admin: Dashboard (0), Lainnya (1)
+        activeIndex = 1;
+      } else if (widget.currentIndex < _visibleItems.length) {
+        activeIndex = widget.currentIndex;
+      }
     }
 
     return Container(
@@ -158,7 +202,7 @@ class _MainLayoutState extends State<MainLayout> {
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
-          selectedItemColor: const Color(0xFF6C5CE7),
+          selectedItemColor: const Color(0xFF6938EF),
           unselectedItemColor: Colors.grey[400],
           selectedFontSize: 12,
           unselectedFontSize: 12,
@@ -178,7 +222,11 @@ class _MainLayoutState extends State<MainLayout> {
             widget.onItemSelected?.call(index);
             if (widget.onItemSelected == null) {
               final route = _visibleItems[index].route;
-              Navigator.of(context).pushNamed(route);
+              // Update current route immediately for better UX
+              setState(() {
+                _currentRoute = route;
+              });
+              Navigator.of(context).pushReplacementNamed(route);
             }
           },
           items: _visibleItems

@@ -33,7 +33,12 @@ class _LainnyaPageState extends State<LainnyaPage> {
           // Content
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(top: 20, left: 16, right: 16, bottom: 16),
+              padding: const EdgeInsets.only(
+                top: 20,
+                left: 16,
+                right: 16,
+                bottom: 16,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -42,7 +47,9 @@ class _LainnyaPageState extends State<LainnyaPage> {
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+                      } else if (snapshot.hasError ||
+                          !snapshot.hasData ||
+                          snapshot.data == null) {
                         return const ProfileCard(
                           name: 'Gagal memuat',
                           email: 'Tidak dapat mengambil data',
@@ -104,11 +111,17 @@ class _LainnyaPageState extends State<LainnyaPage> {
                 right: 0,
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                         const Expanded(
@@ -136,7 +149,9 @@ class _LainnyaPageState extends State<LainnyaPage> {
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const SizedBox.shrink();
-                    } else if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+                    } else if (snapshot.hasError ||
+                        !snapshot.hasData ||
+                        snapshot.data == null) {
                       return const SizedBox.shrink();
                     }
 
@@ -154,10 +169,7 @@ class _LainnyaPageState extends State<LainnyaPage> {
                           height: 100,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 4,
-                            ),
+                            border: Border.all(color: Colors.white, width: 4),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.2),
@@ -182,7 +194,10 @@ class _LainnyaPageState extends State<LainnyaPage> {
                                         child: const Center(
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  Colors.white,
+                                                ),
                                           ),
                                         ),
                                       );
@@ -211,7 +226,10 @@ class _LainnyaPageState extends State<LainnyaPage> {
                         const SizedBox(height: 12),
                         // Role
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF6938EF),
                             borderRadius: BorderRadius.circular(20),
@@ -244,7 +262,7 @@ class CurveClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final path = Path();
     final curveHeight = 40.0;
-    
+
     // Start from top-left corner
     path.moveTo(0, 0);
     // Line to top-right corner
@@ -260,7 +278,7 @@ class CurveClipper extends CustomClipper<Path> {
     );
     // Close path back to start
     path.close();
-    
+
     return path;
   }
 
