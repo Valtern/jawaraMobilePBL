@@ -69,21 +69,21 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/IconJawara.png"
+  image_path: "assets/images/LogoJawara.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
   remove_alpha_ios: true
   web:
     generate: true
-    image_path: "assets/images/IconJawara.png"
+    image_path: "assets/images/LogoJawara.png"
   windows:
     generate: true
-    image_path: "assets/images/IconJawara.png"
+    image_path: "assets/images/LogoJawara.png"
   macos:
     generate: true
-    image_path: "assets/images/IconJawara.png"
+    image_path: "assets/images/LogoJawara.png"
   linux:
     generate: true
-    image_path: "assets/images/IconJawara.png"
+    image_path: "assets/images/LogoJawara.png"
 
 flutter:
   # The following line ensures that the Material Icons font is
