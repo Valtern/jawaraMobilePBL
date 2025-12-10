@@ -12,24 +12,23 @@ class DashboardPage extends StatelessWidget {
       length: 3,
       child: Column(
         children: [
-          // Tab Bar
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: const TabBar(
-              labelColor: Color(0xFF6938EF),
+              labelColor: Color(0xFF6C5CE7),
               unselectedLabelColor: Color(0xFF636E72),
-              indicatorColor: Color(0xFF6938EF),
+              indicatorColor: Color(0xFF6C5CE7),
               indicatorSize: TabBarIndicatorSize.tab,
               labelStyle: TextStyle(
                 fontFamily: 'Poppins',
@@ -50,7 +49,6 @@ class DashboardPage extends StatelessWidget {
           ),
           Expanded(
             child: TabBarView(
-              physics: const ClampingScrollPhysics(),
               children: [
                 KeuanganDashboardContent(),
                 KegiatanDashboardContent(),

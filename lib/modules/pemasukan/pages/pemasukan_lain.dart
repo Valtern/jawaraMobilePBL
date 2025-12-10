@@ -40,7 +40,6 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                 bottom: MediaQuery.of(context).viewInsets.bottom + 16,
               ),
               child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   spacing: 12,
@@ -435,11 +434,11 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
           ],
         ),
         Positioned(
-          bottom: 80,
-          right: 16,
+          bottom: 0,
+          right: 0,
           child: FloatingActionButton(
             heroTag: 'add-pemasukan-lain',
-            backgroundColor: const Color(0xFF6938EF),
+            backgroundColor: Colors.deepPurple,
             onPressed: () => _showAddPemasukanLainSheet(context),
             child: const Icon(Icons.add, color: Colors.white),
           ),

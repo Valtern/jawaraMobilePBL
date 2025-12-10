@@ -144,11 +144,11 @@ class _KategoriIuranListViewState extends State<KategoriIuranListView> {
           ],
         ),
         Positioned(
-          bottom: 80,
-          right: 16,
+          bottom: 0,
+          right: 0,
           child: FloatingActionButton(
             heroTag: 'add-kategori-iuran',
-            backgroundColor: const Color(0xFF6938EF),
+            backgroundColor: Colors.deepPurple,
             onPressed: () => _showAddKategoriSheet(context),
             child: const Icon(Icons.add, color: Colors.white),
           ),
@@ -292,7 +292,6 @@ class _FormTambahKategoriState extends State<_FormTambahKategori> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
       child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           spacing: 12,
