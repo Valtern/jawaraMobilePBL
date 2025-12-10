@@ -414,6 +414,8 @@ class _RegisterSectionState extends State<RegisterSection> {
                 label: 'Masukkan Alamat Baru (Jika tidak ada di list)',
                 hint: 'Blok 5A / No. 10',
                 icon: Icons.home_outlined,
+                validator: (value) =>
+                    null, // Optional field, no validation required
                 onChanged: (val) {
                   if (val.isNotEmpty && _selectedRumahId != null) {
                     setState(() => _selectedRumahId = null);

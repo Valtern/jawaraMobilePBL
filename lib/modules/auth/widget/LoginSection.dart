@@ -96,7 +96,7 @@ class _LoginFormState extends State<LoginForm> {
               TextField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  hintText: 'My Email',
+                  hintText: 'Masukan Email',
                   prefixIcon: const Icon(
                     Icons.email_outlined,
                     color: Color(0xFF6938EF),
@@ -145,7 +145,7 @@ class _LoginFormState extends State<LoginForm> {
               TextField(
                 controller: _passwordController,
                 decoration: InputDecoration(
-                  hintText: 'My Password',
+                  hintText: 'Masukan Password',
                   prefixIcon: const Icon(
                     Icons.lock_outlined,
                     color: Color(0xFF6938EF),
