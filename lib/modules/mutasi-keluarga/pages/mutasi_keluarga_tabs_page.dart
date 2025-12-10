@@ -7,20 +7,22 @@ class MutasiKeluargaTabsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     return DefaultTabController(
       length: 2,
       child: Column(
-        children: const <Widget>[
+        children: <Widget>[
           TabBar(
-            labelColor: Colors.deepPurple,
+            labelColor: primary,
             unselectedLabelColor: Colors.grey,
-            indicatorColor: Colors.deepPurple,
-            tabs: [
+            indicatorColor: primary,
+            tabs: const [
               Tab(text: 'Daftar Mutasi'),
               Tab(text: 'Tambah Mutasi'),
             ],
           ),
-          Expanded(
+          const Expanded(
             child: TabBarView(
               children: [DaftarMutasiPage(), TambahMutasiPage()],
             ),

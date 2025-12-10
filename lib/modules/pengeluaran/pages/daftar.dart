@@ -105,6 +105,8 @@ class DaftarPengeluaranPageState extends State<DaftarPengeluaranPage> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: RefreshIndicator(
@@ -118,7 +120,7 @@ class DaftarPengeluaranPageState extends State<DaftarPengeluaranPage> {
                 title: 'Daftar Pengeluaran',
                 actions: [
                   IconButton(
-                    color: Colors.deepPurple,
+                    color: primary,
                     icon: const Icon(Icons.filter_list),
                     onPressed: _showFilterModal,
                   ),

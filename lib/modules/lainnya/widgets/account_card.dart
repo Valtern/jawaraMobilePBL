@@ -58,11 +58,34 @@ class _AccountCardState extends State<AccountCard> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     final List<ListTile> accountItems = [
       ListTile(
-        leading: const Icon(Icons.settings),
-        title: const Text('Pengaturan'),
-        trailing: const Icon(Icons.chevron_right),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: primary.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            Icons.settings,
+            color: primary,
+            size: 20,
+          ),
+        ),
+        title: const Text(
+          'Pengaturan',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        trailing: Icon(
+          Icons.chevron_right,
+          color: Colors.grey.shade400,
+        ),
         onTap: () {
           Navigator.push(
             context,
@@ -71,11 +94,31 @@ class _AccountCardState extends State<AccountCard> {
         },
       ),
       ListTile(
-        leading: const Icon(Icons.logout),
-        title: const Text('Keluar'),
-        textColor: Colors.red,
-        iconColor: Colors.red,
-        trailing: const Icon(Icons.chevron_right),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.logout,
+            color: Colors.red,
+            size: 20,
+          ),
+        ),
+        title: const Text(
+          'Keluar',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.red,
+          ),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right,
+          color: Colors.red,
+        ),
         onTap: _handleLogout,
       ),
     ];
@@ -83,9 +126,8 @@ class _AccountCardState extends State<AccountCard> {
     return Stack(
       children: [
         Card(
-          color: Colors.white,
           child: Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 8, left: 12),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
             child: ListView(
               shrinkWrap: true,
               children: accountItems,

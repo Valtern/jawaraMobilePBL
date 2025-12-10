@@ -6,8 +6,7 @@ import 'package:jawarapbl/shared/models/user_model.dart';
 import 'package:jawarapbl/modules/penerimaan-warga/models/penerimaanwarga_model.dart';
 
 class AuthService {
-  // Replace with your actual backend URL
-  String url = 'https://jacket-terrace-fate-mime.trycloudflare.com';
+  String url = 'http://192.168.1.10:8010';
 
   String get baseUrl => '$url/api';
   String get storageUrl => '$url/storage';
@@ -34,6 +33,9 @@ class AuthService {
         body: jsonEncode({'email': email, 'password': password}),
       );
 
+      print('LOGIN STATUS: \'${response.statusCode}\'');
+      print('LOGIN BODY: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
@@ -46,6 +48,7 @@ class AuthService {
         return null;
       }
     } catch (e) {
+      print('LOGIN EXCEPTION: $e');
       return null;
     }
   }
@@ -100,7 +103,7 @@ class AuthService {
 
       if (response.statusCode == 201) {
         final data = jsonDecode(respStr);
-        
+
         final prefs = await SharedPreferences.getInstance();
         if (data['access_token'] != null) {
           await prefs.setString('token', data['access_token']);
@@ -109,10 +112,7 @@ class AuthService {
           await prefs.setString('role', data['role']);
         }
 
-        return {
-          'success': true,
-          'userId': data['user']['id'],
-        };
+        return {'success': true, 'userId': data['user']['id']};
       } else if (response.statusCode == 422) {
         final errors = jsonDecode(respStr) as Map<String, dynamic>;
 
@@ -128,23 +128,24 @@ class AuthService {
         if (errors[firstErrorKey] is List) {
           return {
             'success': false,
-            'message': (errors[firstErrorKey] as List).first
+            'message': (errors[firstErrorKey] as List).first,
           };
         }
         return {'success': false, 'message': 'Data tidak valid.'};
       } else {
         return {
           'success': false,
-          'message': 'Pendaftaran gagal. Terjadi kesalahan server.'
+          'message': 'Pendaftaran gagal. Terjadi kesalahan server.',
         };
       }
     } catch (e) {
       return {
         'success': false,
-        'message': 'Pendaftaran gagal. Periksa koneksi internet Anda.'
+        'message': 'Pendaftaran gagal. Periksa koneksi internet Anda.',
       };
     }
   }
+
   Future<String?> enrollFace(List<File> images, int userId) async {
     try {
       print("--- STARTING FACE ENROLLMENT ---");
@@ -157,7 +158,7 @@ class AuthService {
 
       final token = await getToken();
       var uri = Uri.parse('$baseUrl/biometric/enroll');
-      
+
       var request = http.MultipartRequest('POST', uri)
         ..headers['Authorization'] = 'Bearer $token'
         ..headers['Accept'] = 'application/json';
@@ -179,7 +180,7 @@ class AuthService {
 
       if (response.statusCode == 200) {
         print("Enrollment Success!");
-        return null; 
+        return null;
       } else {
         try {
           final errData = jsonDecode(response.body);
@@ -206,9 +207,7 @@ class AuthService {
         ..headers['bypass-tunnel-reminder'] = 'true';
 
       request.fields['email'] = email;
-      request.files.add(
-        await http.MultipartFile.fromPath('image', image.path),
-      );
+      request.files.add(await http.MultipartFile.fromPath('image', image.path));
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
@@ -230,10 +229,10 @@ class AuthService {
     }
   }
 
-Future<String?> updateProfile({
+  Future<String?> updateProfile({
     required String name,
-    required String email, 
-    required String nik,   
+    required String email,
+    required String nik,
     required String phone,
     required String? tempatLahir,
     required DateTime? tanggalLahir,
@@ -254,33 +253,39 @@ Future<String?> updateProfile({
         ..headers['Authorization'] = 'Bearer $token';
 
       request.fields['name'] = name;
-      request.fields['email'] = email; 
-      request.fields['nik'] = nik;     
+      request.fields['email'] = email;
+      request.fields['nik'] = nik;
       request.fields['phone'] = phone;
-      
+
       if (tempatLahir != null) request.fields['tempat_lahir'] = tempatLahir;
       if (tanggalLahir != null) {
-        request.fields['tanggal_lahir'] = tanggalLahir.toIso8601String().split('T').first;
+        request.fields['tanggal_lahir'] = tanggalLahir
+            .toIso8601String()
+            .split('T')
+            .first;
       }
       if (jenisKelamin != null) request.fields['jenis_kelamin'] = jenisKelamin;
       if (agama != null) request.fields['agama'] = agama;
-      if (statusPerkawinan != null) request.fields['status_perkawinan'] = statusPerkawinan;
+      if (statusPerkawinan != null)
+        request.fields['status_perkawinan'] = statusPerkawinan;
       if (pekerjaan != null) request.fields['pekerjaan'] = pekerjaan;
 
       if (fotoProfil != null) {
-        request.files.add(await http.MultipartFile.fromPath('foto_identitas', fotoProfil.path));
+        request.files.add(
+          await http.MultipartFile.fromPath('foto_identitas', fotoProfil.path),
+        );
       }
 
       var response = await request.send();
       final respStr = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
-        return null; 
+        return null;
       } else if (response.statusCode == 422) {
         final errors = jsonDecode(respStr);
         if (errors['errors'] != null) {
-            var errorMap = errors['errors'] as Map<String, dynamic>;
-            return errorMap.values.first[0]; 
+          var errorMap = errors['errors'] as Map<String, dynamic>;
+          return errorMap.values.first[0];
         }
         return 'Data tidak valid.';
       } else {
@@ -509,17 +514,17 @@ Future<String?> updateProfile({
 
   Future<Map<String, dynamic>?> scanKTP(File imageFile) async {
     try {
-      var uri = Uri.parse('$baseUrl/ocr/ktp'); 
-      
+      var uri = Uri.parse('$baseUrl/ocr/ktp');
+
       var request = http.MultipartRequest('POST', uri)
         ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
-        
+
       var response = await request.send();
       final respStr = await response.stream.bytesToString();
       final data = jsonDecode(respStr);
 
       if (response.statusCode == 200 && data['status'] == 'success') {
-        return data['data']; 
+        return data['data'];
       }
       return null;
     } catch (e) {

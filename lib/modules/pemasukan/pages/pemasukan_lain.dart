@@ -230,6 +230,8 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     return Stack(
       children: [
         Column(
@@ -239,7 +241,7 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
               title: 'Pemasukan Lain',
               actions: [
                 IconButton(
-                  color: Colors.deepPurple,
+                  color: primary,
                   icon: const Icon(Icons.filter_list),
                   onPressed: () {
                     showModalBottomSheet(
@@ -387,9 +389,9 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                           : num.tryParse(map['nominal']?.toString() ?? '0') ??
                                 0;
                       return ListTile(
-                        leading: const Icon(
+                        leading: Icon(
                           Icons.attach_money,
-                          color: Colors.deepPurple,
+                          color: primary,
                         ),
                         title: Text(name.isEmpty ? '-' : name),
                         subtitle: Text(
@@ -400,9 +402,9 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                         ),
                         trailing: Text(
                           _formatCurrency(nominal),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: Colors.deepPurple,
+                            color: primary,
                           ),
                         ),
                       );
@@ -418,7 +420,7 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
           right: 0,
           child: FloatingActionButton(
             heroTag: 'add-pemasukan-lain',
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: primary,
             onPressed: () => _showAddPemasukanLainSheet(context),
             child: const Icon(Icons.add, color: Colors.white),
           ),

@@ -8,17 +8,19 @@ class LaporanKeuanganTabsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     return DefaultTabController(
       length: 3, 
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Laporan Keuangan'),
           foregroundColor: const Color.fromARGB(255, 0, 0, 0),
-          bottom: const TabBar(
-            indicatorColor: Color(0xFF673AB7),
-            labelColor: Color(0xFF673AB7),
-            unselectedLabelColor: Color(0xFF673AB7),
-            tabs: [
+          bottom: TabBar(
+            indicatorColor: primary,
+            labelColor: primary,
+            unselectedLabelColor: primary,
+            tabs: const [
               Tab(text: 'Cetak Laporan'),
               Tab(text: 'Semua Pemasukan'),
               Tab(text: 'Semua Pengeluaran'),

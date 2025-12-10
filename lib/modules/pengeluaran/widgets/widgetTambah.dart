@@ -159,77 +159,73 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Form(
       key: _formKey,
-      child: Container(
-        padding: const EdgeInsets.all(24.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
+      child: Card(
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24.0),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.pengeluaranToEdit == null
-                  ? 'Buat Pengeluaran Baru'
-                  : 'Edit Pengeluaran',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 24),
-            _buildTextField(
-              controller: _namaController,
-              label: 'Nama Pengeluaran',
-              hint: 'Masukkan nama pengeluaran',
-              validator: (val) =>
-                  val!.isEmpty ? 'Nama tidak boleh kosong' : null,
-            ),
-            const SizedBox(height: 20),
-            _buildDateField(
-              controller: _tanggalController,
-              label: 'Tanggal Pengeluaran',
-              validator: (val) =>
-                  val!.isEmpty ? 'Tanggal tidak boleh kosong' : null,
-            ),
-            const SizedBox(height: 20),
-            _buildDropdownField(
-              label: 'Kategori Pengeluaran',
-              hint: '-- Pilih Kategori --',
-              items: _kategoriItems,
-              selectedValue: _selectedKategori,
-              validator: (val) =>
-                  val == null ? 'Kategori tidak boleh kosong' : null,
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              controller: _nominalController,
-              label: 'Nominal',
-              hint: 'Masukkan nominal',
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              validator: (val) =>
-                  val!.isEmpty ? 'Nominal tidak boleh kosong' : null,
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              controller: _deskripsiController,
-              label: 'Deskripsi (Opsional)',
-              hint: 'Masukkan deskripsi',
-              isMultiLine: true,
-            ),
-            const SizedBox(height: 20),
-            _buildFileUploadField(label: 'Bukti Pengeluaran (Opsional)'),
-            const SizedBox(height: 32),
-            _buildActionButtons(),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.pengeluaranToEdit == null
+                    ? 'Buat Pengeluaran Baru'
+                    : 'Edit Pengeluaran',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: _namaController,
+                label: 'Nama Pengeluaran',
+                hint: 'Masukkan nama pengeluaran',
+                validator: (val) =>
+                    val!.isEmpty ? 'Nama tidak boleh kosong' : null,
+              ),
+              const SizedBox(height: 20),
+              _buildDateField(
+                controller: _tanggalController,
+                label: 'Tanggal Pengeluaran',
+                validator: (val) =>
+                    val!.isEmpty ? 'Tanggal tidak boleh kosong' : null,
+              ),
+              const SizedBox(height: 20),
+              _buildDropdownField(
+                label: 'Kategori Pengeluaran',
+                hint: '-- Pilih Kategori --',
+                items: _kategoriItems,
+                selectedValue: _selectedKategori,
+                validator: (val) =>
+                    val == null ? 'Kategori tidak boleh kosong' : null,
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                controller: _nominalController,
+                label: 'Nominal',
+                hint: 'Masukkan nominal',
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                validator: (val) =>
+                    val!.isEmpty ? 'Nominal tidak boleh kosong' : null,
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                controller: _deskripsiController,
+                label: 'Deskripsi (Opsional)',
+                hint: 'Masukkan deskripsi',
+                isMultiLine: true,
+              ),
+              const SizedBox(height: 20),
+              _buildFileUploadField(label: 'Bukti Pengeluaran (Opsional)'),
+              const SizedBox(height: 32),
+              _buildActionButtons(),
+            ],
+          ),
         ),
       ),
     );
@@ -257,9 +253,6 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
           maxLines: isMultiLine ? 3 : 1,
           decoration: InputDecoration(
             hintText: hint,
-            border: const OutlineInputBorder(),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),
         ),
       ],
@@ -282,8 +275,6 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
           validator: validator,
           decoration: InputDecoration(
             hintText: '-- / -- / ----',
-            border: const OutlineInputBorder(),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             suffixIcon: IconButton(
               icon: const Icon(Icons.calendar_today),
               onPressed: _pickDate,
@@ -307,10 +298,7 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
         Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12),
-          ),
+          decoration: const InputDecoration(),
           hint: Text(hint),
           initialValue: selectedValue,
           validator: validator,
@@ -339,9 +327,14 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
             height: 100,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(color: Colors.grey.shade300),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.04),
+              borderRadius: BorderRadius.circular(18.0),
+              border: Border.all(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withOpacity(0.2),
+              ),
             ),
             child: Center(
               child: _pickedFile == null
@@ -369,31 +362,27 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
   Widget _buildActionButtons() {
     return Row(
       children: [
-        ElevatedButton(
-          onPressed: _isLoading ? null : _submitForm,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _submitForm,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('Submit'),
           ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text('Submit'),
         ),
         const SizedBox(width: 12),
-        OutlinedButton(
-          onPressed: _isLoading ? null : _resetForm,
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _isLoading ? null : _resetForm,
+            child: const Text('Reset'),
           ),
-          child: const Text('Reset'),
         ),
       ],
     );

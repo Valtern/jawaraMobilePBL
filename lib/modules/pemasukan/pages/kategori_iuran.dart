@@ -39,6 +39,8 @@ class _KategoriIuranListViewState extends State<KategoriIuranListView> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     return Stack(
       children: [
         Column(
@@ -48,7 +50,8 @@ class _KategoriIuranListViewState extends State<KategoriIuranListView> {
               title: 'Kategori Iuran',
               actions: [
                 IconButton(
-                  color: Colors.deepPurple,
+                  color: primary,
+
                   icon: const Icon(Icons.filter_list),
                   onPressed: () {
                     // Similar fix recommended for Filter Sheet, but let's fix the main one first
@@ -148,7 +151,8 @@ class _KategoriIuranListViewState extends State<KategoriIuranListView> {
           right: 0,
           child: FloatingActionButton(
             heroTag: 'add-kategori-iuran',
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: primary,
+
             onPressed: () => _showAddKategoriSheet(context),
             child: const Icon(Icons.add, color: Colors.white),
           ),

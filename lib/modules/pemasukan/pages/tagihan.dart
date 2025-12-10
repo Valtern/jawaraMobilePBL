@@ -283,6 +283,8 @@ class _TagihanListViewState extends State<TagihanListView> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     return Stack(
       children: [
         Column(
@@ -292,7 +294,7 @@ class _TagihanListViewState extends State<TagihanListView> {
               title: 'Daftar Tagihan',
               actions: [
                 IconButton(
-                  color: Colors.deepPurple,
+                  color: primary,
                   icon: const Icon(Icons.filter_list),
                   onPressed: () {
                     showModalBottomSheet(
@@ -507,9 +509,9 @@ class _TagihanListViewState extends State<TagihanListView> {
                               children: [
                                 Text(
                                   _formatCurrency(nominal),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.deepPurple,
+                                    color: primary,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -583,7 +585,7 @@ class _TagihanListViewState extends State<TagihanListView> {
           right: 0,
           child: FloatingActionButton(
             heroTag: 'add-tagihan',
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: primary,
             onPressed: () => _showAddTagihanSheet(context),
             child: const Icon(Icons.add, color: Colors.white),
           ),

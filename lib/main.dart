@@ -26,6 +26,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const primaryPurple = Color(0xFF5F3FFF);
+    const accentPink = Color(0xFFFF6FD8);
+    const softBackground = Color(0xFFF5F3FF);
+
+    final baseTheme = ThemeData(
+      fontFamily: 'Poppins',
+      colorScheme: const ColorScheme.light(
+        primary: primaryPurple,
+        secondary: accentPink,
+        background: softBackground,
+        surface: Colors.white,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+        onBackground: Color(0xFF1B1B33),
+        onSurface: Color(0xFF1B1B33),
+      ),
+      scaffoldBackgroundColor: softBackground,
+      useMaterial3: true,
+    );
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Jawara Pintar',
@@ -35,33 +55,96 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en', ''),
-        Locale('id', ''), 
-      ],
+      supportedLocales: const [Locale('en', ''), Locale('id', '')],
 
-      theme: ThemeData(
-        cardTheme: CardThemeData(color: Colors.white),
+      theme: baseTheme.copyWith(
+        textTheme: baseTheme.textTheme.copyWith(
+          headlineSmall: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1B1B33),
+          ),
+          titleMedium: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1B1B33),
+          ),
+          bodyMedium: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF4B4B6A),
+          ),
+          labelLarge: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 6,
+          shadowColor: Colors.black.withOpacity(0.06),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: primaryPurple,
             foregroundColor: Colors.white,
+            elevation: 3,
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.deepPurple,
-            side: const BorderSide(color: Colors.deepPurple),
+            foregroundColor: primaryPurple,
+            side: const BorderSide(color: primaryPurple, width: 1.4),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
-        scaffoldBackgroundColor: Colors.grey[100],
-        primarySwatch: Colors.deepPurple,
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 14,
+            horizontal: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: const BorderSide(color: primaryPurple, width: 1.6),
+          ),
+          labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF7B7B9A)),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          foregroundColor: Color(0xFF1B1B33),
+        ),
       ),
       initialRoute: '/login',
       routes: {

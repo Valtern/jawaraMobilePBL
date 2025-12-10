@@ -8,24 +8,26 @@ class PemasukanKategoriIuranPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     return DefaultTabController(
       length: 3,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           TabBar(
             isScrollable: true,
-            labelColor: Colors.deepPurple,
+            labelColor: primary,
             unselectedLabelColor: Colors.black54,
-            indicatorColor: Colors.deepPurple,
-            tabs: [
+            indicatorColor: primary,
+            tabs: const [
               Tab(text: 'Kategori Iuran'),
               Tab(text: 'Tagihan'),
               Tab(text: 'Pemasukan Lain'),
             ],
           ),
-          SizedBox(height: 16),
-          Expanded(
+          const SizedBox(height: 16),
+          const Expanded(
             child: TabBarView(
               children: [
                 KategoriIuranListView(),

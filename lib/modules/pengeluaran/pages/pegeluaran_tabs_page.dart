@@ -38,13 +38,15 @@ class _PengeluaranTabsPageState extends State<PengeluaranTabsPage>
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     return Column(
       children: <Widget>[
         TabBar(
           controller: _tabController,
-          labelColor: Colors.deepPurple,
+          labelColor: primary,
           unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.deepPurple,
+          indicatorColor: primary,
           tabs: const [
             Tab(text: 'Daftar Pengeluaran'),
             Tab(text: 'Tambah Pengeluaran'),

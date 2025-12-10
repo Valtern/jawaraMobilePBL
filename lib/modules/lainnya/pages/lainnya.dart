@@ -24,51 +24,80 @@ class _LainnyaPageState extends State<LainnyaPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final accent = theme.colorScheme.secondary;
+    final softBackground = theme.colorScheme.background;
+
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Lainnya'),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.white,
       ),
-      backgroundColor: Colors.grey[200],
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            FutureBuilder<User?>(
-              future: _userFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-                  return const ProfileCard(
-                    name: 'Gagal memuat',
-                    email: 'Tidak dapat mengambil data',
-                    imageUrl: null,
-                  );
-                }
-
-                final user = snapshot.data!;
-
-                // Construct the full image URL
-                final imageUrl = (user.fotoIdentitas != null)
-                    ? '${_authService.storageUrl}/${user.fotoIdentitas}'
-                    : null;
-
-                return ProfileCard(
-                  name: user.name,
-                  email: user.email,
-                  imageUrl: imageUrl,
-                );
-              },
+      backgroundColor: softBackground,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [primary, accent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Container(
+            decoration: BoxDecoration(
+              color: softBackground,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
-            const SizedBox(height: 16),
-            const MenusCard(),
-            const SizedBox(height: 16),
-            const AccountCard(),
-          ],
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FutureBuilder<User?>(
+                    future: _userFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      } else if (snapshot.hasError ||
+                          !snapshot.hasData ||
+                          snapshot.data == null) {
+                        return const ProfileCard(
+                          name: 'Gagal memuat',
+                          email: 'Tidak dapat mengambil data',
+                          imageUrl: null,
+                        );
+                      }
+
+                      final user = snapshot.data!;
+
+                      final imageUrl = (user.fotoIdentitas != null)
+                          ? '${_authService.storageUrl}/${user.fotoIdentitas}'
+                          : null;
+
+                      return ProfileCard(
+                        name: user.name,
+                        email: user.email,
+                        imageUrl: imageUrl,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const MenusCard(),
+                  const SizedBox(height: 16),
+                  const AccountCard(),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

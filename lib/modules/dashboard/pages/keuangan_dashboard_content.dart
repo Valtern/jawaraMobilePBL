@@ -49,6 +49,10 @@ class _KeuanganDashboardContentState extends State<KeuanganDashboardContent> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final pemasukanColor = theme.colorScheme.primary;
+    final pengeluaranColor = theme.colorScheme.error;
+
     return FutureBuilder<Map<String, dynamic>>(
       future: _statsFuture,
       builder: (context, snapshot) {
@@ -70,79 +74,127 @@ class _KeuanganDashboardContentState extends State<KeuanganDashboardContent> {
         final chartKeluar = _parseChartData(data['chart_pengeluaran'] as List?);
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Summary Cards
               Row(
                 children: [
                   Expanded(
-                      child: _buildInfoCard('Pemasukan',
-                          formatRupiah(totalMasuk), Icons.arrow_downward, Colors.blue)),
+                    child: _buildInfoCard(
+                      'Pemasukan',
+                      formatRupiah(totalMasuk),
+                      Icons.arrow_downward,
+                      pemasukanColor,
+                    ),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
-                      child: _buildInfoCard('Pengeluaran',
-                          formatRupiah(totalKeluar), Icons.arrow_upward, Colors.red)),
+                    child: _buildInfoCard(
+                      'Pengeluaran',
+                      formatRupiah(totalKeluar),
+                      Icons.arrow_upward,
+                      pengeluaranColor,
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 24),
-
-              // Charts
-              SizedBox(
-                height: 200,
-                child: BarChart(
-                  BarChartData(
-                    gridData: FlGridData(show: false),
-                    titlesData: FlTitlesData(
-                      leftTitles:
-                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles:
-                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles:
-                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          getTitlesWidget: (value, meta) {
-                            const months = [
-                              'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-                            ];
-                            if (value.toInt() >= 0 && value.toInt() < 12) {
-                              return Text(months[value.toInt()],
-                                  style: const TextStyle(fontSize: 10));
-                            }
-                            return const Text('');
-                          },
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Grafik Keuangan Tahun Ini',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 220,
+                      child: BarChart(
+                        BarChartData(
+                          gridData: FlGridData(show: false),
+                          titlesData: FlTitlesData(
+                            leftTitles: AxisTitles(
+                              sideTitles:
+                                  SideTitles(showTitles: false),
+                            ),
+                            topTitles: AxisTitles(
+                              sideTitles:
+                                  SideTitles(showTitles: false),
+                            ),
+                            rightTitles: AxisTitles(
+                              sideTitles:
+                                  SideTitles(showTitles: false),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (value, meta) {
+                                  const months = [
+                                    'Jan',
+                                    'Feb',
+                                    'Mar',
+                                    'Apr',
+                                    'May',
+                                    'Jun',
+                                    'Jul',
+                                    'Aug',
+                                    'Sep',
+                                    'Oct',
+                                    'Nov',
+                                    'Dec'
+                                  ];
+                                  if (value.toInt() >= 0 &&
+                                      value.toInt() < 12) {
+                                    return Text(
+                                      months[value.toInt()],
+                                      style:
+                                          const TextStyle(fontSize: 10),
+                                    );
+                                  }
+                                  return const Text('');
+                                },
+                              ),
+                            ),
+                          ),
+                          borderData: FlBorderData(show: false),
+                          barGroups: List.generate(12, (index) {
+                            return BarChartGroupData(
+                              x: index,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: chartMasuk[index],
+                                  color: pemasukanColor,
+                                  width: 6,
+                                ),
+                                BarChartRodData(
+                                  toY: chartKeluar[index],
+                                  color: pengeluaranColor,
+                                  width: 6,
+                                ),
+                              ],
+                            );
+                          }),
                         ),
                       ),
                     ),
-                    borderData: FlBorderData(show: false),
-                    barGroups: List.generate(12, (index) {
-                      return BarChartGroupData(
-                        x: index,
-                        barRods: [
-                          BarChartRodData(
-                              toY: chartMasuk[index],
-                              color: Colors.blue,
-                              width: 6),
-                          BarChartRodData(
-                              toY: chartKeluar[index],
-                              color: Colors.red,
-                              width: 6),
-                        ],
-                      );
-                    }),
-                  ),
+                  ],
                 ),
               ),
-              const Center(
-                  child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text("Grafik Keuangan Tahun Ini",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-              ))
             ],
           ),
         );
@@ -155,17 +207,58 @@ class _KeuanganDashboardContentState extends State<KeuanganDashboardContent> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.16),
+            color.withOpacity(0.06),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 8),
-          Text(title, style: TextStyle(color: color)),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1B1B33),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
