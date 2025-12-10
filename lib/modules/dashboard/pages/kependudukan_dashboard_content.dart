@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:jawarapbl/modules/dashboard/widget/kependudukan_card.dart';
 import 'package:jawarapbl/services/dashboard_service.dart';
 
 class KependudukanDashboardContent extends StatefulWidget {
@@ -58,75 +57,236 @@ class _KependudukanDashboardContentState extends State<KependudukanDashboardCont
         double lakiPct = totalGender == 0 ? 0 : (laki / totalGender) * 100;
         double prPct = totalGender == 0 ? 0 : (perempuan / totalGender) * 100;
 
-        return GridView.count(
+        return SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.75,
-          children: [
-            _buildStatCard('Total Keluarga', Icons.group, Colors.blue.shade700, totalKeluarga),
-            _buildStatCard('Total Penduduk', Icons.person, Colors.green.shade600, totalPenduduk),
-            
-            KependudukanCard(
-              title: 'Jenis Kelamin',
-              icon: Icons.wc,
-              color: Colors.purple.shade600,
-              height: 200,
-              child: _buildPieChart(
-                sections: [
-                  PieChartSectionData(
-                    color: Colors.blueAccent, 
-                    value: laki.toDouble(), 
-                    title: '${lakiPct.toStringAsFixed(0)}%', 
-                    radius: 40, 
-                    showTitle: true
-                  ),
-                  PieChartSectionData(
-                    color: Colors.pinkAccent, 
-                    value: perempuan.toDouble(), 
-                    title: '${prPct.toStringAsFixed(0)}%', 
-                    radius: 40, 
-                    showTitle: true
-                  ),
-                ],
-                legend: [
-                  _buildLegendItem(Colors.blueAccent, 'Laki'),
-                  _buildLegendItem(Colors.pinkAccent, 'Pr'),
-                ]
-              ),
-            ),
-            
-             KependudukanCard(
-              title: 'Status Perkawinan',
-              icon: Icons.favorite,
-              color: Colors.red.shade700,
-              height: 200,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Summary Cards
+              Row(
                 children: [
-                  Text("Kawin: ${statusData['kawin'] ?? 0}"),
-                  const SizedBox(height: 8),
-                  Text("Belum: ${statusData['belum_kawin'] ?? 0}"),
+                  Expanded(
+                    child: _buildModernStatCard('Total Keluarga', Icons.group, const Color(0xFF2196F3), totalKeluarga),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildModernStatCard('Total Penduduk', Icons.person, const Color(0xFF4CAF50), totalPenduduk),
+                  ),
                 ],
-              ), 
-            ),
-          ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Jenis Kelamin Card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF9C27B0).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.wc, color: Color(0xFF9C27B0), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Jenis Kelamin',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D3436),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      height: 200,
+                      child: _buildPieChart(
+                        sections: [
+                          PieChartSectionData(
+                            color: const Color(0xFF2196F3), 
+                            value: laki.toDouble(), 
+                            title: '${lakiPct.toStringAsFixed(0)}%', 
+                            radius: 50, 
+                            showTitle: true
+                          ),
+                          PieChartSectionData(
+                            color: const Color(0xFFE91E63), 
+                            value: perempuan.toDouble(), 
+                            title: '${prPct.toStringAsFixed(0)}%', 
+                            radius: 50, 
+                            showTitle: true
+                          ),
+                        ],
+                        legend: [
+                          _buildLegendItem(const Color(0xFF2196F3), 'Laki-laki'),
+                          _buildLegendItem(const Color(0xFFE91E63), 'Perempuan'),
+                        ]
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              // Status Perkawinan Card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF44336).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.favorite, color: Color(0xFFF44336), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Status Perkawinan',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D3436),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatusItem('Kawin', statusData['kawin'] ?? 0, const Color(0xFF4CAF50)),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildStatusItem('Belum Kawin', statusData['belum_kawin'] ?? 0, const Color(0xFFFF9800)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildStatCard(String title, IconData icon, Color color, String value) {
-    return KependudukanCard(
-      title: title,
-      icon: icon,
-      color: color,
-      child: Center(
-        child: Text(
-          value,
-          style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-        ),
+  Widget _buildModernStatCard(String title, IconData icon, Color color, String value) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 14,
+              color: Color(0xFF636E72),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusItem(String label, dynamic value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value.toString(),
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 12,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
