@@ -369,31 +369,41 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
   Widget _buildActionButtons() {
     return Row(
       children: [
-        ElevatedButton(
-          onPressed: _isLoading ? null : _submitForm,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _submitForm,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurple,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Submit',
+                    style: TextStyle(fontSize: 14),
                   ),
-                )
-              : const Text('Submit'),
+          ),
         ),
         const SizedBox(width: 12),
-        OutlinedButton(
-          onPressed: _isLoading ? null : _resetForm,
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _isLoading ? null : _resetForm,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            child: const Text(
+              'Reset',
+              style: TextStyle(fontSize: 14),
+            ),
           ),
-          child: const Text('Reset'),
         ),
       ],
     );

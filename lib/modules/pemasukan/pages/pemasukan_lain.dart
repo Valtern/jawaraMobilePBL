@@ -184,12 +184,22 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                                 );
                               }
                             },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: const [
-                                Icon(Icons.save),
-                                SizedBox(width: 4),
-                                Text('Simpan'),
+                                Icon(Icons.save, size: 18),
+                                SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    'Simpan',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -206,12 +216,22 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                                 jenisVal = null;
                               });
                             },
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: const [
-                                Icon(Icons.refresh),
-                                SizedBox(width: 4),
-                                Text('Reset'),
+                                Icon(Icons.refresh, size: 18),
+                                SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    'Reset',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
                               ],
                             ),
                           ),

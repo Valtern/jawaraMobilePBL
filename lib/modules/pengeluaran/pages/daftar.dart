@@ -374,12 +374,22 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: _onApplyFilters,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
-                      Icon(Icons.check),
-                      SizedBox(width: 4),
-                      Text('Terapkan'),
+                      Icon(Icons.check, size: 18),
+                      SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Terapkan',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -388,12 +398,22 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: _onResetFilters,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
-                      Icon(Icons.refresh),
-                      SizedBox(width: 4),
-                      Text('Reset'),
+                      Icon(Icons.refresh, size: 18),
+                      SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Reset',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
                     ],
                   ),
                 ),

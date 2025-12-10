@@ -349,7 +349,11 @@ class _AddRumahFormState extends State<_AddRumahForm> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _isLoading
@@ -357,9 +361,15 @@ class _AddRumahFormState extends State<_AddRumahForm> {
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.save),
-                        const SizedBox(width: 4),
-                        Text(_isLoading ? 'Menyimpan...' : 'Simpan'),
+                            : const Icon(Icons.save, size: 18),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            _isLoading ? 'Menyimpan...' : 'Simpan',
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -375,12 +385,22 @@ class _AddRumahFormState extends State<_AddRumahForm> {
                               _statusHunian = null;
                             });
                           },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.refresh),
-                        SizedBox(width: 4),
-                        Text('Reset'),
+                        Icon(Icons.refresh, size: 18),
+                        SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'Reset',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ),
                       ],
                     ),
                   ),
