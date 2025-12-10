@@ -15,76 +15,35 @@ class ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.grey[200],
-              child: (imageUrl != null && imageUrl!.isNotEmpty)
-                  ? ClipOval(
-                      child: Image.network(
-                        imageUrl!,
-                        fit: BoxFit.cover,
-                        width: 60,
-                        height: 60,
-                        loadingBuilder: (context, child, progress) {
-                          if (progress == null) {
-                            return child;
-                          }
-                          return const CircularProgressIndicator();
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            CupertinoIcons.person_alt_circle,
-                            size: 40,
-                            color: Colors.grey[600],
-                          );
-                        },
-                      ),
-                    )
-                  : Icon(
-                      CupertinoIcons.person_alt_circle,
-                      size: 40,
-                      color: Colors.grey[600],
-                    ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Text(
+            name,
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2D3436),
             ),
-            const SizedBox(width: 16),
-            
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis, 
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    email,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

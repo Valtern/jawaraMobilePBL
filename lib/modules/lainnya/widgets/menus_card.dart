@@ -44,10 +44,9 @@ class _MenusCardState extends State<MenusCard> {
     final List<Map<String, dynamic>> menuConfiguration = [
       {
         'roles': ['all'],
-        'widget': ListTile(
-          leading: const Icon(Icons.dashboard),
-          title: const Text('Dashboard'),
-          trailing: const Icon(Icons.chevron_right),
+        'widget': _buildModernMenuItem(
+          icon: Icons.dashboard,
+          title: 'Dashboard',
           onTap: () {
             Navigator.of(
               context,
@@ -58,10 +57,9 @@ class _MenusCardState extends State<MenusCard> {
       },
       {
         'roles': [admin, rw, rt, sekretaris],
-        'widget': ListTile(
-          leading: const Icon(Icons.person),
-          title: const Text('Data Warga & Rumah'),
-          trailing: const Icon(Icons.chevron_right),
+        'widget': _buildModernMenuItem(
+          icon: Icons.person,
+          title: 'Data Warga & Rumah',
           onTap: () {
             Navigator.of(context).pushNamed('/data-warga-rumah');
           },
@@ -69,10 +67,9 @@ class _MenusCardState extends State<MenusCard> {
       },
       {
         'roles': ['all'],
-        'widget': ListTile(
-          leading: const Icon(Icons.calendar_month),
-          title: const Text('Kegiatan & Broadcast'),
-          trailing: const Icon(Icons.chevron_right),
+        'widget': _buildModernMenuItem(
+          icon: Icons.calendar_month,
+          title: 'Kegiatan & Broadcast',
           onTap: () {
             Navigator.of(context).pushNamed('/kegiatan-broadcast');
           },
@@ -80,10 +77,9 @@ class _MenusCardState extends State<MenusCard> {
       },
       {
         'roles': [admin, bendahara],
-        'widget': ListTile(
-          leading: const Icon(Icons.credit_card),
-          title: const Text('Channel Transfer'),
-          trailing: const Icon(Icons.chevron_right),
+        'widget': _buildModernMenuItem(
+          icon: Icons.credit_card,
+          title: 'Channel Transfer',
           onTap: () {
             Navigator.of(context).pushNamed('/channel-transfer');
           },
@@ -91,10 +87,9 @@ class _MenusCardState extends State<MenusCard> {
       },
       {
         'roles': [admin, bendahara, rw, rt],
-        'widget': ListTile(
-          leading: const Icon(Icons.show_chart),
-          title: const Text('Laporan Keuangan'),
-          trailing: const Icon(Icons.chevron_right),
+        'widget': _buildModernMenuItem(
+          icon: Icons.show_chart,
+          title: 'Laporan Keuangan',
           onTap: () {
             Navigator.of(context).pushNamed('/laporan-keuangan');
           },
@@ -102,10 +97,9 @@ class _MenusCardState extends State<MenusCard> {
       },
       {
         'roles': ['all'],
-        'widget': ListTile(
-          leading: const Icon(Icons.email),
-          title: const Text('Pesan Warga'),
-          trailing: const Icon(Icons.chevron_right),
+        'widget': _buildModernMenuItem(
+          icon: Icons.email,
+          title: 'Pesan Warga',
           onTap: () {
             Navigator.of(context).pushNamed('/pesan-warga');
           },
@@ -113,10 +107,9 @@ class _MenusCardState extends State<MenusCard> {
       },
       {
         'roles': [admin, rw, rt, sekretaris],
-        'widget': ListTile(
-          leading: const Icon(Icons.how_to_reg),
-          title: const Text('Penerimaan Warga'),
-          trailing: const Icon(Icons.chevron_right),
+        'widget': _buildModernMenuItem(
+          icon: Icons.how_to_reg,
+          title: 'Penerimaan Warga',
           onTap: () {
             Navigator.of(context).pushNamed('/penerimaan-warga');
           },
@@ -124,10 +117,9 @@ class _MenusCardState extends State<MenusCard> {
       },
       {
         'roles': [admin, rw, rt, sekretaris],
-        'widget': ListTile(
-          leading: const Icon(Icons.family_restroom),
-          title: const Text('Mutasi Keluarga'),
-          trailing: const Icon(Icons.chevron_right),
+        'widget': _buildModernMenuItem(
+          icon: Icons.family_restroom,
+          title: 'Mutasi Keluarga',
           onTap: () {
             Navigator.of(context).pushNamed('/mutasi-keluarga');
           },
@@ -135,10 +127,9 @@ class _MenusCardState extends State<MenusCard> {
       },
       {
         'roles': [admin],
-        'widget': ListTile(
-          leading: const Icon(Icons.history),
-          title: const Text('Log Aktivitas'),
-          trailing: const Icon(Icons.chevron_right),
+        'widget': _buildModernMenuItem(
+          icon: Icons.history,
+          title: 'Log Aktivitas',
           onTap: () {
             Navigator.of(context).pushNamed('/log-aktivitas');
           },
@@ -146,10 +137,9 @@ class _MenusCardState extends State<MenusCard> {
       },
       {
         'roles': [admin],
-        'widget': ListTile(
-          leading: const Icon(Icons.admin_panel_settings),
-          title: const Text('Manajemen Pengguna'),
-          trailing: const Icon(Icons.chevron_right),
+        'widget': _buildModernMenuItem(
+          icon: Icons.admin_panel_settings,
+          title: 'Manajemen Pengguna',
           onTap: () {
             Navigator.of(context).pushNamed('/manajemen-pengguna');
           },
@@ -162,20 +152,70 @@ class _MenusCardState extends State<MenusCard> {
         .map((item) => item['widget'] as Widget)
         .toList();
 
-    return Card(
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 8, bottom: 8, left: 12),
-        child: _role == null
-            ? const Center(child: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: CircularProgressIndicator(),
-              ))
-            : ListView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: visibleMenuItems,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: _role == null
+          ? const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6938EF)),
+                ),
               ),
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: visibleMenuItems,
+            ),
+    );
+  }
+
+  Widget _buildModernMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: const Color(0xFF6938EF),
+              size: 24,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF2D3436),
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: Colors.grey,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
