@@ -12,35 +12,40 @@ class BroadcastListView extends StatefulWidget {
   State<BroadcastListView> createState() => _BroadcastListViewState();
 }
 
-class _BroadcastListViewState extends State<BroadcastListView> {
-  final KegiatanBroadcastService _service = KegiatanBroadcastService();
-  final AuthService _authService = AuthService();
-  String? _role;
-  String? _filterJudul;
+class _AddBroadcastForm extends StatefulWidget {
+  final KegiatanBroadcastService service;
+  final VoidCallback onSuccess;
+
+  const _AddBroadcastForm({
+    required this.service,
+    required this.onSuccess,
+  });
+
+  @override
+  State<_AddBroadcastForm> createState() => _AddBroadcastFormState();
+}
+
+class _AddBroadcastFormState extends State<_AddBroadcastForm> {
+  late final TextEditingController judulCtl;
+  late final TextEditingController isiCtl;
 
   @override
   void initState() {
     super.initState();
-    _loadUserRole();
+    judulCtl = TextEditingController();
+    isiCtl = TextEditingController();
   }
 
-  Future<void> _loadUserRole() async {
-    final role = await _authService.getRole();
-    if (mounted) {
-      setState(() {
-        _role = role;
-      });
-    }
+  @override
+  void dispose() {
+    judulCtl.dispose();
+    isiCtl.dispose();
+    super.dispose();
   }
 
-  void _showAddBroadcastSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        final judulCtl = TextEditingController();
-        final isiCtl = TextEditingController();
-        return Padding(
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
@@ -48,9 +53,9 @@ class _BroadcastListViewState extends State<BroadcastListView> {
             bottom: MediaQuery.of(context).viewInsets.bottom + 16,
           ),
           child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              spacing: 12,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -98,34 +103,46 @@ class _BroadcastListViewState extends State<BroadcastListView> {
                             );
                             return;
                           }
-                          final ok = await _service.createBroadcast({
+                          final ok = await widget.service.createBroadcast({
                             'judul': judul,
                             'isi_pesan': isi,
                           });
                           if (ok) {
                             if (mounted) {
                               Navigator.of(context).pop();
-                              setState(() {});
-                              ScaffoldMessenger.of(this.context).showSnackBar(
+                              widget.onSuccess();
+                              ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Broadcast berhasil dikirim'),
                                 ),
                               );
                             }
                           } else {
-                            ScaffoldMessenger.of(this.context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Gagal mengirim broadcast'),
-                              ),
-                            );
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Gagal mengirim broadcast'),
+                                ),
+                              );
+                            }
                           }
                         },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Icon(Icons.send),
-                            SizedBox(width: 4),
-                            Text('Kirim Broadcast'),
+                            Icon(Icons.send, size: 18),
+                            SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'Kirim Broadcast',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -134,15 +151,27 @@ class _BroadcastListViewState extends State<BroadcastListView> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
-                          judulCtl.clear();
-                          isiCtl.clear();
+                          setState(() {
+                            judulCtl.clear();
+                            isiCtl.clear();
+                          });
                         },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Icon(Icons.refresh),
-                            SizedBox(width: 4),
-                            Text('Reset'),
+                            Icon(Icons.refresh, size: 18),
+                            SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'Reset',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -152,6 +181,41 @@ class _BroadcastListViewState extends State<BroadcastListView> {
               ],
             ),
           ),
+        );
+  }
+}
+
+class _BroadcastListViewState extends State<BroadcastListView> {
+  final KegiatanBroadcastService _service = KegiatanBroadcastService();
+  final AuthService _authService = AuthService();
+  String? _role;
+  String? _filterJudul;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+  Future<void> _loadUserRole() async {
+    final role = await _authService.getRole();
+    if (mounted) {
+      setState(() {
+        _role = role;
+      });
+    }
+  }
+
+  void _showAddBroadcastSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return _AddBroadcastForm(
+          service: _service,
+          onSuccess: () {
+            setState(() {});
+          },
         );
       },
     );
@@ -313,11 +377,11 @@ class _BroadcastListViewState extends State<BroadcastListView> {
         ),
         if (canAdd)
           Positioned(
-            bottom: 0,
-            right: 0,
+            bottom: 80,
+            right: 16,
             child: FloatingActionButton(
               heroTag: 'add-broadcast',
-              backgroundColor: Colors.deepPurple,
+              backgroundColor: const Color(0xFF6938EF),
               onPressed: () => _showAddBroadcastSheet(context),
               child: const Icon(Icons.add, color: Colors.white),
             ),

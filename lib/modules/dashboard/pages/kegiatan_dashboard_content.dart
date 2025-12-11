@@ -7,7 +7,8 @@ class KegiatanDashboardContent extends StatefulWidget {
   const KegiatanDashboardContent({super.key});
 
   @override
-  State<KegiatanDashboardContent> createState() => _KegiatanDashboardContentState();
+  State<KegiatanDashboardContent> createState() =>
+      _KegiatanDashboardContentState();
 }
 
 class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
@@ -71,9 +72,8 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
 
         final total = data['total'] ?? 0;
         final waktu = _safeMap(data['waktu']);
-        final kategori = _safeMap(data['kategori']); 
-        final pj = data['pj_terbanyak'] ?? '-';
-        
+        final kategori = _safeMap(data['kategori']);
+
         final rawChartData = data['chart_bulanan'] as List? ?? [];
         final chartData = rawChartData.map((e) {
           if (e is num) return e.toDouble();
@@ -82,53 +82,62 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
         }).toList();
 
         // Calculate task counts for each category
-        final totalKategori = kategori.values.fold<int>(0, (sum, val) => sum + (val is int ? val : int.tryParse(val.toString()) ?? 0));
+        final totalKategori = kategori.values.fold<int>(
+          0,
+          (sum, val) =>
+              sum + (val is int ? val : int.tryParse(val.toString()) ?? 0),
+        );
         final selesai = waktu['selesai'] ?? 0;
         final hariIni = waktu['hari_ini'] ?? 0;
         final akanDatang = waktu['akan_datang'] ?? 0;
-        final totalWaktu = (selesai is int ? selesai : int.tryParse(selesai.toString()) ?? 0) +
-                          (hariIni is int ? hariIni : int.tryParse(hariIni.toString()) ?? 0) +
-                          (akanDatang is int ? akanDatang : int.tryParse(akanDatang.toString()) ?? 0);
+        final totalWaktu =
+            (selesai is int ? selesai : int.tryParse(selesai.toString()) ?? 0) +
+            (hariIni is int ? hariIni : int.tryParse(hariIni.toString()) ?? 0) +
+            (akanDatang is int
+                ? akanDatang
+                : int.tryParse(akanDatang.toString()) ?? 0);
 
         // Prepare task groups for list
         final taskGroups = <Map<String, dynamic>>[];
-        
-        // Add total kegiatan first
-        final totalInt = total is int ? total : int.tryParse(total.toString()) ?? 0;
-        if (totalInt > 0) {
-          taskGroups.add({
-            'name': 'Total Kegiatan',
-            'tasks': totalInt,
-            'progress': 100.0,
-            'icon': Icons.event_note,
-            'color': Colors.blue,
-          });
-        }
-        
-        // Add kategori tasks
-        kategori.forEach((key, value) {
-          final count = value is int ? value : int.tryParse(value.toString()) ?? 0;
-          if (count > 0 && totalKategori > 0) {
-            taskGroups.add({
-              'name': key,
-              'tasks': count,
-              'progress': (count / totalKategori * 100).clamp(0.0, 100.0),
-              'icon': Icons.category,
-              'color': _getColorForIndex(taskGroups.length),
-            });
-          }
+
+        // Add total kegiatan first - always show
+        final totalInt = total is int
+            ? total
+            : int.tryParse(total.toString()) ?? 0;
+        taskGroups.add({
+          'name': 'Total Kegiatan',
+          'tasks': totalInt,
+          'progress': 100.0,
+          'icon': Icons.event_note,
+          'color': Colors.blue,
         });
 
-        // Add waktu tasks
-        if (totalWaktu > 0) {
+        // Add kategori tasks - show all categories with their actual counts
+        kategori.forEach((key, value) {
+          final count = value is int
+              ? value
+              : int.tryParse(value.toString()) ?? 0;
+          // Show all categories, even if count is 0
+          final progress = totalKategori > 0
+              ? (count / totalKategori * 100).clamp(0.0, 100.0)
+              : (count > 0 ? 100.0 : 0.0);
           taskGroups.add({
-            'name': 'Waktu Pelaksanaan',
-            'tasks': totalWaktu,
-            'progress': 50.0,
-            'icon': Icons.schedule,
-            'color': Colors.amber,
+            'name': key,
+            'tasks': count,
+            'progress': progress,
+            'icon': Icons.category,
+            'color': _getColorForIndex(taskGroups.length),
           });
-        }
+        });
+
+        // Add waktu tasks - show with actual total waktu count
+        taskGroups.add({
+          'name': 'Waktu Pelaksanaan',
+          'tasks': totalWaktu,
+          'progress': totalWaktu > 0 ? 50.0 : 0.0,
+          'icon': Icons.schedule,
+          'color': Colors.amber,
+        });
 
         // Ensure at least one item for badge count
         final badgeCount = taskGroups.isEmpty ? 0 : taskGroups.length;
@@ -143,7 +152,7 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
               _buildSectionHeader('Kegiatan', badgeCount),
               const SizedBox(height: 8),
               const SizedBox(height: 16),
-              
+
               // Task Groups List
               if (taskGroups.isEmpty)
                 const Center(
@@ -160,18 +169,25 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
                   ),
                 )
               else
-                ...taskGroups.map((group) => _buildTaskGroupCard(
-                  group['name'] as String,
-                  group['tasks'] as int,
-                  group['progress'] as double,
-                  group['icon'] as IconData,
-                  group['color'] as Color,
-                )).toList(),
-              
+                ...taskGroups
+                    .map(
+                      (group) => _buildTaskGroupCard(
+                        group['name'] as String,
+                        group['tasks'] as int,
+                        group['progress'] as double,
+                        group['icon'] as IconData,
+                        group['color'] as Color,
+                      ),
+                    )
+                    .toList(),
+
               const SizedBox(height: 24),
-              
+
               // Chart Card
-              SizedBox(height: 300, child: _buildKegiatanPerBulanCard(chartData)),
+              SizedBox(
+                height: 300,
+                child: _buildKegiatanPerBulanCard(chartData),
+              ),
             ],
           ),
         );
@@ -224,7 +240,13 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
     return colors[index % colors.length];
   }
 
-  Widget _buildTaskGroupCard(String name, int tasks, double progress, IconData icon, Color color) {
+  Widget _buildTaskGroupCard(
+    String name,
+    int tasks,
+    double progress,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -310,7 +332,7 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
 
   Widget _buildKegiatanPerBulanCard(List<double> data) {
     if (data.isEmpty || data.every((e) => e == 0)) {
-       return DashboardCard(
+      return DashboardCard(
         title: 'Tren Kegiatan (Tahun Ini)',
         icon: Icons.show_chart,
         color: Colors.pink.shade700,
@@ -329,30 +351,68 @@ class _KegiatanDashboardContentState extends State<KegiatanDashboardContent> {
             gridData: FlGridData(show: false),
             titlesData: FlTitlesData(
               topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 1, reservedSize: 24, getTitlesWidget: (v, m) => Text(v.toInt().toString(), style: const TextStyle(fontSize: 10)))),
+              rightTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  interval: 1,
+                  reservedSize: 24,
+                  getTitlesWidget: (v, m) => Text(
+                    v.toInt().toString(),
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                ),
+              ),
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
                   interval: 1,
                   getTitlesWidget: (value, meta) {
-                    const months = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+                    const months = [
+                      'J',
+                      'F',
+                      'M',
+                      'A',
+                      'M',
+                      'J',
+                      'J',
+                      'A',
+                      'S',
+                      'O',
+                      'N',
+                      'D',
+                    ];
                     int index = value.toInt();
-                    if (index >= 0 && index < 12) return Text(months[index], style: const TextStyle(fontSize: 10));
+                    if (index >= 0 && index < 12)
+                      return Text(
+                        months[index],
+                        style: const TextStyle(fontSize: 10),
+                      );
                     return const Text('');
                   },
                 ),
               ),
             ),
-            borderData: FlBorderData(show: true, border: Border.all(color: Colors.grey.shade300)),
+            borderData: FlBorderData(
+              show: true,
+              border: Border.all(color: Colors.grey.shade300),
+            ),
             lineBarsData: [
               LineChartBarData(
-                spots: List.generate(data.length, (index) => FlSpot(index.toDouble(), data[index])),
+                spots: List.generate(
+                  data.length,
+                  (index) => FlSpot(index.toDouble(), data[index]),
+                ),
                 isCurved: true,
                 color: Colors.pink,
                 barWidth: 3,
                 dotData: FlDotData(show: true),
-                belowBarData: BarAreaData(show: true, color: Colors.pink.withOpacity(0.1)),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: Colors.pink.withOpacity(0.1),
+                ),
               ),
             ],
           ),
