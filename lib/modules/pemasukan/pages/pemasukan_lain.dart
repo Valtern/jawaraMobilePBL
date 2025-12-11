@@ -17,6 +17,10 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
   String? _filterName;
   String? _filterJenis;
 
+  void _fetchData() {
+    setState(() {});
+  }
+
   String _formatCurrency(num value) => 'Rp ${value.toStringAsFixed(0)}';
 
   void _showAddPemasukanLainSheet(BuildContext context) {
@@ -325,6 +329,7 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                                                   ? null
                                                   : jenisVal;
                                             });
+                                            _fetchData();
                                             Navigator.of(context).pop();
                                           },
                                           child: Row(
@@ -346,6 +351,7 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                                               _filterName = null;
                                               _filterJenis = null;
                                             });
+                                            _fetchData();
                                             Navigator.of(context).pop();
                                           },
                                           child: Row(

@@ -16,10 +16,7 @@ class _AddBroadcastForm extends StatefulWidget {
   final KegiatanBroadcastService service;
   final VoidCallback onSuccess;
 
-  const _AddBroadcastForm({
-    required this.service,
-    required this.onSuccess,
-  });
+  const _AddBroadcastForm({required this.service, required this.onSuccess});
 
   @override
   State<_AddBroadcastForm> createState() => _AddBroadcastFormState();
@@ -46,142 +43,137 @@ class _AddBroadcastFormState extends State<_AddBroadcastForm> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          ),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Tambah Broadcast',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
+                const Expanded(
+                  child: Text(
+                    'Tambah Broadcast',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
                 ),
-                TextInput(
-                  controller: judulCtl,
-                  label: 'Judul Pesan',
-                  prefixIcon: const Icon(Icons.campaign),
-                ),
-                TextInput(
-                  controller: isiCtl,
-                  label: 'Isi Pesan',
-                  prefixIcon: const Icon(Icons.message),
-                  maxLines: 3,
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final judul = judulCtl.text.trim();
-                          final isi = isiCtl.text.trim();
-                          if (judul.isEmpty || isi.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Judul dan isi pesan wajib diisi',
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-                          final ok = await widget.service.createBroadcast({
-                            'judul': judul,
-                            'isi_pesan': isi,
-                          });
-                          if (ok) {
-                            if (mounted) {
-                              Navigator.of(context).pop();
-                              widget.onSuccess();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Broadcast berhasil dikirim'),
-                                ),
-                              );
-                            }
-                          } else {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Gagal mengirim broadcast'),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.send, size: 18),
-                            SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                'Kirim Broadcast',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 14),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          setState(() {
-                            judulCtl.clear();
-                            isiCtl.clear();
-                          });
-                        },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.refresh, size: 18),
-                            SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                'Reset',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 14),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
                 ),
               ],
             ),
-          ),
-        );
+            TextInput(
+              controller: judulCtl,
+              label: 'Judul Pesan',
+              prefixIcon: const Icon(Icons.campaign),
+            ),
+            TextInput(
+              controller: isiCtl,
+              label: 'Isi Pesan',
+              prefixIcon: const Icon(Icons.message),
+              maxLines: 3,
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final judul = judulCtl.text.trim();
+                      final isi = isiCtl.text.trim();
+                      if (judul.isEmpty || isi.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Judul dan isi pesan wajib diisi'),
+                          ),
+                        );
+                        return;
+                      }
+                      final ok = await widget.service.createBroadcast({
+                        'judul': judul,
+                        'isi_pesan': isi,
+                      });
+                      if (ok) {
+                        if (mounted) {
+                          Navigator.of(context).pop();
+                          widget.onSuccess();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Broadcast berhasil dikirim'),
+                            ),
+                          );
+                        }
+                      } else {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Gagal mengirim broadcast'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.send, size: 18),
+                        SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'Kirim Broadcast',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        judulCtl.clear();
+                        isiCtl.clear();
+                      });
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.refresh, size: 18),
+                        SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'Reset',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -190,11 +182,19 @@ class _BroadcastListViewState extends State<BroadcastListView> {
   final AuthService _authService = AuthService();
   String? _role;
   String? _filterJudul;
+  late Future<List<dynamic>> _futureBroadcast;
 
   @override
   void initState() {
     super.initState();
     _loadUserRole();
+    _fetchData();
+  }
+
+  void _fetchData() {
+    setState(() {
+      _futureBroadcast = _service.getBroadcastList(judul: _filterJudul);
+    });
   }
 
   Future<void> _loadUserRole() async {
@@ -267,6 +267,7 @@ class _BroadcastListViewState extends State<BroadcastListView> {
                                               ? null
                                               : judulCtl.text.trim();
                                         });
+                                        _fetchData();
                                         Navigator.of(context).pop();
                                       },
                                       child: Row(
@@ -287,6 +288,7 @@ class _BroadcastListViewState extends State<BroadcastListView> {
                                         setState(() {
                                           _filterJudul = null;
                                         });
+                                        _fetchData();
                                         Navigator.of(context).pop();
                                       },
                                       child: Row(
@@ -313,7 +315,7 @@ class _BroadcastListViewState extends State<BroadcastListView> {
             ),
             Expanded(
               child: FutureBuilder<List<dynamic>>(
-                future: _service.getBroadcastList(judul: _filterJudul),
+                future: _futureBroadcast,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());

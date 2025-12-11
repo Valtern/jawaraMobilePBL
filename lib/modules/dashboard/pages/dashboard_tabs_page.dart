@@ -26,6 +26,7 @@ class DashboardPage extends StatelessWidget {
             ),
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: const TabBar(
+              isScrollable: true,
               labelColor: Color(0xFF6938EF),
               unselectedLabelColor: Color(0xFF636E72),
               indicatorColor: Color(0xFF6938EF),

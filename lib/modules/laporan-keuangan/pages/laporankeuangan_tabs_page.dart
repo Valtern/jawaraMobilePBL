@@ -9,12 +9,13 @@ class LaporanKeuanganTabsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3, 
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Laporan Keuangan'),
           foregroundColor: const Color.fromARGB(255, 0, 0, 0),
           bottom: const TabBar(
+            isScrollable: true,
             indicatorColor: Color(0xFF673AB7),
             labelColor: Color(0xFF673AB7),
             unselectedLabelColor: Color(0xFF673AB7),
@@ -27,8 +28,8 @@ class LaporanKeuanganTabsPage extends StatelessWidget {
         ),
         body: const TabBarView(
           children: [
-            CetakLaporanPage(),    // Konten untuk Tab 1 (Cetak Laporan)
-            SemuaPemasukanPage(),  // Konten untuk Tab 2 (Semua Pemasukan)
+            CetakLaporanPage(), // Konten untuk Tab 1 (Cetak Laporan)
+            SemuaPemasukanPage(), // Konten untuk Tab 2 (Semua Pemasukan)
             SemuaPengeluaranPage(), // Konten untuk Tab 3 (Semua Pengeluaran)
           ],
         ),

@@ -26,6 +26,9 @@ class WargaDaftarView extends StatefulWidget {
 class _WargaDaftarViewState extends State<WargaDaftarView> {
   final DataWargaRumahService _service = DataWargaRumahService();
   String? _filterNama;
+  String? _filterNik;
+  int? _filterKeluargaId;
+  List<dynamic> _keluargaList = [];
 
   late Future<List<dynamic>> _futureWarga;
 
@@ -33,6 +36,8 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
     setState(() {
       _futureWarga = _service.getWargaList(
         namaLengkap: _filterNama,
+        nik: _filterNik,
+        keluargaId: _filterKeluargaId,
       );
     });
   }
@@ -41,6 +46,18 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
   void initState() {
     super.initState();
     _fetchData();
+    _loadKeluargaList();
+  }
+
+  Future<void> _loadKeluargaList() async {
+    try {
+      final keluarga = await _service.getKeluargaList();
+      setState(() {
+        _keluargaList = keluarga;
+      });
+    } catch (e) {
+      // Handle error silently or show message if needed
+    }
   }
 
   void _showAddWargaSheet(BuildContext context) {
@@ -74,8 +91,13 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
                     showModalBottomSheet(
                       context: context,
                       builder: (BuildContext context) {
-                        final namaCtl =
-                            TextEditingController(text: _filterNama ?? '');
+                        final namaCtl = TextEditingController(
+                          text: _filterNama ?? '',
+                        );
+                        final nikCtl = TextEditingController(
+                          text: _filterNik ?? '',
+                        );
+                        int? tempKeluargaId = _filterKeluargaId;
                         return Container(
                           padding: const EdgeInsets.all(16),
                           width: double.infinity,
@@ -87,6 +109,35 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
                                 label: 'Cari berdasarkan nama...',
                                 prefixIcon: const Icon(Icons.search),
                               ),
+                              const SizedBox(height: 12),
+                              TextInput(
+                                controller: nikCtl,
+                                label: 'Cari berdasarkan NIK...',
+                                prefixIcon: const Icon(Icons.badge),
+                              ),
+                              const SizedBox(height: 12),
+                              SelectInput<int>(
+                                label: 'Filter Keluarga (opsional)',
+                                prefixIcon: const Icon(Icons.people),
+                                value: tempKeluargaId,
+                                items: _keluargaList.map((item) {
+                                  final map = item as Map<String, dynamic>;
+                                  final id = map['id'] as int?;
+                                  final name =
+                                      (map['nama_keluarga'] ??
+                                              map['name'] ??
+                                              map['nama'] ??
+                                              '')
+                                          .toString();
+                                  return DropdownMenuItem<int>(
+                                    value: id,
+                                    child: Text(name.isEmpty ? '-' : name),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  tempKeluargaId = value;
+                                },
+                              ),
                               const Spacer(),
                               Row(
                                 mainAxisAlignment:
@@ -97,8 +148,12 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
                                       onPressed: () {
                                         _filterNama =
                                             namaCtl.text.trim().isEmpty
-                                                ? null
-                                                : namaCtl.text.trim();
+                                            ? null
+                                            : namaCtl.text.trim();
+                                        _filterNik = nikCtl.text.trim().isEmpty
+                                            ? null
+                                            : nikCtl.text.trim();
+                                        _filterKeluargaId = tempKeluargaId;
                                         _fetchData();
                                         Navigator.of(context).pop();
                                       },
@@ -118,6 +173,8 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
                                     child: OutlinedButton(
                                       onPressed: () {
                                         _filterNama = null;
+                                        _filterNik = null;
+                                        _filterKeluargaId = null;
                                         _fetchData();
                                         Navigator.of(context).pop();
                                       },
@@ -153,7 +210,8 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
                   }
                   if (snapshot.hasError) {
                     return Center(
-                        child: Text('Gagal memuat data: ${snapshot.error}'));
+                      child: Text('Gagal memuat data: ${snapshot.error}'),
+                    );
                   }
                   final items = snapshot.data ?? [];
                   if (items.isEmpty) {
@@ -176,11 +234,12 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
                       final keluargaObj = map['keluarga'];
                       String keluargaName = '';
                       if (keluargaObj is Map<String, dynamic>) {
-                        keluargaName = (keluargaObj['nama_keluarga'] ??
-                                keluargaObj['name'] ??
-                                keluargaObj['nama'] ??
-                                '')
-                            .toString();
+                        keluargaName =
+                            (keluargaObj['nama_keluarga'] ??
+                                    keluargaObj['name'] ??
+                                    keluargaObj['nama'] ??
+                                    '')
+                                .toString();
                       } else {
                         keluargaName =
                             (map['keluarga_name'] ?? map['keluarga'] ?? '')
@@ -188,10 +247,12 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
                       }
                       return ListTile(
                         title: Text(name.isEmpty ? '-' : name),
-                        subtitle: Text([
-                          if (keluargaName.isNotEmpty) keluargaName,
-                          if (nik.isNotEmpty) 'NIK - $nik',
-                        ].join(' • ')),
+                        subtitle: Text(
+                          [
+                            if (keluargaName.isNotEmpty) keluargaName,
+                            if (nik.isNotEmpty) 'NIK - $nik',
+                          ].join(' • '),
+                        ),
                       );
                     },
                   );
@@ -230,7 +291,9 @@ class _AddWargaFormState extends State<_AddWargaForm> {
   late TextEditingController _nikController;
   late TextEditingController _tempatLahirController;
   late TextEditingController _tanggalLahirController;
+  late TextEditingController _pekerjaanController;
   String? _jenisKelamin;
+  String? _statusPerkawinan;
   int? _keluargaId;
   bool _isLoading = false;
   DateTime? _selectedTanggalLahir;
@@ -244,6 +307,7 @@ class _AddWargaFormState extends State<_AddWargaForm> {
     _nikController = TextEditingController();
     _tempatLahirController = TextEditingController();
     _tanggalLahirController = TextEditingController();
+    _pekerjaanController = TextEditingController();
     _futureKeluargaItems = _fetchKeluargaList();
   }
 
@@ -253,6 +317,7 @@ class _AddWargaFormState extends State<_AddWargaForm> {
     _nikController.dispose();
     _tempatLahirController.dispose();
     _tanggalLahirController.dispose();
+    _pekerjaanController.dispose();
     super.dispose();
   }
 
@@ -261,8 +326,8 @@ class _AddWargaFormState extends State<_AddWargaForm> {
     return items.map((item) {
       final map = item as Map<String, dynamic>;
       final id = map['id'] as int?;
-      final name =
-          (map['nama_keluarga'] ?? map['name'] ?? map['nama'] ?? '').toString();
+      final name = (map['nama_keluarga'] ?? map['name'] ?? map['nama'] ?? '')
+          .toString();
       return DropdownMenuItem<int>(
         value: id,
         child: Text(name.isEmpty ? '-' : name),
@@ -290,16 +355,13 @@ class _AddWargaFormState extends State<_AddWargaForm> {
     final nama = _namaController.text.trim();
     final nik = _nikController.text.trim();
     if (nama.isEmpty || nik.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama dan NIK wajib diisi')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Nama dan NIK wajib diisi')));
       setState(() => _isLoading = false);
       return;
     }
-    final payload = <String, dynamic>{
-      'nama_lengkap': nama,
-      'nik': nik,
-    };
+    final payload = <String, dynamic>{'nama_lengkap': nama, 'nik': nik};
     if ((_jenisKelamin ?? '').isNotEmpty) {
       payload['jenis_kelamin'] = _jenisKelamin;
     }
@@ -310,6 +372,10 @@ class _AddWargaFormState extends State<_AddWargaForm> {
       payload['tanggal_lahir'] = _tanggalLahirController.text.trim();
     }
     if (_keluargaId != null) payload['keluarga_id'] = _keluargaId;
+    if (_statusPerkawinan != null)
+      payload['status_perkawinan'] = _statusPerkawinan;
+    if (_pekerjaanController.text.trim().isNotEmpty)
+      payload['pekerjaan'] = _pekerjaanController.text.trim();
 
     final error = await widget.service.createWarga(payload);
 
@@ -322,9 +388,9 @@ class _AddWargaFormState extends State<_AddWargaForm> {
         const SnackBar(content: Text('Warga berhasil ditambahkan')),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal: $error')));
     }
     setState(() => _isLoading = false);
   }
@@ -348,10 +414,7 @@ class _AddWargaFormState extends State<_AddWargaForm> {
                 const Expanded(
                   child: Text(
                     'Tambah Data Warga',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
                 IconButton(
@@ -395,14 +458,8 @@ class _AddWargaFormState extends State<_AddWargaForm> {
               prefixIcon: const Icon(Icons.wc),
               value: _jenisKelamin,
               items: const [
-                DropdownMenuItem(
-                  value: 'Laki-laki',
-                  child: Text('Laki-laki'),
-                ),
-                DropdownMenuItem(
-                  value: 'Perempuan',
-                  child: Text('Perempuan'),
-                ),
+                DropdownMenuItem(value: 'Laki-laki', child: Text('Laki-laki')),
+                DropdownMenuItem(value: 'Perempuan', child: Text('Perempuan')),
               ],
               onChanged: (value) {
                 setState(() {
@@ -415,6 +472,30 @@ class _AddWargaFormState extends State<_AddWargaForm> {
               controller: _tempatLahirController,
               label: 'Tempat Lahir',
               prefixIcon: const Icon(Icons.location_city),
+            ),
+            const SizedBox(height: 12),
+            SelectInput<String>(
+              label: 'Status Perkawinan',
+              prefixIcon: const Icon(Icons.favorite),
+              value: _statusPerkawinan,
+              items: const [
+                DropdownMenuItem(value: 'Kawin', child: Text('Kawin')),
+                DropdownMenuItem(
+                  value: 'Belum Kawin',
+                  child: Text('Belum Kawin'),
+                ),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _statusPerkawinan = value;
+                });
+              },
+            ),
+            const SizedBox(height: 12),
+            TextInput(
+              controller: _pekerjaanController,
+              label: 'Pekerjaan',
+              prefixIcon: const Icon(Icons.work),
             ),
             const SizedBox(height: 12),
             TextInput(
@@ -441,7 +522,10 @@ class _AddWargaFormState extends State<_AddWargaForm> {
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2))
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Icon(Icons.save, size: 18),
                         const SizedBox(width: 6),
                         Flexible(
@@ -466,7 +550,9 @@ class _AddWargaFormState extends State<_AddWargaForm> {
                               _nikController.clear();
                               _tempatLahirController.clear();
                               _tanggalLahirController.clear();
+                              _pekerjaanController.clear();
                               _jenisKelamin = null;
+                              _statusPerkawinan = null;
                               _keluargaId = null;
                               _selectedTanggalLahir = null;
                             });

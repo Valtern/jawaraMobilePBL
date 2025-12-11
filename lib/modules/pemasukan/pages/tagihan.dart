@@ -21,6 +21,10 @@ class _TagihanListViewState extends State<TagihanListView> {
   List<dynamic> _kategoriIuranList = [];
   List<dynamic> _keluargaList = [];
 
+  void _fetchData() {
+    setState(() {});
+  }
+
   String _formatCurrency(num value) => 'Rp ${value.toStringAsFixed(0)}';
 
   String _paymentStatusLabel(String status) {
@@ -390,10 +394,13 @@ class _TagihanListViewState extends State<TagihanListView> {
                                                   : periodeCtl.text.trim();
                                               _filterPaymentStatus = statusVal;
                                             });
+                                            _fetchData();
                                             Navigator.of(context).pop();
                                           },
                                           style: ElevatedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -405,8 +412,11 @@ class _TagihanListViewState extends State<TagihanListView> {
                                               Flexible(
                                                 child: Text(
                                                   'Terapkan',
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: TextStyle(fontSize: 14),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                  ),
                                                 ),
                                               ),
                                             ],
@@ -421,10 +431,13 @@ class _TagihanListViewState extends State<TagihanListView> {
                                               _filterPeriode = null;
                                               _filterPaymentStatus = null;
                                             });
+                                            _fetchData();
                                             Navigator.of(context).pop();
                                           },
                                           style: OutlinedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -436,8 +449,11 @@ class _TagihanListViewState extends State<TagihanListView> {
                                               Flexible(
                                                 child: Text(
                                                   'Reset',
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: TextStyle(fontSize: 14),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                  ),
                                                 ),
                                               ),
                                             ],

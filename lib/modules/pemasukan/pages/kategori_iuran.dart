@@ -17,6 +17,10 @@ class _KategoriIuranListViewState extends State<KategoriIuranListView> {
   String? _filterName;
   String? _filterJenis;
 
+  void _fetchData() {
+    setState(() {});
+  }
+
   String _formatCurrency(num value) {
     return 'Rp ${value.toStringAsFixed(0)}';
   }
@@ -89,7 +93,7 @@ class _KategoriIuranListViewState extends State<KategoriIuranListView> {
                       final nominal = map['nominal'] is num
                           ? map['nominal'] as num
                           : num.tryParse(map['nominal']?.toString() ?? '0') ??
-                              0;
+                                0;
                       return ListTile(
                         title: Text(name.isEmpty ? '-' : name),
                         subtitle: Text(
@@ -185,10 +189,7 @@ class _KategoriIuranListViewState extends State<KategoriIuranListView> {
                     prefixIcon: const Icon(Icons.category),
                     value: jenisVal,
                     items: const [
-                      DropdownMenuItem(
-                        value: 'Wajib',
-                        child: Text('Wajib'),
-                      ),
+                      DropdownMenuItem(value: 'Wajib', child: Text('Wajib')),
                       DropdownMenuItem(
                         value: 'Sukarela',
                         child: Text('Sukarela'),
@@ -214,6 +215,7 @@ class _KategoriIuranListViewState extends State<KategoriIuranListView> {
                                   ? null
                                   : jenisVal;
                             });
+                            _fetchData();
                             Navigator.of(context).pop();
                           },
                           child: Row(
@@ -234,6 +236,7 @@ class _KategoriIuranListViewState extends State<KategoriIuranListView> {
                               _filterName = null;
                               _filterJenis = null;
                             });
+                            _fetchData();
                             Navigator.of(context).pop();
                           },
                           child: Row(
@@ -302,10 +305,7 @@ class _FormTambahKategoriState extends State<_FormTambahKategori> {
                 const Expanded(
                   child: Text(
                     'Tambah Kategori Iuran',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
                 IconButton(
@@ -325,10 +325,7 @@ class _FormTambahKategoriState extends State<_FormTambahKategori> {
               value: jenisVal,
               items: const [
                 DropdownMenuItem(value: 'Wajib', child: Text('Wajib')),
-                DropdownMenuItem(
-                  value: 'Sukarela',
-                  child: Text('Sukarela'),
-                ),
+                DropdownMenuItem(value: 'Sukarela', child: Text('Sukarela')),
               ],
               onChanged: (value) {
                 // setState here updates THIS widget only
@@ -352,9 +349,7 @@ class _FormTambahKategoriState extends State<_FormTambahKategori> {
                       final jenis = (jenisVal ?? '').trim();
                       final nominalStr = nominalCtl.text.trim();
 
-                      if (name.isEmpty ||
-                          jenis.isEmpty ||
-                          nominalStr.isEmpty) {
+                      if (name.isEmpty || jenis.isEmpty || nominalStr.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(

@@ -17,10 +17,7 @@ class _AddKegiatanForm extends StatefulWidget {
   final KegiatanBroadcastService service;
   final VoidCallback onSuccess;
 
-  const _AddKegiatanForm({
-    required this.service,
-    required this.onSuccess,
-  });
+  const _AddKegiatanForm({required this.service, required this.onSuccess});
 
   @override
   State<_AddKegiatanForm> createState() => _AddKegiatanFormState();
@@ -71,10 +68,7 @@ class _AddKegiatanFormState extends State<_AddKegiatanForm> {
                 const Expanded(
                   child: Text(
                     'Tambah Kegiatan',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
                 IconButton(
@@ -100,10 +94,7 @@ class _AddKegiatanFormState extends State<_AddKegiatanForm> {
                   child: Text('Kebersihan'),
                 ),
                 DropdownMenuItem(value: 'Rapat', child: Text('Rapat')),
-                DropdownMenuItem(
-                  value: 'Pelatihan',
-                  child: Text('Pelatihan'),
-                ),
+                DropdownMenuItem(value: 'Pelatihan', child: Text('Pelatihan')),
               ],
               onChanged: (value) {
                 setState(() {
@@ -277,6 +268,10 @@ class _KegiatanListViewState extends State<KegiatanListView> {
     _loadUserRole();
   }
 
+  void _fetchData() {
+    setState(() {});
+  }
+
   Future<void> _loadUserRole() async {
     final role = await _authService.getRole();
     if (mounted) {
@@ -378,6 +373,7 @@ class _KegiatanListViewState extends State<KegiatanListView> {
                                                   ? null
                                                   : catVal;
                                             });
+                                            _fetchData();
                                             Navigator.of(context).pop();
                                           },
                                           child: Row(
@@ -399,6 +395,7 @@ class _KegiatanListViewState extends State<KegiatanListView> {
                                               _filterName = null;
                                               _filterCategory = null;
                                             });
+                                            _fetchData();
                                             Navigator.of(context).pop();
                                           },
                                           child: Row(
