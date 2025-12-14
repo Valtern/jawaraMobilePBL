@@ -94,6 +94,7 @@ class _LoginFormState extends State<LoginForm> {
               ),
               const SizedBox(height: 8),
               TextField(
+                key: const Key('emailField'),
                 controller: _emailController,
                 decoration: InputDecoration(
                   hintText: 'Masukan Email',
@@ -143,6 +144,7 @@ class _LoginFormState extends State<LoginForm> {
               ),
               const SizedBox(height: 8),
               TextField(
+                key: const Key('passwordField'),
                 controller: _passwordController,
                 decoration: InputDecoration(
                   hintText: 'Masukan Password',
@@ -202,6 +204,7 @@ class _LoginFormState extends State<LoginForm> {
                   children: [
                     // Primary Login Button
                     ElevatedButton(
+                      key: const Key('loginButton'),
                       onPressed: _handleLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6938EF),
