@@ -9,7 +9,7 @@ class AuthService {
   // Replace with your actual backend URL
   // use http if you using local ip
   // use https if using hosting server
-  String url = 'http://192.168.0.109:8000';
+  String url = 'https://excluded-indication-song-miami.trycloudflare.com';
 
   String get baseUrl => '$url/api';
   String get storageUrl => '$url/storage';

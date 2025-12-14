@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jawarapbl/services/pesan_service.dart';
+import 'package:jawarapbl/modules/pesan-warga/bloc/pesan_bloc.dart'; 
 import 'package:jawarapbl/modules/pesan-warga/models/pesan_model.dart';
 import 'package:jawarapbl/shared/widgets/base_list_card.dart';
 
@@ -11,23 +11,23 @@ class PesanMasukPage extends StatefulWidget {
 }
 
 class _PesanMasukPageState extends State<PesanMasukPage> {
-  final PesanService _pesanService = PesanService();
-  late Future<List<Pesan>> _futurePesan;
+  final PesanBloc _bloc = PesanBloc();
 
   @override
   void initState() {
     super.initState();
-    _loadPesan();
+    _bloc.eventSink.add(null);
   }
 
-  void _loadPesan() {
-    _futurePesan = _pesanService.getInbox();
+  @override
+  void dispose() {
+    _bloc.dispose();
+    super.dispose();
   }
 
   Future<void> _refresh() async {
-    setState(() {
-      _loadPesan();
-    });
+    _bloc.eventSink.add(null);
+    await Future.delayed(const Duration(seconds: 1));
   }
 
   void _showDetailPesan(Pesan pesan) {
@@ -62,18 +62,22 @@ class _PesanMasukPageState extends State<PesanMasukPage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Pesan>>(
-      future: _futurePesan,
+    return StreamBuilder<List<Pesan>>(
+      stream: _bloc.pesanStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
+        if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('Tidak ada pesan masuk.'));
+        } 
+
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
         }
 
         final allPesan = snapshot.data!;
+
+        if (allPesan.isEmpty) {
+          return const Center(child: Text('Tidak ada pesan masuk.'));
+        }
 
         return RefreshIndicator(
           onRefresh: _refresh,
