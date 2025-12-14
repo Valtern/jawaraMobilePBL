@@ -4,6 +4,7 @@ import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
 import 'package:jawarapbl/shared/widgets/inputs/select_input.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
+import 'package:jawarapbl/shared/widgets/add_data_popup.dart';
 import 'package:jawarapbl/services/dataWargaRumah_service.dart';
 
 class KeluargaPage extends StatelessWidget {
@@ -43,17 +44,93 @@ class _KeluargaListViewState extends State<KeluargaListView> {
   }
 
   void _showAddKeluargaSheet(BuildContext context) {
-    showModalBottomSheet(
+    final namaKeluargaCtl = TextEditingController();
+    final nomorKkCtl = TextEditingController();
+    int? rumahId;
+    bool isLoading = false;
+
+    showAddDataPopup(
       context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return _AddKeluargaForm(
-          service: _service,
-          onSave: () {
-            _fetchData();
-          },
-        );
+      title: 'Tambah Data Keluarga',
+      onSave: () async {
+        final namaKeluarga = namaKeluargaCtl.text.trim();
+        final nomorKk = nomorKkCtl.text.trim();
+
+        if (namaKeluarga.isEmpty) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Nama keluarga wajib diisi'),
+            ),
+          );
+          return;
+        }
+
+        setState(() => isLoading = true);
+        Navigator.of(context).pop();
+
+        final ok = await _service.createKeluarga({
+          'nama_keluarga': namaKeluarga,
+          'nomor_kk': nomorKk.isEmpty ? null : nomorKk,
+          'rumah_id': rumahId,
+        });
+
+        if (ok == null) {
+          _fetchData();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Data keluarga berhasil ditambahkan')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal menambahkan data keluarga: $ok')),
+          );
+        }
       },
+      onReset: () {
+        namaKeluargaCtl.clear();
+        nomorKkCtl.clear();
+        rumahId = null;
+      },
+      isLoading: isLoading,
+      formFields: [
+        const SizedBox(height: 8),
+        TextInput(
+          controller: namaKeluargaCtl,
+          label: 'Nama Keluarga',
+          prefixIcon: const Icon(Icons.people),
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: nomorKkCtl,
+          label: 'Nomor KK (opsional)',
+          prefixIcon: const Icon(Icons.badge),
+        ),
+        const SizedBox(height: 16),
+        FutureBuilder<List<DropdownMenuItem<int>>>(
+          future: _service.getRumahList().then((items) => items.map((item) {
+                final map = item as Map<String, dynamic>;
+                final id = map['id'] as int?;
+                final alamat =
+                    (map['alamat'] ?? map['address'] ?? '').toString();
+                return DropdownMenuItem<int>(
+                  value: id,
+                  child: Text(alamat.isEmpty ? '-' : alamat),
+                );
+              }).toList()),
+          builder: (context, snapshot) {
+            return SelectInput<int>(
+              label: 'Rumah (opsional)',
+              prefixIcon: const Icon(Icons.home),
+              value: rumahId,
+              items: snapshot.data ?? [],
+              onChanged: (value) {
+                rumahId = value;
+              },
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 
@@ -177,12 +254,11 @@ class _KeluargaListViewState extends State<KeluargaListView> {
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
                     itemBuilder: (context, item) {
                       final map = item as Map<String, dynamic>;
-                      final namaKeluarga =
-                          (map['nama_keluarga'] ??
-                                  map['name'] ??
-                                  map['nama'] ??
-                                  '')
-                              .toString();
+                      final namaKeluarga = (map['nama_keluarga'] ??
+                              map['name'] ??
+                              map['nama'] ??
+                              '')
+                          .toString();
                       final nomorKk = (map['nomor_kk'] ?? '').toString();
                       String alamatRumah = '';
                       final rumahObj = map['rumah'];
@@ -216,220 +292,6 @@ class _KeluargaListViewState extends State<KeluargaListView> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _AddKeluargaForm extends StatefulWidget {
-  final DataWargaRumahService service;
-  final VoidCallback onSave;
-
-  const _AddKeluargaForm({required this.service, required this.onSave});
-
-  @override
-  State<_AddKeluargaForm> createState() => _AddKeluargaFormState();
-}
-
-class _AddKeluargaFormState extends State<_AddKeluargaForm> {
-  late TextEditingController _namaKeluargaController;
-  late TextEditingController _nomorKkController;
-  int? _rumahId;
-  bool _isLoading = false;
-
-  late Future<List<DropdownMenuItem<int>>> _futureRumahItems;
-
-  @override
-  void initState() {
-    super.initState();
-    _namaKeluargaController = TextEditingController();
-    _nomorKkController = TextEditingController();
-    _futureRumahItems = _fetchRumahList();
-  }
-
-  @override
-  void dispose() {
-    _namaKeluargaController.dispose();
-    _nomorKkController.dispose();
-    super.dispose();
-  }
-
-  Future<List<DropdownMenuItem<int>>> _fetchRumahList() async {
-    final items = await widget.service.getRumahList();
-    return items.map((item) {
-      final map = item as Map<String, dynamic>;
-      final id = map['id'] as int?;
-      final alamat = (map['alamat'] ?? map['address'] ?? '').toString();
-      return DropdownMenuItem<int>(
-        value: id,
-        child: Text(alamat.isEmpty ? '-' : alamat),
-      );
-    }).toList();
-  }
-
-  Future<void> _submit() async {
-    setState(() => _isLoading = true);
-    final nama = _namaKeluargaController.text.trim();
-    if (nama.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama Keluarga wajib diisi')),
-      );
-      setState(() => _isLoading = false);
-      return;
-    }
-    final payload = <String, dynamic>{
-      'nama_keluarga': nama,
-    };
-    if (_nomorKkController.text.trim().isNotEmpty) {
-      payload['nomor_kk'] = _nomorKkController.text.trim();
-    }
-    if (_rumahId != null) payload['rumah_id'] = _rumahId;
-
-    final error = await widget.service.createKeluarga(payload);
-
-    if (!mounted) return;
-
-    if (error == null) {
-      Navigator.of(context).pop();
-      widget.onSave();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Keluarga berhasil ditambahkan')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal: $error')),
-      );
-    }
-    setState(() => _isLoading = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Tambah Data Keluarga',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextInput(
-              controller: _namaKeluargaController,
-              label: 'Nama Keluarga',
-              prefixIcon: const Icon(Icons.people),
-            ),
-            const SizedBox(height: 12),
-            TextInput(
-              controller: _nomorKkController,
-              label: 'Nomor KK (opsional)',
-              prefixIcon: const Icon(Icons.badge),
-            ),
-            const SizedBox(height: 12),
-            FutureBuilder<List<DropdownMenuItem<int>>>(
-              future: _futureRumahItems,
-              builder: (context, snapshot) {
-                return SelectInput<int>(
-                  label: 'Rumah (opsional)',
-                  prefixIcon: const Icon(Icons.home),
-                  value: _rumahId,
-                  items: snapshot.data ?? [],
-                  onChanged: (value) {
-                    setState(() {
-                      _rumahId = value;
-                    });
-                  },
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.save, size: 18),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            _isLoading ? 'Menyimpan...' : 'Simpan',
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            setState(() {
-                              _namaKeluargaController.clear();
-                              _nomorKkController.clear();
-                              _rumahId = null;
-                            });
-                          },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.refresh, size: 18),
-                        SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            'Reset',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

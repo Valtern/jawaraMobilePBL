@@ -357,8 +357,8 @@ class _TagihanListViewState extends State<TagihanListView> {
                                     value: statusVal == null
                                         ? null
                                         : (statusVal == 'paid'
-                                              ? 'Sudah Dibayar'
-                                              : 'Belum Dibayar'),
+                                            ? 'Sudah Dibayar'
+                                            : 'Belum Dibayar'),
                                     items: const [
                                       DropdownMenuItem(
                                         value: 'Sudah Dibayar',
@@ -390,8 +390,8 @@ class _TagihanListViewState extends State<TagihanListView> {
                                             setState(() {
                                               _filterPeriode =
                                                   periodeCtl.text.trim().isEmpty
-                                                  ? null
-                                                  : periodeCtl.text.trim();
+                                                      ? null
+                                                      : periodeCtl.text.trim();
                                               _filterPaymentStatus = statusVal;
                                             });
                                             _fetchData();
@@ -506,11 +506,10 @@ class _TagihanListViewState extends State<TagihanListView> {
                       String familyName = '';
                       bool familyActive = true;
                       if (keluarga is Map<String, dynamic>) {
-                        familyName =
-                            (keluarga['nama_keluarga'] ??
-                                    keluarga['name'] ??
-                                    '')
-                                .toString();
+                        familyName = (keluarga['nama_keluarga'] ??
+                                keluarga['name'] ??
+                                '')
+                            .toString();
                         final status = (keluarga['status'] ?? '').toString();
                         if (status.isNotEmpty) {
                           familyActive = !status.toLowerCase().contains('non');
@@ -528,9 +527,9 @@ class _TagihanListViewState extends State<TagihanListView> {
                       final nominal = map['nominal'] is num
                           ? map['nominal'] as num
                           : num.tryParse(map['nominal']?.toString() ?? '0') ??
-                                0;
-                      final paymentStatus = (map['payment_status'] ?? 'unpaid')
-                          .toString();
+                              0;
+                      final paymentStatus =
+                          (map['payment_status'] ?? 'unpaid').toString();
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),

@@ -5,6 +5,7 @@ import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
 import 'package:jawarapbl/shared/widgets/inputs/select_input.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
+import 'package:jawarapbl/shared/widgets/add_data_popup.dart';
 import 'package:jawarapbl/services/dataWargaRumah_service.dart';
 
 class WargaPage extends StatelessWidget {
@@ -61,17 +62,177 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
   }
 
   void _showAddWargaSheet(BuildContext context) {
-    showModalBottomSheet(
+    final namaCtl = TextEditingController();
+    final nikCtl = TextEditingController();
+    final tempatLahirCtl = TextEditingController();
+    final tanggalLahirCtl = TextEditingController();
+    final pekerjaanCtl = TextEditingController();
+    String? jenisKelamin;
+    String? statusPerkawinan;
+    int? keluargaId;
+    bool isLoading = false;
+
+    showAddDataPopup(
       context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return _AddWargaForm(
-          service: _service,
-          onSave: () {
-            _fetchData();
-          },
-        );
+      title: 'Tambah Data Warga',
+      onSave: () async {
+        final nama = namaCtl.text.trim();
+        final nik = nikCtl.text.trim();
+        if (nama.isEmpty || nik.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Nama dan NIK wajib diisi')),
+          );
+          return;
+        }
+
+        setState(() => isLoading = true);
+        Navigator.of(context).pop();
+
+        final payload = <String, dynamic>{
+          'nama_lengkap': nama,
+          'nik': nik,
+        };
+
+        if ((jenisKelamin ?? '').isNotEmpty) {
+          payload['jenis_kelamin'] = jenisKelamin;
+        }
+        if (tempatLahirCtl.text.trim().isNotEmpty) {
+          payload['tempat_lahir'] = tempatLahirCtl.text.trim();
+        }
+        if (tanggalLahirCtl.text.trim().isNotEmpty) {
+          payload['tanggal_lahir'] = tanggalLahirCtl.text.trim();
+        }
+        if (keluargaId != null) payload['keluarga_id'] = keluargaId;
+        if (statusPerkawinan != null) {
+          payload['status_perkawinan'] = statusPerkawinan;
+        }
+        if (pekerjaanCtl.text.trim().isNotEmpty) {
+          payload['pekerjaan'] = pekerjaanCtl.text.trim();
+        }
+
+        final error = await _service.createWarga(payload);
+
+        if (error == null) {
+          _fetchData();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Data warga berhasil ditambahkan')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal menambahkan data warga: $error')),
+          );
+        }
       },
+      onReset: () {
+        namaCtl.clear();
+        nikCtl.clear();
+        tempatLahirCtl.clear();
+        tanggalLahirCtl.clear();
+        pekerjaanCtl.clear();
+        jenisKelamin = null;
+        statusPerkawinan = null;
+        keluargaId = null;
+      },
+      isLoading: isLoading,
+      formFields: [
+        const SizedBox(height: 8),
+        TextInput(
+          controller: namaCtl,
+          label: 'Nama Lengkap',
+          prefixIcon: const Icon(Icons.person),
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: nikCtl,
+          label: 'NIK',
+          prefixIcon: const Icon(Icons.badge),
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        FutureBuilder<List<DropdownMenuItem<int>>>(
+          future: _service.getKeluargaList().then((items) => items.map((item) {
+                final map = item as Map<String, dynamic>;
+                final id = map['id'] as int?;
+                final name =
+                    (map['nama_keluarga'] ?? map['name'] ?? map['nama'] ?? '')
+                        .toString();
+                return DropdownMenuItem<int>(
+                  value: id,
+                  child: Text(name.isEmpty ? '-' : name),
+                );
+              }).toList()),
+          builder: (context, snapshot) {
+            return SelectInput<int>(
+              label: 'Keluarga (opsional)',
+              prefixIcon: const Icon(Icons.home),
+              value: keluargaId,
+              items: snapshot.data ?? [],
+              onChanged: (value) {
+                keluargaId = value;
+              },
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        SelectInput<String>(
+          label: 'Jenis Kelamin',
+          prefixIcon: const Icon(Icons.people),
+          value: jenisKelamin,
+          items: const [
+            DropdownMenuItem(value: 'Laki-laki', child: Text('Laki-laki')),
+            DropdownMenuItem(value: 'Perempuan', child: Text('Perempuan')),
+          ],
+          onChanged: (value) {
+            jenisKelamin = value;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: tempatLahirCtl,
+          label: 'Tempat Lahir',
+          prefixIcon: const Icon(Icons.location_on),
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: tanggalLahirCtl,
+          label: 'Tanggal Lahir',
+          prefixIcon: const Icon(Icons.calendar_today),
+          readOnly: true,
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: DateTime.now(),
+              firstDate: DateTime(1900),
+              lastDate: DateTime.now(),
+            );
+            if (date != null) {
+              tanggalLahirCtl.text = DateFormat('yyyy-MM-dd').format(date);
+            }
+          },
+        ),
+        const SizedBox(height: 16),
+        SelectInput<String>(
+          label: 'Status Perkawinan',
+          prefixIcon: const Icon(Icons.family_restroom),
+          value: statusPerkawinan,
+          items: const [
+            DropdownMenuItem(value: 'Belum Kawin', child: Text('Belum Kawin')),
+            DropdownMenuItem(value: 'Kawin', child: Text('Kawin')),
+            DropdownMenuItem(value: 'Cerai Hidup', child: Text('Cerai Hidup')),
+            DropdownMenuItem(value: 'Cerai Mati', child: Text('Cerai Mati')),
+          ],
+          onChanged: (value) {
+            statusPerkawinan = value;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: pekerjaanCtl,
+          label: 'Pekerjaan',
+          prefixIcon: const Icon(Icons.work),
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 
@@ -123,12 +284,11 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
                                 items: _keluargaList.map((item) {
                                   final map = item as Map<String, dynamic>;
                                   final id = map['id'] as int?;
-                                  final name =
-                                      (map['nama_keluarga'] ??
-                                              map['name'] ??
-                                              map['nama'] ??
-                                              '')
-                                          .toString();
+                                  final name = (map['nama_keluarga'] ??
+                                          map['name'] ??
+                                          map['nama'] ??
+                                          '')
+                                      .toString();
                                   return DropdownMenuItem<int>(
                                     value: id,
                                     child: Text(name.isEmpty ? '-' : name),
@@ -148,8 +308,8 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
                                       onPressed: () {
                                         _filterNama =
                                             namaCtl.text.trim().isEmpty
-                                            ? null
-                                            : namaCtl.text.trim();
+                                                ? null
+                                                : namaCtl.text.trim();
                                         _filterNik = nikCtl.text.trim().isEmpty
                                             ? null
                                             : nikCtl.text.trim();
@@ -223,23 +383,21 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
                     items: items,
                     itemBuilder: (context, item) {
                       final map = item as Map<String, dynamic>;
-                      final name =
-                          (map['nama_lengkap'] ??
-                                  map['name'] ??
-                                  map['nama'] ??
-                                  '')
-                              .toString();
+                      final name = (map['nama_lengkap'] ??
+                              map['name'] ??
+                              map['nama'] ??
+                              '')
+                          .toString();
                       final nik = (map['nik'] ?? '').toString();
 
                       final keluargaObj = map['keluarga'];
                       String keluargaName = '';
                       if (keluargaObj is Map<String, dynamic>) {
-                        keluargaName =
-                            (keluargaObj['nama_keluarga'] ??
-                                    keluargaObj['name'] ??
-                                    keluargaObj['nama'] ??
-                                    '')
-                                .toString();
+                        keluargaName = (keluargaObj['nama_keluarga'] ??
+                                keluargaObj['name'] ??
+                                keluargaObj['nama'] ??
+                                '')
+                            .toString();
                       } else {
                         keluargaName =
                             (map['keluarga_name'] ?? map['keluarga'] ?? '')
@@ -272,316 +430,6 @@ class _WargaDaftarViewState extends State<WargaDaftarView> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _AddWargaForm extends StatefulWidget {
-  final DataWargaRumahService service;
-  final VoidCallback onSave;
-
-  const _AddWargaForm({required this.service, required this.onSave});
-
-  @override
-  State<_AddWargaForm> createState() => _AddWargaFormState();
-}
-
-class _AddWargaFormState extends State<_AddWargaForm> {
-  late TextEditingController _namaController;
-  late TextEditingController _nikController;
-  late TextEditingController _tempatLahirController;
-  late TextEditingController _tanggalLahirController;
-  late TextEditingController _pekerjaanController;
-  String? _jenisKelamin;
-  String? _statusPerkawinan;
-  int? _keluargaId;
-  bool _isLoading = false;
-  DateTime? _selectedTanggalLahir;
-
-  late Future<List<DropdownMenuItem<int>>> _futureKeluargaItems;
-
-  @override
-  void initState() {
-    super.initState();
-    _namaController = TextEditingController();
-    _nikController = TextEditingController();
-    _tempatLahirController = TextEditingController();
-    _tanggalLahirController = TextEditingController();
-    _pekerjaanController = TextEditingController();
-    _futureKeluargaItems = _fetchKeluargaList();
-  }
-
-  @override
-  void dispose() {
-    _namaController.dispose();
-    _nikController.dispose();
-    _tempatLahirController.dispose();
-    _tanggalLahirController.dispose();
-    _pekerjaanController.dispose();
-    super.dispose();
-  }
-
-  Future<List<DropdownMenuItem<int>>> _fetchKeluargaList() async {
-    final items = await widget.service.getKeluargaList();
-    return items.map((item) {
-      final map = item as Map<String, dynamic>;
-      final id = map['id'] as int?;
-      final name = (map['nama_keluarga'] ?? map['name'] ?? map['nama'] ?? '')
-          .toString();
-      return DropdownMenuItem<int>(
-        value: id,
-        child: Text(name.isEmpty ? '-' : name),
-      );
-    }).toList();
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedTanggalLahir ?? DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _selectedTanggalLahir) {
-      setState(() {
-        _selectedTanggalLahir = picked;
-        _tanggalLahirController.text = DateFormat('yyyy-MM-dd').format(picked);
-      });
-    }
-  }
-
-  Future<void> _submit() async {
-    setState(() => _isLoading = true);
-    final nama = _namaController.text.trim();
-    final nik = _nikController.text.trim();
-    if (nama.isEmpty || nik.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Nama dan NIK wajib diisi')));
-      setState(() => _isLoading = false);
-      return;
-    }
-    final payload = <String, dynamic>{'nama_lengkap': nama, 'nik': nik};
-    if ((_jenisKelamin ?? '').isNotEmpty) {
-      payload['jenis_kelamin'] = _jenisKelamin;
-    }
-    if (_tempatLahirController.text.trim().isNotEmpty) {
-      payload['tempat_lahir'] = _tempatLahirController.text.trim();
-    }
-    if (_tanggalLahirController.text.trim().isNotEmpty) {
-      payload['tanggal_lahir'] = _tanggalLahirController.text.trim();
-    }
-    if (_keluargaId != null) payload['keluarga_id'] = _keluargaId;
-    if (_statusPerkawinan != null)
-      payload['status_perkawinan'] = _statusPerkawinan;
-    if (_pekerjaanController.text.trim().isNotEmpty)
-      payload['pekerjaan'] = _pekerjaanController.text.trim();
-
-    final error = await widget.service.createWarga(payload);
-
-    if (!mounted) return;
-
-    if (error == null) {
-      Navigator.of(context).pop();
-      widget.onSave();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Warga berhasil ditambahkan')),
-      );
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal: $error')));
-    }
-    setState(() => _isLoading = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Tambah Data Warga',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextInput(
-              controller: _namaController,
-              label: 'Nama Lengkap',
-              prefixIcon: const Icon(Icons.person),
-            ),
-            const SizedBox(height: 12),
-            TextInput(
-              controller: _nikController,
-              label: 'Nomor Induk Kependudukan (NIK)',
-              prefixIcon: const Icon(Icons.badge),
-            ),
-            const SizedBox(height: 12),
-            FutureBuilder<List<DropdownMenuItem<int>>>(
-              future: _futureKeluargaItems,
-              builder: (context, snapshot) {
-                return SelectInput<int>(
-                  label: 'Pilih Keluarga (opsional)',
-                  prefixIcon: const Icon(Icons.people),
-                  value: _keluargaId,
-                  items: snapshot.data ?? [],
-                  onChanged: (value) {
-                    setState(() {
-                      _keluargaId = value;
-                    });
-                  },
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            SelectInput<String>(
-              label: 'Jenis Kelamin',
-              prefixIcon: const Icon(Icons.wc),
-              value: _jenisKelamin,
-              items: const [
-                DropdownMenuItem(value: 'Laki-laki', child: Text('Laki-laki')),
-                DropdownMenuItem(value: 'Perempuan', child: Text('Perempuan')),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _jenisKelamin = value;
-                });
-              },
-            ),
-            const SizedBox(height: 12),
-            TextInput(
-              controller: _tempatLahirController,
-              label: 'Tempat Lahir',
-              prefixIcon: const Icon(Icons.location_city),
-            ),
-            const SizedBox(height: 12),
-            SelectInput<String>(
-              label: 'Status Perkawinan',
-              prefixIcon: const Icon(Icons.favorite),
-              value: _statusPerkawinan,
-              items: const [
-                DropdownMenuItem(value: 'Kawin', child: Text('Kawin')),
-                DropdownMenuItem(
-                  value: 'Belum Kawin',
-                  child: Text('Belum Kawin'),
-                ),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _statusPerkawinan = value;
-                });
-              },
-            ),
-            const SizedBox(height: 12),
-            TextInput(
-              controller: _pekerjaanController,
-              label: 'Pekerjaan',
-              prefixIcon: const Icon(Icons.work),
-            ),
-            const SizedBox(height: 12),
-            TextInput(
-              controller: _tanggalLahirController,
-              label: 'Tanggal Lahir',
-              prefixIcon: const Icon(Icons.calendar_month),
-              readOnly: true,
-              onTap: () => _selectDate(context),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.save, size: 18),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            _isLoading ? 'Menyimpan...' : 'Simpan',
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            setState(() {
-                              _namaController.clear();
-                              _nikController.clear();
-                              _tempatLahirController.clear();
-                              _tanggalLahirController.clear();
-                              _pekerjaanController.clear();
-                              _jenisKelamin = null;
-                              _statusPerkawinan = null;
-                              _keluargaId = null;
-                              _selectedTanggalLahir = null;
-                            });
-                          },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.refresh, size: 18),
-                        SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            'Reset',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

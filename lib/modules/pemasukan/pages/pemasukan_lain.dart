@@ -3,6 +3,7 @@ import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
 import 'package:jawarapbl/shared/widgets/inputs/select_input.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
+import 'package:jawarapbl/shared/widgets/add_data_popup.dart';
 import 'package:jawarapbl/services/pemasukan_service.dart';
 
 class PemasukanLainListView extends StatefulWidget {
@@ -24,231 +25,135 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
   String _formatCurrency(num value) => 'Rp ${value.toStringAsFixed(0)}';
 
   void _showAddPemasukanLainSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        final nameCtl = TextEditingController();
-        String? jenisVal;
-        final tanggalCtl = TextEditingController();
-        final nominalCtl = TextEditingController();
-        final ketCtl = TextEditingController();
+    final nameCtl = TextEditingController();
+    String? jenisVal;
+    final tanggalCtl = TextEditingController();
+    final nominalCtl = TextEditingController();
+    final ketCtl = TextEditingController();
+    bool isLoading = false;
 
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 12,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Tambah Pemasukan Lain',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                    TextInput(
-                      controller: nameCtl,
-                      label: 'Nama Pemasukan',
-                      prefixIcon: const Icon(Icons.title),
-                    ),
-                    SelectInput<String>(
-                      label: 'Jenis Pemasukan',
-                      prefixIcon: const Icon(Icons.category_outlined),
-                      value: jenisVal,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Donasi',
-                          child: Text('Donasi'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Sponsor',
-                          child: Text('Sponsor'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Penjualan',
-                          child: Text('Penjualan'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setModalState(() {
-                          jenisVal = value;
-                        });
-                      },
-                    ),
-                    TextInput(
-                      controller: tanggalCtl,
-                      label: 'Tanggal (YYYY-MM-DD)',
-                      prefixIcon: const Icon(Icons.calendar_today),
-                      readOnly: true,
-                      onTap: () async {
-                        FocusScope.of(context).unfocus();
-                        final now = DateTime.now();
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: now,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                        );
-                        if (picked != null) {
-                          final y = picked.year.toString().padLeft(4, '0');
-                          final m = picked.month.toString().padLeft(2, '0');
-                          final d = picked.day.toString().padLeft(2, '0');
-                          tanggalCtl.text = '$y-$m-$d';
-                        }
-                      },
-                    ),
-                    TextInput(
-                      controller: nominalCtl,
-                      label: 'Nominal',
-                      prefixIcon: const Icon(Icons.attach_money),
-                      keyboardType: TextInputType.number,
-                    ),
-                    TextInput(
-                      controller: ketCtl,
-                      label: 'Keterangan (opsional)',
-                      prefixIcon: const Icon(Icons.notes),
-                      maxLines: 2,
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              final name = nameCtl.text.trim();
-                              final jenis = (jenisVal ?? '').trim();
-                              final tanggal = tanggalCtl.text.trim();
-                              final nominalStr = nominalCtl.text.trim();
-                              if (name.isEmpty ||
-                                  jenis.isEmpty ||
-                                  tanggal.isEmpty ||
-                                  nominalStr.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Nama, jenis, tanggal, dan nominal wajib diisi',
-                                    ),
-                                  ),
-                                );
-                                return;
-                              }
-                              final nominal = double.tryParse(nominalStr) ?? 0;
-                              final payload = <String, dynamic>{
-                                'name': name,
-                                'jenis': jenis,
-                                'nominal': nominal,
-                                'tanggal': tanggal,
-                              };
-                              if (ketCtl.text.trim().isNotEmpty) {
-                                payload['keterangan'] = ketCtl.text.trim();
-                              }
-                              final ok = await _service.createPemasukanLain(
-                                payload,
-                              );
-                              if (ok) {
-                                if (mounted) {
-                                  Navigator.of(context).pop();
-                                  setState(() {});
-                                  ScaffoldMessenger.of(
-                                    this.context,
-                                  ).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Pemasukan lain berhasil dibuat',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              } else {
-                                ScaffoldMessenger.of(this.context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Gagal membuat pemasukan lain',
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.save, size: 18),
-                                SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    'Simpan',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              setModalState(() {
-                                nameCtl.clear();
-                                tanggalCtl.clear();
-                                nominalCtl.clear();
-                                ketCtl.clear();
-                                jenisVal = null;
-                              });
-                            },
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.refresh, size: 18),
-                                SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    'Reset',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+    showAddDataPopup(
+      context: context,
+      title: 'Tambah Pemasukan Lain',
+      onSave: () async {
+        final name = nameCtl.text.trim();
+        final jenis = (jenisVal ?? '').trim();
+        final tanggal = tanggalCtl.text.trim();
+        final nominalStr = nominalCtl.text.trim();
+
+        if (name.isEmpty ||
+            jenis.isEmpty ||
+            tanggal.isEmpty ||
+            nominalStr.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Nama, jenis, tanggal, dan nominal wajib diisi'),
+            ),
+          );
+          return;
+        }
+
+        Navigator.of(context).pop();
+        setState(() => isLoading = true);
+
+        final nominal = double.tryParse(nominalStr) ?? 0;
+        final payload = <String, dynamic>{
+          'name': name,
+          'jenis': jenis,
+          'nominal': nominal,
+          'tanggal': tanggal,
+        };
+        if (ketCtl.text.trim().isNotEmpty) {
+          payload['keterangan'] = ketCtl.text.trim();
+        }
+
+        final ok = await _service.createPemasukanLain(payload);
+
+        setState(() => isLoading = false);
+
+        if (ok) {
+          if (mounted) {
+            setState(() {});
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Pemasukan lain berhasil dibuat')),
             );
-          },
-        );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Gagal membuat pemasukan lain')),
+            );
+          }
+        }
       },
+      onReset: () {
+        nameCtl.clear();
+        tanggalCtl.clear();
+        nominalCtl.clear();
+        ketCtl.clear();
+        jenisVal = null;
+      },
+      isLoading: isLoading,
+      formFields: [
+        const SizedBox(height: 8),
+        TextInput(
+          controller: nameCtl,
+          label: 'Nama Pemasukan',
+          prefixIcon: const Icon(Icons.title),
+        ),
+        const SizedBox(height: 16),
+        SelectInput<String>(
+          label: 'Jenis Pemasukan',
+          prefixIcon: const Icon(Icons.category_outlined),
+          value: jenisVal,
+          items: const [
+            DropdownMenuItem(value: 'Donasi', child: Text('Donasi')),
+            DropdownMenuItem(value: 'Sponsor', child: Text('Sponsor')),
+            DropdownMenuItem(value: 'Penjualan', child: Text('Penjualan')),
+          ],
+          onChanged: (value) {
+            jenisVal = value;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: tanggalCtl,
+          label: 'Tanggal (YYYY-MM-DD)',
+          prefixIcon: const Icon(Icons.calendar_today),
+          readOnly: true,
+          onTap: () async {
+            FocusScope.of(context).unfocus();
+            final now = DateTime.now();
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: now,
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+            );
+            if (picked != null) {
+              final y = picked.year.toString().padLeft(4, '0');
+              final m = picked.month.toString().padLeft(2, '0');
+              final d = picked.day.toString().padLeft(2, '0');
+              tanggalCtl.text = '$y-$m-$d';
+            }
+          },
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: nominalCtl,
+          label: 'Nominal',
+          prefixIcon: const Icon(Icons.attach_money),
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: ketCtl,
+          label: 'Keterangan (opsional)',
+          prefixIcon: const Icon(Icons.notes),
+          maxLines: 2,
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 
@@ -322,12 +227,12 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                                             setState(() {
                                               _filterName =
                                                   nameCtl.text.trim().isEmpty
-                                                  ? null
-                                                  : nameCtl.text.trim();
+                                                      ? null
+                                                      : nameCtl.text.trim();
                                               _filterJenis =
                                                   (jenisVal ?? '').isEmpty
-                                                  ? null
-                                                  : jenisVal;
+                                                      ? null
+                                                      : jenisVal;
                                             });
                                             _fetchData();
                                             Navigator.of(context).pop();
@@ -411,7 +316,7 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                       final nominal = map['nominal'] is num
                           ? map['nominal'] as num
                           : num.tryParse(map['nominal']?.toString() ?? '0') ??
-                                0;
+                              0;
                       return ListTile(
                         leading: const Icon(
                           Icons.attach_money,

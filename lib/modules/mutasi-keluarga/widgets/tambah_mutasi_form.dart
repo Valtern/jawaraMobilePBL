@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jawarapbl/shared/models/mutasi_keluarga_model.dart';
 import 'package:jawarapbl/services/mutasi_keluarga_service.dart';
+import 'package:jawarapbl/shared/widgets/add_data_popup.dart';
 
 class TambahMutasiForm extends StatefulWidget {
   const TambahMutasiForm({super.key});
@@ -12,12 +13,12 @@ class TambahMutasiForm extends StatefulWidget {
 class _TambahMutasiFormState extends State<TambahMutasiForm> {
   final MutasiKeluargaService _service = MutasiKeluargaService();
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _keteranganController;
   late DateTime _selectedDate;
   late String _selectedJenisMutasi;
   Keluarga? _selectedKeluarga;
-  
+
   List<Keluarga> _keluargaList = [];
   bool _isLoading = false;
   bool _isFetchingData = true;
@@ -61,83 +62,65 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: _isFetchingData
-                ? const Center(child: CircularProgressIndicator())
-                : _keluargaList.isEmpty
-                    ? Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'Data keluarga tidak tersedia.',
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          OutlinedButton.icon(
-                            onPressed: _fetchKeluargaList,
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Muat Ulang'),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Pastikan server API dapat diakses dari perangkat dan base URL sudah benar.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                        ],
-                      )
-                    : ListView(
-                        children: [
-                          const Text(
-                            'Formulir Pendaftaran Mutasi Keluarga',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
+    if (_isFetchingData) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-                          _buildKeluargaDropdown(),
-                          _buildJenisMutasiDropdown(),
-                          _buildDateField(),
-                          _buildKeteranganField(),
-
-                          const SizedBox(height: 30),
-                          ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _saveMutasi,
-                            icon: _isLoading
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.save),
-                            label: Text(_isLoading ? 'Menyimpan...' : 'Simpan'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+    if (_keluargaList.isEmpty) {
+      return AddDataPopup(
+        title: 'Tambah Mutasi Keluarga',
+        onSave: () {},
+        onReset: _resetForm,
+        isLoading: false,
+        formFields: [
+          const SizedBox(height: 8),
+          const Text(
+            'Data keluarga tidak tersedia.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.red),
           ),
-        ),
-      ),
+          const SizedBox(height: 16),
+          const Text(
+            'Pastikan server API dapat diakses dari perangkat dan base URL sudah benar.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _fetchKeluargaList,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Muat Ulang'),
+          ),
+        ],
+      );
+    }
+
+    return AddDataPopup(
+      title: 'Tambah Mutasi Keluarga',
+      onSave: _saveMutasi,
+      onReset: _resetForm,
+      isLoading: _isLoading,
+      formFields: [
+        const SizedBox(height: 8),
+        _buildKeluargaDropdown(),
+        const SizedBox(height: 16),
+        _buildJenisMutasiDropdown(),
+        const SizedBox(height: 16),
+        _buildDateField(),
+        const SizedBox(height: 16),
+        _buildKeteranganField(),
+        const SizedBox(height: 8),
+      ],
     );
+  }
+
+  void _resetForm() {
+    _keteranganController.clear();
+    setState(() {
+      _selectedDate = DateTime.now();
+      _selectedJenisMutasi = _jenisMutasiOptions.first;
+      _selectedKeluarga = null;
+    });
   }
 
   Widget _buildKeluargaDropdown() {
@@ -147,7 +130,8 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
         decoration: InputDecoration(
           labelText: 'Keluarga',
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
         hint: const Text('Pilih keluarga'),
@@ -169,7 +153,8 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(keluarga.namaKeluarga, style: const TextStyle(fontWeight: FontWeight.w500)),
+                Text(keluarga.namaKeluarga,
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
                 Text(
                   'KK: ${keluarga.nomorKk}',
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
@@ -223,7 +208,8 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
         ),
         controller: TextEditingController(text: _formatDate(_selectedDate)),
         onTap: _selectDate,
-        validator: (value) => value == null || value.isEmpty ? 'Harap pilih tanggal' : null,
+        validator: (value) =>
+            value == null || value.isEmpty ? 'Harap pilih tanggal' : null,
       ),
     );
   }
@@ -262,15 +248,25 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
 
   String _getMonthName(int month) {
     const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember'
     ];
     return months[month - 1];
   }
 
   Future<void> _saveMutasi() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_selectedKeluarga == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Harap pilih keluarga')),
@@ -284,8 +280,8 @@ class _TambahMutasiFormState extends State<TambahMutasiForm> {
       keluargaId: _selectedKeluarga!.id,
       jenisMutasi: _selectedJenisMutasi,
       tanggalMutasi: _selectedDate,
-      keterangan: _keteranganController.text.trim().isEmpty 
-          ? null 
+      keterangan: _keteranganController.text.trim().isEmpty
+          ? null
           : _keteranganController.text.trim(),
     );
 

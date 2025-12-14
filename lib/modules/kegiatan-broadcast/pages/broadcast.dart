@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
+import 'package:jawarapbl/shared/widgets/add_data_popup.dart';
 import 'package:jawarapbl/services/kegiatanBroadcast_service.dart';
 import 'package:jawarapbl/services/auth_services.dart';
 
@@ -10,171 +11,6 @@ class BroadcastListView extends StatefulWidget {
 
   @override
   State<BroadcastListView> createState() => _BroadcastListViewState();
-}
-
-class _AddBroadcastForm extends StatefulWidget {
-  final KegiatanBroadcastService service;
-  final VoidCallback onSuccess;
-
-  const _AddBroadcastForm({required this.service, required this.onSuccess});
-
-  @override
-  State<_AddBroadcastForm> createState() => _AddBroadcastFormState();
-}
-
-class _AddBroadcastFormState extends State<_AddBroadcastForm> {
-  late final TextEditingController judulCtl;
-  late final TextEditingController isiCtl;
-
-  @override
-  void initState() {
-    super.initState();
-    judulCtl = TextEditingController();
-    isiCtl = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    judulCtl.dispose();
-    isiCtl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Tambah Broadcast',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            TextInput(
-              controller: judulCtl,
-              label: 'Judul Pesan',
-              prefixIcon: const Icon(Icons.campaign),
-            ),
-            TextInput(
-              controller: isiCtl,
-              label: 'Isi Pesan',
-              prefixIcon: const Icon(Icons.message),
-              maxLines: 3,
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final judul = judulCtl.text.trim();
-                      final isi = isiCtl.text.trim();
-                      if (judul.isEmpty || isi.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Judul dan isi pesan wajib diisi'),
-                          ),
-                        );
-                        return;
-                      }
-                      final ok = await widget.service.createBroadcast({
-                        'judul': judul,
-                        'isi_pesan': isi,
-                      });
-                      if (ok) {
-                        if (mounted) {
-                          Navigator.of(context).pop();
-                          widget.onSuccess();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Broadcast berhasil dikirim'),
-                            ),
-                          );
-                        }
-                      } else {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Gagal mengirim broadcast'),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.send, size: 18),
-                        SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            'Kirim Broadcast',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      setState(() {
-                        judulCtl.clear();
-                        isiCtl.clear();
-                      });
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.refresh, size: 18),
-                        SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            'Reset',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _BroadcastListViewState extends State<BroadcastListView> {
@@ -207,17 +43,70 @@ class _BroadcastListViewState extends State<BroadcastListView> {
   }
 
   void _showAddBroadcastSheet(BuildContext context) {
-    showModalBottomSheet(
+    final judulCtl = TextEditingController();
+    final isiCtl = TextEditingController();
+    bool isLoading = false;
+
+    showAddDataPopup(
       context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return _AddBroadcastForm(
-          service: _service,
-          onSuccess: () {
-            setState(() {});
-          },
-        );
+      title: 'Tambah Broadcast',
+      onSave: () async {
+        final judul = judulCtl.text.trim();
+        final isi = isiCtl.text.trim();
+
+        if (judul.isEmpty || isi.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Judul dan isi pesan wajib diisi'),
+            ),
+          );
+          return;
+        }
+
+        setState(() => isLoading = true);
+        Navigator.of(context).pop();
+
+        final ok = await _service.createBroadcast({
+          'judul': judul,
+          'isi_pesan': isi,
+        });
+
+        if (ok) {
+          if (mounted) {
+            _fetchData();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Broadcast berhasil dikirim')),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Gagal mengirim broadcast')),
+            );
+          }
+        }
       },
+      onReset: () {
+        judulCtl.clear();
+        isiCtl.clear();
+      },
+      isLoading: isLoading,
+      formFields: [
+        const SizedBox(height: 8),
+        TextInput(
+          controller: judulCtl,
+          label: 'Judul Pesan',
+          prefixIcon: const Icon(Icons.campaign),
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: isiCtl,
+          label: 'Isi Pesan',
+          prefixIcon: const Icon(Icons.message),
+          maxLines: 3,
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 
@@ -264,8 +153,8 @@ class _BroadcastListViewState extends State<BroadcastListView> {
                                         setState(() {
                                           _filterJudul =
                                               judulCtl.text.trim().isEmpty
-                                              ? null
-                                              : judulCtl.text.trim();
+                                                  ? null
+                                                  : judulCtl.text.trim();
                                         });
                                         _fetchData();
                                         Navigator.of(context).pop();
@@ -340,8 +229,8 @@ class _BroadcastListViewState extends State<BroadcastListView> {
                       final user = map['user'];
                       String pengirim = '';
                       if (user is Map<String, dynamic>) {
-                        pengirim = (user['name'] ?? user['email'] ?? '')
-                            .toString();
+                        pengirim =
+                            (user['name'] ?? user['email'] ?? '').toString();
                       }
                       final createdAt = (map['created_at'] ?? '').toString();
                       return ListTile(

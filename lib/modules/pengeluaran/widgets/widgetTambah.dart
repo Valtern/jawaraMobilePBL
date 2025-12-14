@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:jawarapbl/services/pengeluaran_service.dart';
 import 'package:jawarapbl/shared/models/pengeluaran_model.dart';
+import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
+import 'package:jawarapbl/shared/widgets/inputs/select_input.dart';
 
 class TambahPengeluaranForm extends StatefulWidget {
   final Pengeluaran? pengeluaranToEdit;
@@ -103,25 +104,41 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
   }
 
   Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) {
+    final nama = _namaController.text.trim();
+    final tanggal = _tanggalController.text.trim();
+    final nominalStr = _nominalController.text.trim();
+
+    if (nama.isEmpty ||
+        tanggal.isEmpty ||
+        nominalStr.isEmpty ||
+        _selectedKategori == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nama, tanggal, kategori, dan nominal wajib diisi'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
 
     final data = {
-      'nama': _namaController.text,
-      'tanggal': _tanggalController.text,
+      'nama': nama,
+      'tanggal': tanggal,
       'kategori': _selectedKategori!,
-      'nominal': _nominalController.text,
-      'deskripsi': _deskripsiController.text,
+      'nominal': nominalStr,
+      'deskripsi': _deskripsiController.text.trim(),
     };
 
     Map<String, dynamic> response;
-    
+
     if (widget.pengeluaranToEdit == null) {
       // Create new
-      response = await PengeluaranService().createPengeluaran(data, _pickedFile);
+      response =
+          await PengeluaranService().createPengeluaran(data, _pickedFile);
     } else {
       // Update existing
       response = await PengeluaranService().updatePengeluaran(
@@ -131,10 +148,12 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
       );
     }
 
-    setState(() { _isLoading = false; });
+    setState(() {
+      _isLoading = false;
+    });
 
     if (!mounted) return;
-    
+
     if (response['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -150,7 +169,7 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
       // Show the actual error message from the API
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal: ${response['message']}'), 
+          content: Text('Gagal: ${response['message']}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -159,210 +178,85 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        padding: const EdgeInsets.all(24.0),
+        width: double.infinity,
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.pengeluaranToEdit == null
-                  ? 'Buat Pengeluaran Baru'
-                  : 'Edit Pengeluaran',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 24),
-            _buildTextField(
-              controller: _namaController,
-              label: 'Nama Pengeluaran',
-              hint: 'Masukkan nama pengeluaran',
-              validator: (val) =>
-                  val!.isEmpty ? 'Nama tidak boleh kosong' : null,
-            ),
-            const SizedBox(height: 20),
-            _buildDateField(
-              controller: _tanggalController,
-              label: 'Tanggal Pengeluaran',
-              validator: (val) =>
-                  val!.isEmpty ? 'Tanggal tidak boleh kosong' : null,
-            ),
-            const SizedBox(height: 20),
-            _buildDropdownField(
-              label: 'Kategori Pengeluaran',
-              hint: '-- Pilih Kategori --',
-              items: _kategoriItems,
-              selectedValue: _selectedKategori,
-              validator: (val) =>
-                  val == null ? 'Kategori tidak boleh kosong' : null,
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              controller: _nominalController,
-              label: 'Nominal',
-              hint: 'Masukkan nominal',
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              validator: (val) =>
-                  val!.isEmpty ? 'Nominal tidak boleh kosong' : null,
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              controller: _deskripsiController,
-              label: 'Deskripsi (Opsional)',
-              hint: 'Masukkan deskripsi',
-              isMultiLine: true,
-            ),
-            const SizedBox(height: 20),
-            _buildFileUploadField(label: 'Bukti Pengeluaran (Opsional)'),
-            const SizedBox(height: 32),
-            _buildActionButtons(),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.pengeluaranToEdit == null
+                    ? 'Tambah Pengeluaran'
+                    : 'Edit Pengeluaran',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
+                ),
+              ),
+              const SizedBox(height: 24),
+              const SizedBox(height: 8),
+              TextInput(
+                controller: _namaController,
+                label: 'Nama Pengeluaran',
+                prefixIcon: const Icon(Icons.description),
+              ),
+              const SizedBox(height: 16),
+              TextInput(
+                controller: _tanggalController,
+                label: 'Tanggal Pengeluaran',
+                prefixIcon: const Icon(Icons.calendar_today),
+                readOnly: true,
+                onTap: _pickDate,
+              ),
+              const SizedBox(height: 16),
+              SelectInput<String>(
+                label: 'Kategori Pengeluaran',
+                prefixIcon: const Icon(Icons.category),
+                value: _selectedKategori,
+                items: _kategoriItems
+                    .map((kategori) => DropdownMenuItem(
+                        value: kategori, child: Text(kategori)))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedKategori = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              TextInput(
+                controller: _nominalController,
+                label: 'Nominal',
+                prefixIcon: const Icon(Icons.attach_money),
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
+              TextInput(
+                controller: _deskripsiController,
+                label: 'Deskripsi (Opsional)',
+                prefixIcon: const Icon(Icons.notes),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 16),
+              _buildFileUploadField(),
+              const SizedBox(height: 24),
+              _buildActionButtons(),
+            ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-    List<TextInputFormatter>? inputFormatters,
-    bool isMultiLine = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          validator: validator,
-          maxLines: isMultiLine ? 3 : 1,
-          decoration: InputDecoration(
-            hintText: hint,
-            border: const OutlineInputBorder(),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateField({
-    required TextEditingController controller,
-    required String label,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          readOnly: true,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: '-- / -- / ----',
-            border: const OutlineInputBorder(),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.calendar_today),
-              onPressed: _pickDate,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDropdownField({
-    required String label,
-    required String hint,
-    required List<String> items,
-    required String? selectedValue,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12),
-          ),
-          hint: Text(hint),
-          initialValue: selectedValue,
-          validator: validator,
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedKategori = newValue;
-            });
-          },
-          items: items.map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(value: value, child: Text(value));
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFileUploadField({required String label}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: _pickFile,
-          child: Container(
-            height: 100,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: Center(
-              child: _pickedFile == null
-                  ? Text(
-                      'Upload bukti pengeluaran (.png/.jpg)',
-                      style: TextStyle(color: Colors.grey[600]),
-                    )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.check_circle, color: Colors.green),
-                        Text(
-                          'File terpilih: ${_pickedFile!.path.split('/').last}',
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -370,38 +264,176 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
     return Row(
       children: [
         Expanded(
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _submitForm,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text(
-                    'Submit',
-                    style: TextStyle(fontSize: 14),
-                  ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
           child: OutlinedButton(
             onPressed: _isLoading ? null : _resetForm,
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
+              side: const BorderSide(
+                color: Color(0xFF6938EF),
+                width: 1.5,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            child: const Text(
-              'Reset',
-              style: TextStyle(fontSize: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.refresh_rounded,
+                  size: 18,
+                  color: Color(0xFF6938EF),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Reset',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6938EF),
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _submitForm,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6938EF),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            child: _isLoading
+                ? const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Menyimpan...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.save_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.pengeluaranToEdit == null
+                            ? 'Simpan'
+                            : 'Perbarui',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFileUploadField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Bukti Pengeluaran (Opsional)',
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: _pickFile,
+          child: Container(
+            height: 100,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFE5E7EB),
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: _pickedFile == null
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.cloud_upload_outlined,
+                          size: 32,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Upload bukti pengeluaran (.png/.jpg)',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                          size: 24,
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            'File terpilih: ${_pickedFile!.path.split('/').last}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.green,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),
