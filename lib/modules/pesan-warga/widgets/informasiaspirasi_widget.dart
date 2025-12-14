@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:jawarapbl/modules/pesan-warga/models/informasiaspirasi_model.dart';
 import 'package:jawarapbl/shared/widgets/base_list_card.dart';
-import 'package:jawarapbl/modules/pesan-warga/pages/detail_aspirasi_page.dart';
+
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${substring(1)}";
+  }
+}
 
 class AspirasiActionMenu extends StatelessWidget {
   final AspirasiWarga item;
@@ -47,7 +52,8 @@ class AspirasiActionMenu extends StatelessWidget {
 
         menuItems.add(
           const PopupMenuItem<String>(
-              value: 'Hapus', child: Text('Hapus', style: TextStyle(color: Colors.red))),
+              value: 'Hapus',
+              child: Text('Hapus', style: TextStyle(color: Colors.red))),
         );
 
         return menuItems;
@@ -91,7 +97,10 @@ class AspirasiCard extends StatelessWidget {
           title,
           style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
         ),
-        valueWidget,
+        const SizedBox(width: 8),
+        Flexible(
+          child: valueWidget,
+        ),
       ],
     );
   }
@@ -113,16 +122,22 @@ class AspirasiCard extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
+        overflow: TextOverflow.ellipsis, 
       ),
     );
 
     final pengirimText = Text(
       item.pengirim ?? '-',
       style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+      overflow: TextOverflow.ellipsis,
+      maxLines: 1,
+      textAlign: TextAlign.right,
     );
+
     final tanggalText = Text(
       item.tanggalDibuat ?? '',
       style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+      textAlign: TextAlign.right,
     );
 
     return BaseListCard(
@@ -143,6 +158,8 @@ class AspirasiCard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
+                    maxLines: 2, 
+                    overflow: TextOverflow.ellipsis, 
                   ),
                 ),
                 if (isOwner || isManagement)
