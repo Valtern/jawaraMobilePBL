@@ -202,7 +202,7 @@ class _TambahPengeluaranFormState extends State<TambahPengeluaranForm> {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple,
+                  color: const Color(0xFF6938EF),
                 ),
               ),
               const SizedBox(height: 24),

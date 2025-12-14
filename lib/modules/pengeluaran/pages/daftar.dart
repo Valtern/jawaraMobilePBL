@@ -118,7 +118,7 @@ class DaftarPengeluaranPageState extends State<DaftarPengeluaranPage> {
                 title: 'Daftar Pengeluaran',
                 actions: [
                   IconButton(
-                    color: Colors.deepPurple,
+                    color: const Color(0xFF6938EF),
                     icon: const Icon(Icons.filter_list),
                     onPressed: _showFilterModal,
                   ),
@@ -227,9 +227,12 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _namaController = TextEditingController(text: widget.initialFilters['nama']);
-    _startDateController = TextEditingController(text: widget.initialFilters['start_date']);
-    _endDateController = TextEditingController(text: widget.initialFilters['end_date']);
+    _namaController =
+        TextEditingController(text: widget.initialFilters['nama']);
+    _startDateController =
+        TextEditingController(text: widget.initialFilters['start_date']);
+    _endDateController =
+        TextEditingController(text: widget.initialFilters['end_date']);
     _selectedKategori = widget.initialFilters['kategori'];
     _caseSensitive = widget.initialFilters['case_sensitive'] == 'true';
   }
@@ -251,7 +254,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
         initialDate = DateTime.now();
       }
     }
-    
+
     final now = DateTime.now();
     initialDate = initialDate ?? now;
     if (initialDate.isAfter(now)) {
@@ -305,7 +308,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
       width: double.infinity,
       color: Colors.white,
       child: Column(
-        spacing: 12, 
+        spacing: 12,
         children: [
           TextInput(
             label: 'Cari Nama Pengeluaran',
@@ -368,7 +371,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
             contentPadding: EdgeInsets.zero,
             dense: true,
           ),
-          const Spacer(), 
+          const Spacer(),
           Row(
             children: [
               Expanded(

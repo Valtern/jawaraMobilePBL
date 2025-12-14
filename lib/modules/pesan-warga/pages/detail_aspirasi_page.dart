@@ -12,7 +12,7 @@ class DetailAspirasiPage extends StatelessWidget {
         ? Colors.green
         : item.status.toLowerCase() == 'ditolak'
             ? Colors.red
-            : Colors.orange; 
+            : Colors.orange;
 
     final statusBgColor = item.status.toLowerCase() == 'diterima'
         ? Colors.green.shade100
@@ -22,9 +22,8 @@ class DetailAspirasiPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Detail Aspirasi"),
-        backgroundColor: Colors.deepPurpleAccent
-      ),
+          title: const Text("Detail Aspirasi"),
+          backgroundColor: const Color(0xFF6938EF)),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Card(
@@ -75,13 +74,13 @@ class DetailAspirasiPage extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: statusBgColor, 
+                        color: statusBgColor,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         item.status.capitalize(),
                         style: TextStyle(
-                          color: statusColor, 
+                          color: statusColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

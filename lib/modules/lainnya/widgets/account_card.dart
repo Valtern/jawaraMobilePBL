@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jawarapbl/services/auth_services.dart';
 import 'package:jawarapbl/modules/lainnya/pages/edit_profile_page.dart';
+import 'package:jawarapbl/shared/widgets/logout_confirmation_dialog.dart';
 
 class AccountCard extends StatefulWidget {
   const AccountCard({super.key});
@@ -14,26 +15,7 @@ class _AccountCardState extends State<AccountCard> {
   bool _isLoading = false;
 
   Future<void> _handleLogout() async {
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Keluar',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
+    final shouldLogout = await showLogoutConfirmationDialog(context: context);
 
     if (shouldLogout == true) {
       setState(() {
@@ -47,7 +29,8 @@ class _AccountCardState extends State<AccountCard> {
       });
 
       if (success && mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/login', (route) => false);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Logout gagal. Silakan coba lagi.')),
@@ -81,7 +64,8 @@ class _AccountCardState extends State<AccountCard> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const EditProfilePage()),
+                    MaterialPageRoute(
+                        builder: (context) => const EditProfilePage()),
                   );
                 },
               ),

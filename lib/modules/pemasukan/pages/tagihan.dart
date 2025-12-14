@@ -324,7 +324,7 @@ class _TagihanListViewState extends State<TagihanListView> {
               title: 'Daftar Tagihan',
               actions: [
                 IconButton(
-                  color: Colors.deepPurple,
+                  color: const Color(0xFF6938EF),
                   icon: const Icon(Icons.filter_list),
                   onPressed: () {
                     showModalBottomSheet(
@@ -572,7 +572,7 @@ class _TagihanListViewState extends State<TagihanListView> {
                                   _formatCurrency(nominal),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.deepPurple,
+                                    color: const Color(0xFF6938EF),
                                   ),
                                 ),
                                 const SizedBox(height: 4),

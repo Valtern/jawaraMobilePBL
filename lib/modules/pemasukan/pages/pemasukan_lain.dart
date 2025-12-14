@@ -168,7 +168,7 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
               title: 'Pemasukan Lain',
               actions: [
                 IconButton(
-                  color: Colors.deepPurple,
+                  color: const Color(0xFF6938EF),
                   icon: const Icon(Icons.filter_list),
                   onPressed: () {
                     showModalBottomSheet(
@@ -320,7 +320,7 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                       return ListTile(
                         leading: const Icon(
                           Icons.attach_money,
-                          color: Colors.deepPurple,
+                          color: const Color(0xFF6938EF),
                         ),
                         title: Text(name.isEmpty ? '-' : name),
                         subtitle: Text(
@@ -333,7 +333,7 @@ class _PemasukanLainListViewState extends State<PemasukanLainListView> {
                           _formatCurrency(nominal),
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: Colors.deepPurple,
+                            color: const Color(0xFF6938EF),
                           ),
                         ),
                       );
