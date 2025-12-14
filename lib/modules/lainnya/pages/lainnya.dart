@@ -196,30 +196,31 @@ class _LainnyaPageState extends State<LainnyaPage> {
                                             strokeWidth: 2,
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(
-                                                  Colors.white,
-                                                ),
+                                                    Colors.white),
                                           ),
                                         ),
                                       );
                                     },
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: Colors.grey[200],
-                                        child: const Icon(
-                                          Icons.person,
-                                          size: 60,
-                                          color: Colors.grey,
-                                        ),
-                                      );
-                                    },
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Container(
+                                      color: Colors.grey[200],
+                                      child: const Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
                                   ),
                                 )
-                              : Container(
-                                  color: Colors.grey[200],
-                                  child: const Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: Colors.grey,
+                              : ClipOval(
+                                  child: Container(
+                                    color: Colors.grey[200],
+                                    child: const Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 ),
                         ),

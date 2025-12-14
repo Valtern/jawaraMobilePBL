@@ -6,9 +6,12 @@ class TambahMutasiPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: const TambahMutasiForm(),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: const TambahMutasiForm(),
+      ),
     );
   }
 }

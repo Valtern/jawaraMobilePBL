@@ -632,8 +632,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Widget _buildDefaultAvatar() {
     return Container(
-      width: 120,
-      height: 120,
+      width: 100,
+      height: 100,
       decoration: BoxDecoration(
         color: Colors.grey[300],
         shape: BoxShape.circle,
@@ -641,7 +641,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       child: Icon(
         CupertinoIcons.person_fill,
         color: Colors.grey[600],
-        size: 80,
+        size: 60,
       ),
     );
   }
@@ -709,9 +709,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: _isFaceLoginEnabled
-                    ? Colors.green[100]
-                    : Colors.grey[200],
+                color:
+                    _isFaceLoginEnabled ? Colors.green[100] : Colors.grey[200],
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -728,7 +727,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ],
         ),
         const SizedBox(height: 16),
-
         if (_isBiometricLoading)
           const Center(child: CircularProgressIndicator())
         else if (!_isFaceLoginEnabled)
@@ -1016,8 +1014,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               vertical: 16,
             ),
           ),
-          validator:
-              validator ??
+          validator: validator ??
               (value) {
                 if (validator != null && (value == null || value.isEmpty))
                   return 'Mohon isi kolom ini';
@@ -1104,9 +1101,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     required VoidCallback onTap,
     String? Function(String?)? validator,
   }) {
-    final displayValue = value != null
-        ? DateFormat('dd MMMM yyyy').format(value)
-        : '';
+    final displayValue =
+        value != null ? DateFormat('dd MMMM yyyy').format(value) : '';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
