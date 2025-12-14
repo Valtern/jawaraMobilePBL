@@ -109,7 +109,7 @@ class _TambahPenggunaFormState extends State<TambahPenggunaForm> {
                   // 🔹 Nomor HP
                   _buildTextField(
                     label: 'Nomor HP',
-                    hint: 'Masukkan nomor HP (cth: 08xxxxxxxxxx)',
+                    hint: 'Masukkan nomor HP',
                     keyboardType: TextInputType.phone,
                     controller: _phoneCtrl,
                   ),
