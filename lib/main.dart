@@ -20,6 +20,7 @@ import 'package:jawarapbl/modules/auth/pages/register.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:jawarapbl/modules/auth/pages/face_enrollment_page.dart';
 import 'package:jawarapbl/modules/auth/pages/face_login_page.dart';
+import 'package:jawarapbl/screens/splash_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -29,14 +30,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Jawara Pintar',
-
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('en', ''), Locale('id', '')],
-
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: 'Poppins',
@@ -48,6 +47,12 @@ class MyApp extends StatelessWidget {
           background: const Color(0xFFF8F9FA),
           error: const Color(0xFFE74C3C),
           brightness: Brightness.light,
+        ),
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
         ),
         cardTheme: CardThemeData(
           color: Colors.white,
@@ -192,8 +197,9 @@ class MyApp extends StatelessWidget {
           labelSmall: TextStyle(fontFamily: 'Poppins'),
         ),
       ),
-      initialRoute: '/login',
+      initialRoute: '/splash',
       routes: {
+        '/splash': (context) => const SplashScreen(),
         // Auth Routes
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
@@ -209,9 +215,9 @@ class MyApp extends StatelessWidget {
             const MainLayout(body: DataWargaRumahPage()),
         // Pemasukan Routes
         '/pemasukan': (context) => const MainLayout(
-          body: PemasukanKategoriIuranPage(),
-          currentIndex: 1,
-        ),
+              body: PemasukanKategoriIuranPage(),
+              currentIndex: 1,
+            ),
         '/kegiatan-broadcast': (context) =>
             const MainLayout(body: KegiatanBroadcastPage(), currentIndex: 3),
         '/channel-transfer': (context) =>

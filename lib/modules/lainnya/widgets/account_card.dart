@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:jawarapbl/services/auth_services.dart';
 import 'package:jawarapbl/modules/lainnya/pages/edit_profile_page.dart';
 import 'package:jawarapbl/shared/widgets/logout_confirmation_dialog.dart';
+import 'package:jawarapbl/shared/widgets/page_transitions.dart';
+import 'package:jawarapbl/modules/auth/widgets/login_route_wrapper.dart';
 
 class AccountCard extends StatefulWidget {
   const AccountCard({super.key});
@@ -29,8 +31,10 @@ class _AccountCardState extends State<AccountCard> {
       });
 
       if (success && mounted) {
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil('/login', (route) => false);
+        NavigationHelper.navigateToAndClear(
+          context,
+          const LoginRouteWrapper(),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Logout gagal. Silakan coba lagi.')),
@@ -62,10 +66,9 @@ class _AccountCardState extends State<AccountCard> {
                 icon: Icons.settings,
                 title: 'Pengaturan',
                 onTap: () {
-                  Navigator.push(
+                  NavigationHelper.navigateTo(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) => const EditProfilePage()),
+                    const EditProfilePage(),
                   );
                 },
               ),
