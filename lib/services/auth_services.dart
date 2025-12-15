@@ -10,7 +10,7 @@ class AuthService {
   // use http if you using local ip
   // use https if using hosting server
   // String url = 'https://shower-arrival-clarity-winner.trycloudflare.com';
-  String url = 'http://10.222.219.9:8000';
+  String url = 'https://shower-arrival-clarity-winner.trycloudflare.com';
 
   String get baseUrl => '$url/api';
   String get storageUrl => '$url/storage';
