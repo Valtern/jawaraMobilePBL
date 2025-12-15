@@ -3,6 +3,7 @@ import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
 import 'package:jawarapbl/shared/widgets/inputs/select_input.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
+import 'package:jawarapbl/shared/widgets/add_data_popup.dart';
 import 'package:jawarapbl/services/pemasukan_service.dart';
 import 'package:jawarapbl/services/dataWargaRumah_service.dart';
 
@@ -67,40 +68,87 @@ class _TagihanListViewState extends State<TagihanListView> {
     final periodeCtl = TextEditingController();
     String? statusLabel; // 'Sudah Dibayar' / 'Belum Dibayar'
 
-    showModalBottomSheet(
+    showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 12,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Tagih Iuran',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        bool isLoading = false;
+
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AddDataPopup(
+              title: 'Tagih Iuran',
+              saveButtonText: 'Kirim Tagihan',
+              isLoading: isLoading,
+              onSave: () async {
+                if (selectedKeluargaId == null ||
+                    selectedKategoriId == null ||
+                    (statusLabel ?? '').isEmpty ||
+                    nominalCtl.text.trim().isEmpty ||
+                    periodeCtl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Keluarga, jenis iuran, nominal, periode, dan status pembayaran wajib diisi',
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
+                  );
+                  return;
+                }
+
+                setDialogState(() {
+                  isLoading = true;
+                });
+
+                final nominal = double.tryParse(nominalCtl.text.trim()) ?? 0;
+                final paymentStatus =
+                    statusLabel == 'Sudah Dibayar' ? 'paid' : 'unpaid';
+
+                final payload = {
+                  'keluarga_id': int.parse(selectedKeluargaId!),
+                  'kategori_iuran_id': int.parse(selectedKategoriId!),
+                  'nominal': nominal,
+                  'periode': periodeCtl.text.trim(),
+                  'payment_status': paymentStatus,
+                };
+
+                final ok = await _service.createTagihan(payload);
+
+                if (!mounted) return;
+
+                setDialogState(() {
+                  isLoading = false;
+                });
+
+                if (ok) {
+                  Navigator.of(dialogContext).pop();
+                  setState(() {});
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tagihan berhasil dibuat'),
                     ),
-                  ],
-                ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Gagal membuat tagihan. Periksa data dan coba lagi.',
+                      ),
+                    ),
+                  );
+                }
+              },
+              onReset: () {
+                setDialogState(() {
+                  selectedKeluargaId = null;
+                  selectedKategoriId = null;
+                  statusLabel = null;
+                  nominalCtl.clear();
+                  periodeCtl.clear();
+                });
+              },
+              formFields: [
+                const SizedBox(height: 8),
                 SelectInput<String>(
                   label: 'Nama Keluarga',
                   prefixIcon: const Icon(Icons.family_restroom),
@@ -120,11 +168,12 @@ class _TagihanListViewState extends State<TagihanListView> {
                       .whereType<DropdownMenuItem<String>>()
                       .toList(),
                   onChanged: (value) {
-                    setState(() {
+                    setDialogState(() {
                       selectedKeluargaId = value;
                     });
                   },
                 ),
+                const SizedBox(height: 16),
                 SelectInput<String>(
                   label: 'Jenis Iuran',
                   prefixIcon: const Icon(Icons.category),
@@ -143,17 +192,19 @@ class _TagihanListViewState extends State<TagihanListView> {
                       .toList(),
                   value: selectedKategoriId,
                   onChanged: (value) {
-                    setState(() {
+                    setDialogState(() {
                       selectedKategoriId = value;
                     });
                   },
                 ),
+                const SizedBox(height: 16),
                 TextInput(
                   controller: nominalCtl,
                   label: 'Nominal',
                   prefixIcon: const Icon(Icons.attach_money),
                   keyboardType: TextInputType.number,
                 ),
+                const SizedBox(height: 16),
                 TextInput(
                   controller: periodeCtl,
                   label: 'Periode Tagihan',
@@ -172,10 +223,13 @@ class _TagihanListViewState extends State<TagihanListView> {
                       final y = picked.year.toString().padLeft(4, '0');
                       final m = picked.month.toString().padLeft(2, '0');
                       final d = picked.day.toString().padLeft(2, '0');
-                      periodeCtl.text = '$y-$m-$d';
+                      setDialogState(() {
+                        periodeCtl.text = '$y-$m-$d';
+                      });
                     }
                   },
                 ),
+                const SizedBox(height: 16),
                 SelectInput<String>(
                   label: 'Status Pembayaran',
                   prefixIcon: const Icon(Icons.payments),
@@ -191,123 +245,15 @@ class _TagihanListViewState extends State<TagihanListView> {
                     ),
                   ],
                   onChanged: (value) {
-                    setState(() {
+                    setDialogState(() {
                       statusLabel = value;
                     });
                   },
                 ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (selectedKeluargaId == null ||
-                              selectedKategoriId == null ||
-                              (statusLabel ?? '').isEmpty ||
-                              nominalCtl.text.trim().isEmpty ||
-                              periodeCtl.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Keluarga, jenis iuran, nominal, periode, dan status pembayaran wajib diisi',
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-
-                          final nominal =
-                              double.tryParse(nominalCtl.text.trim()) ?? 0;
-                          final paymentStatus = statusLabel == 'Sudah Dibayar'
-                              ? 'paid'
-                              : 'unpaid';
-
-                          final payload = {
-                            'keluarga_id': int.parse(selectedKeluargaId!),
-                            'kategori_iuran_id': int.parse(selectedKategoriId!),
-                            'nominal': nominal,
-                            'periode': periodeCtl.text.trim(),
-                            'payment_status': paymentStatus,
-                          };
-
-                          final ok = await _service.createTagihan(payload);
-                          if (ok) {
-                            if (mounted) {
-                              Navigator.of(context).pop();
-                              setState(() {});
-                              ScaffoldMessenger.of(this.context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Tagihan berhasil dibuat'),
-                                ),
-                              );
-                            }
-                          } else {
-                            ScaffoldMessenger.of(this.context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Gagal membuat tagihan. Periksa data dan coba lagi.',
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.send, size: 18),
-                            SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                'Kirim Tagihan',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 14),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          setState(() {
-                            selectedKeluargaId = null;
-                            selectedKategoriId = null;
-                            statusLabel = null;
-                            nominalCtl.clear();
-                            periodeCtl.clear();
-                          });
-                        },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.refresh, size: 18),
-                            SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                'Reset',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 14),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 8),
               ],
-            ),
-          ),
+            );
+          },
         );
       },
     );
