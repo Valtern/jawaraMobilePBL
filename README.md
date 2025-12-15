@@ -1,45 +1,31 @@
-# jawarapbl
+# JAWARA
 
-`jawarapbl` is a mobile application developed as a mock-up based on a website named "jawara". The application is designed to serve as a digital solution for managing residential data and activities within a community.
 
----
+`JAWARA` is a mobile application developed as a mock-up based on a website named "jawara pintar". The application is designed to serve as a digital solution for managing residential data and activities within a community.
+
+##
 
 ## Team Contributions
+This project was developed collaboratively, with each member responsible for specific modules and features. We're using notion for project tracking : 
+    
+https://www.notion.so/PBL-Group-3-Progress-Tracking-2a0f5b3893cf80938bceeafc9996830e
 
-This project was developed collaboratively, with each member responsible for specific modules and features:
+##
 
-### **Anton**
+# GIF Capture of the app 
+## Login :
+![login](/assets/images/login.gif)
 
-* **Login System** 🔐: Anton developed the authentication system, which includes both login and registration functionalities. This allows users to securely access the application.
+## Register :
 
-* **Dashboard Interface** 🏠: He was responsible for creating the main dashboard, which provides a comprehensive overview of the community's financial, event-related, and demographic data through interactive charts and cards.
+## Admin :
 
-* **Expense Management (Pengeluaran)** 💸: Anton also handled the expense management module, enabling users to track and manage all community expenses. This includes functionalities for adding new expenses and viewing a list of all recorded expenditures.
+## Bendahara :
 
-### **Ridho**
+## Sekertaris :
 
-* **Resident & Household Data (Data Warga dan Rumah)** 🧾: 
+## RT :
 
-* **Income Management (Pemasukan)** 💰:.
+## RW :
 
-* **Activities and Broadcasts (Kegiatan dan Broadcast)** 📢: Saran nambah notifikasi ke semua user
-
-* **Channel Transfer** 🔄: 
-
-### **Majid**
-
-* **Financial Reports (Laporan Keuangan)** 📊: 
-
-* **Resident Messages (Pesan Warga)** 💬: Saran nambah notifikasi ke semua user
-
-* **Resident Admissions (Penerimaan Warga)** 🧍‍♂️: 
-
-### **Hammam**
-
-* **Family Transfers (Mutasi Keluarga)** 👨‍👩‍👧‍👦: 
-
-* **Activity Logs (Log Aktivitas)** 🧠: 
-
-* **User Management (Manajemen Pengguna)** ⚙️:
-
-# GIF Capture of the app (example showcase):
+## Warga :
