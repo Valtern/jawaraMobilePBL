@@ -118,7 +118,7 @@ class DaftarPengeluaranPageState extends State<DaftarPengeluaranPage> {
                 title: 'Daftar Pengeluaran',
                 actions: [
                   IconButton(
-                    color: Colors.deepPurple,
+                    color: const Color(0xFF6938EF),
                     icon: const Icon(Icons.filter_list),
                     onPressed: _showFilterModal,
                   ),
@@ -227,9 +227,12 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _namaController = TextEditingController(text: widget.initialFilters['nama']);
-    _startDateController = TextEditingController(text: widget.initialFilters['start_date']);
-    _endDateController = TextEditingController(text: widget.initialFilters['end_date']);
+    _namaController =
+        TextEditingController(text: widget.initialFilters['nama']);
+    _startDateController =
+        TextEditingController(text: widget.initialFilters['start_date']);
+    _endDateController =
+        TextEditingController(text: widget.initialFilters['end_date']);
     _selectedKategori = widget.initialFilters['kategori'];
     _caseSensitive = widget.initialFilters['case_sensitive'] == 'true';
   }
@@ -251,7 +254,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
         initialDate = DateTime.now();
       }
     }
-    
+
     final now = DateTime.now();
     initialDate = initialDate ?? now;
     if (initialDate.isAfter(now)) {
@@ -305,7 +308,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
       width: double.infinity,
       color: Colors.white,
       child: Column(
-        spacing: 12, 
+        spacing: 12,
         children: [
           TextInput(
             label: 'Cari Nama Pengeluaran',
@@ -368,18 +371,28 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
             contentPadding: EdgeInsets.zero,
             dense: true,
           ),
-          const Spacer(), 
+          const Spacer(),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
                   onPressed: _onApplyFilters,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
-                      Icon(Icons.check),
-                      SizedBox(width: 4),
-                      Text('Terapkan'),
+                      Icon(Icons.check, size: 18),
+                      SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Terapkan',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -388,12 +401,22 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: _onResetFilters,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
-                      Icon(Icons.refresh),
-                      SizedBox(width: 4),
-                      Text('Reset'),
+                      Icon(Icons.refresh, size: 18),
+                      SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Reset',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
                     ],
                   ),
                 ),

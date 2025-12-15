@@ -8,9 +8,9 @@ class TambahPengeluaranPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFF8F9FB),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(top: 16.0),
+        padding: const EdgeInsets.all(16.0),
         child: TambahPengeluaranForm(
           onSuccess: onSuccess,
         ),

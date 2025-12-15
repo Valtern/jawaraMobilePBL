@@ -8,19 +8,19 @@ class TambahPenggunaPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6FA),
-      appBar: AppBar(
-        title: const Text(
-          'Tambah Akun Pengguna',
-          style: TextStyle(
-            color: Colors.deepPurple,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 2,
-        iconTheme: const IconThemeData(color: Colors.deepPurple),
-        automaticallyImplyLeading: false, // Remove back button for tab
-      ),
+      // appBar: AppBar(
+      //   title: const Text(
+      //     'Tambah Akun Pengguna',
+      //     style: TextStyle(
+      //       color: Colors.deepPurple,
+      //       fontWeight: FontWeight.bold,
+      //     ),
+      //   ),
+      //   backgroundColor: Colors.white,
+      //   elevation: 2,
+      //   iconTheme: const IconThemeData(color: Colors.deepPurple),
+      //   automaticallyImplyLeading: false, // Remove back button for tab
+      // ),
       body: const TambahPenggunaForm(),
     );
   }

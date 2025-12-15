@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jawarapbl/shared/widgets/consistent_tabbar.dart';
 import 'package:jawarapbl/modules/pengeluaran/pages/daftar.dart';
 import 'package:jawarapbl/modules/pengeluaran/pages/tambah.dart';
 
@@ -14,7 +15,7 @@ class _PengeluaranTabsPageState extends State<PengeluaranTabsPage>
   // Key to access the Daftar page's state and call refreshData()
   final GlobalKey<DaftarPengeluaranPageState> _daftarKey =
       GlobalKey<DaftarPengeluaranPageState>();
-  
+
   late TabController _tabController;
 
   @override
@@ -38,27 +39,11 @@ class _PengeluaranTabsPageState extends State<PengeluaranTabsPage>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        TabBar(
-          controller: _tabController,
-          labelColor: Colors.deepPurple,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.deepPurple,
-          tabs: const [
-            Tab(text: 'Daftar Pengeluaran'),
-            Tab(text: 'Tambah Pengeluaran'),
-          ],
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              DaftarPengeluaranPage(key: _daftarKey),
-              TambahPengeluaranPage(onSuccess: _onPengeluaranAdded),
-            ],
-          ),
-        ),
+    return ConsistentTabBar(
+      tabs: ['Daftar Pengeluaran', 'Tambah Pengeluaran'],
+      tabViews: [
+        DaftarPengeluaranPage(key: _daftarKey),
+        TambahPengeluaranPage(onSuccess: _onPengeluaranAdded),
       ],
     );
   }

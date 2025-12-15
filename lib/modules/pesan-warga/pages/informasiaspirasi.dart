@@ -4,10 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:jawarapbl/services/auth_services.dart';
 import 'package:jawarapbl/services/pesan_service.dart';
 import 'package:jawarapbl/shared/models/user_model.dart';
-import '../models/informasiaspirasi_model.dart';
-import 'detail_aspirasi_page.dart';
+import 'package:jawarapbl/modules/pesan-warga/models/informasiaspirasi_model.dart';
+import 'package:jawarapbl/modules/pesan-warga/pages/detail_aspirasi_page.dart';
+import 'package:jawarapbl/modules/pesan-warga/pages/edit_aspirasi_page.dart';
+import 'package:jawarapbl/shared/widgets/page_transitions.dart';
 import '../widgets/informasiaspirasi_widget.dart';
-import 'edit_aspirasi_page.dart';
 
 class AspirasiWargaPage extends StatefulWidget {
   const AspirasiWargaPage({super.key});
@@ -20,7 +21,7 @@ class _AspirasiWargaPageState extends State<AspirasiWargaPage> {
   final PesanService _pesanService = PesanService();
   late Future<List<AspirasiWarga>> _futureData;
   String _selectedFilter = 'Semua';
-  
+
   User? _currentUser;
   bool _isLoadingUser = true;
   bool _isManagement = false;
@@ -80,14 +81,12 @@ class _AspirasiWargaPageState extends State<AspirasiWargaPage> {
       throw Exception('Terjadi kesalahan: $e');
     }
   }
-  
+
   void _handleAspirasiAction(String action, AspirasiWarga item) {
     if (action == 'Detail') {
-      Navigator.push(
+      NavigationHelper.navigateTo(
         context,
-        MaterialPageRoute(
-          builder: (_) => DetailAspirasiPage(item: item),
-        ),
+        DetailAspirasiPage(item: item),
       );
     }
     if (action == 'Edit Konten') {
@@ -102,11 +101,9 @@ class _AspirasiWargaPageState extends State<AspirasiWargaPage> {
   }
 
   void _navigateToEdit(AspirasiWarga item) async {
-    final result = await Navigator.push(
+    final result = await NavigationHelper.navigateTo(
       context,
-      MaterialPageRoute(
-        builder: (_) => EditAspirasiPage(aspirasi: item),
-      ),
+      EditAspirasiPage(aspirasi: item),
     );
 
     if (result != null) {
@@ -250,11 +247,15 @@ class _AspirasiWargaPageState extends State<AspirasiWargaPage> {
 
   List<AspirasiWarga> _applyFilter(List<AspirasiWarga> data) {
     if (_selectedFilter == 'Semua') return data;
-    return data
-        .where(
-          (item) => item.status.toLowerCase() == _selectedFilter.toLowerCase(),
-        )
-        .toList();
+
+    final selected = _selectedFilter.trim().toLowerCase();
+
+    return data.where((item) {
+      final status = item.status.trim().toLowerCase();
+      if (status == selected) return true;
+      if (selected == 'pending' && status == 'menunggu') return true;
+      return false;
+    }).toList();
   }
 
   void _showFilterDialog() {
@@ -353,7 +354,7 @@ class _AspirasiWargaPageState extends State<AspirasiWargaPage> {
                           final item = filtered[index];
                           final isOwner = _currentUser != null &&
                               _currentUser!.wargaId == item.wargaId;
-                          
+
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12.0),
                             child: AspirasiCard(

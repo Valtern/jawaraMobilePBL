@@ -3,6 +3,7 @@ import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
 import 'package:jawarapbl/shared/widgets/inputs/select_input.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
+import 'package:jawarapbl/shared/widgets/add_data_popup.dart';
 import 'package:jawarapbl/services/kegiatanBroadcast_service.dart';
 import 'package:jawarapbl/services/auth_services.dart';
 
@@ -27,6 +28,10 @@ class _KegiatanListViewState extends State<KegiatanListView> {
     _loadUserRole();
   }
 
+  void _fetchData() {
+    setState(() {});
+  }
+
   Future<void> _loadUserRole() async {
     final role = await _authService.getRole();
     if (mounted) {
@@ -37,200 +42,124 @@ class _KegiatanListViewState extends State<KegiatanListView> {
   }
 
   void _showAddKegiatanSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        final nameCtl = TextEditingController();
-        final personCtl = TextEditingController();
-        final dateCtl = TextEditingController();
-        String? categoryVal;
-        final descCtl = TextEditingController();
+    final nameCtl = TextEditingController();
+    final personCtl = TextEditingController();
+    final dateCtl = TextEditingController();
+    final descCtl = TextEditingController();
+    String? categoryVal;
+    bool isLoading = false;
 
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 12,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Tambah Kegiatan',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                    TextInput(
-                      controller: nameCtl,
-                      label: 'Nama Kegiatan',
-                      prefixIcon: const Icon(Icons.event),
-                    ),
-                    SelectInput<String>(
-                      label: 'Kategori',
-                      prefixIcon: const Icon(Icons.category),
-                      value: categoryVal,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Kebersihan',
-                          child: Text('Kebersihan'),
-                        ),
-                        DropdownMenuItem(value: 'Rapat', child: Text('Rapat')),
-                        DropdownMenuItem(
-                          value: 'Pelatihan',
-                          child: Text('Pelatihan'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setModalState(() {
-                          categoryVal = value;
-                        });
-                      },
-                    ),
-                    TextInput(
-                      controller: personCtl,
-                      label: 'Penanggung Jawab',
-                      prefixIcon: const Icon(Icons.person),
-                    ),
-                    TextInput(
-                      controller: dateCtl,
-                      label: 'Tanggal Pelaksanaan (YYYY-MM-DD HH:MM:SS)',
-                      prefixIcon: const Icon(Icons.calendar_month),
-                      readOnly: true,
-                      onTap: () async {
-                        FocusScope.of(context).unfocus();
-                        final now = DateTime.now();
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: now,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                        );
-                        if (picked != null) {
-                          final y = picked.year.toString().padLeft(4, '0');
-                          final m = picked.month.toString().padLeft(2, '0');
-                          final d = picked.day.toString().padLeft(2, '0');
-                          dateCtl.text = '$y-$m-$d';
-                        }
-                      },
-                    ),
-                    TextInput(
-                      controller: descCtl,
-                      label: 'Deskripsi (opsional)',
-                      prefixIcon: const Icon(Icons.description),
-                      maxLines: 3,
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              final name = nameCtl.text.trim();
-                              final person = personCtl.text.trim();
-                              final date = dateCtl.text.trim();
-                              final cat = (categoryVal ?? '').trim();
-                              if (name.isEmpty ||
-                                  person.isEmpty ||
-                                  date.isEmpty ||
-                                  cat.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Nama, kategori, penanggung jawab, dan tanggal wajib diisi',
-                                    ),
-                                  ),
-                                );
-                                return;
-                              }
-                              final payload = <String, dynamic>{
-                                'name': name,
-                                'category': cat,
-                                'person_in_charge': person,
-                                'event_date': date,
-                              };
-                              if (descCtl.text.trim().isNotEmpty) {
-                                payload['description'] = descCtl.text.trim();
-                              }
-                              final ok = await _service.createKegiatan(payload);
-                              if (ok) {
-                                if (mounted) {
-                                  Navigator.of(context).pop();
-                                  setState(() {});
-                                  ScaffoldMessenger.of(
-                                    this.context,
-                                  ).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Kegiatan berhasil dibuat'),
-                                    ),
-                                  );
-                                }
-                              } else {
-                                ScaffoldMessenger.of(this.context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Gagal membuat kegiatan'),
-                                  ),
-                                );
-                              }
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.save),
-                                SizedBox(width: 4),
-                                Text('Simpan'),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              setModalState(() {
-                                nameCtl.clear();
-                                personCtl.clear();
-                                dateCtl.clear();
-                                descCtl.clear();
-                                categoryVal = null;
-                              });
-                            },
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.refresh),
-                                SizedBox(width: 4),
-                                Text('Reset'),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+    showAddDataPopup(
+      context: context,
+      title: 'Tambah Kegiatan',
+      onSave: () async {
+        final name = nameCtl.text.trim();
+        final person = personCtl.text.trim();
+        final date = dateCtl.text.trim();
+        final desc = descCtl.text.trim();
+
+        if (name.isEmpty ||
+            person.isEmpty ||
+            date.isEmpty ||
+            categoryVal == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Nama kegiatan, penanggung jawab, tanggal, dan kategori wajib diisi'),
+            ),
+          );
+          return;
+        }
+
+        setState(() => isLoading = true);
+        Navigator.of(context).pop();
+
+        final ok = await _service.createKegiatan({
+          'name': name,
+          'category': categoryVal,
+          'person_in_charge': person,
+          'event_date': date,
+          'description': desc,
+        });
+
+        if (ok) {
+          if (mounted) {
+            setState(() {});
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Kegiatan berhasil ditambahkan')),
             );
-          },
-        );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Gagal menambahkan kegiatan')),
+            );
+          }
+        }
       },
+      onReset: () {
+        nameCtl.clear();
+        personCtl.clear();
+        dateCtl.clear();
+        descCtl.clear();
+        categoryVal = null;
+      },
+      isLoading: isLoading,
+      formFields: [
+        const SizedBox(height: 8),
+        TextInput(
+          controller: nameCtl,
+          label: 'Nama Kegiatan',
+          prefixIcon: const Icon(Icons.event),
+        ),
+        const SizedBox(height: 16),
+        SelectInput<String>(
+          label: 'Kategori',
+          prefixIcon: const Icon(Icons.category),
+          value: categoryVal,
+          items: const [
+            DropdownMenuItem(value: 'Kebersihan', child: Text('Kebersihan')),
+            DropdownMenuItem(value: 'Rapat', child: Text('Rapat')),
+            DropdownMenuItem(value: 'Pelatihan', child: Text('Pelatihan')),
+          ],
+          onChanged: (value) {
+            categoryVal = value;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: personCtl,
+          label: 'Penanggung Jawab',
+          prefixIcon: const Icon(Icons.person),
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: dateCtl,
+          label: 'Tanggal',
+          prefixIcon: const Icon(Icons.calendar_today),
+          readOnly: true,
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: DateTime.now(),
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+            );
+            if (date != null) {
+              dateCtl.text =
+                  '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+            }
+          },
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: descCtl,
+          label: 'Deskripsi',
+          prefixIcon: const Icon(Icons.description),
+          maxLines: 3,
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 
@@ -304,13 +233,14 @@ class _KegiatanListViewState extends State<KegiatanListView> {
                                             setState(() {
                                               _filterName =
                                                   nameCtl.text.trim().isEmpty
-                                                  ? null
-                                                  : nameCtl.text.trim();
+                                                      ? null
+                                                      : nameCtl.text.trim();
                                               _filterCategory =
                                                   (catVal ?? '').isEmpty
-                                                  ? null
-                                                  : catVal;
+                                                      ? null
+                                                      : catVal;
                                             });
+                                            _fetchData();
                                             Navigator.of(context).pop();
                                           },
                                           child: Row(
@@ -332,6 +262,7 @@ class _KegiatanListViewState extends State<KegiatanListView> {
                                               _filterName = null;
                                               _filterCategory = null;
                                             });
+                                            _fetchData();
                                             Navigator.of(context).pop();
                                           },
                                           child: Row(
@@ -424,11 +355,11 @@ class _KegiatanListViewState extends State<KegiatanListView> {
         ),
         if (canAdd)
           Positioned(
-            bottom: 0,
-            right: 0,
+            bottom: 80,
+            right: 16,
             child: FloatingActionButton(
               heroTag: 'add-kegiatan',
-              backgroundColor: Colors.deepPurple,
+              backgroundColor: const Color(0xFF6938EF),
               onPressed: () => _showAddKegiatanSheet(context),
               child: const Icon(Icons.add, color: Colors.white),
             ),

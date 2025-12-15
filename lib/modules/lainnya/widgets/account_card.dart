@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:jawarapbl/services/auth_services.dart';
 import 'package:jawarapbl/modules/lainnya/pages/edit_profile_page.dart';
+import 'package:jawarapbl/shared/widgets/logout_confirmation_dialog.dart';
+import 'package:jawarapbl/shared/widgets/page_transitions.dart';
+import 'package:jawarapbl/modules/auth/widgets/login_route_wrapper.dart';
 
 class AccountCard extends StatefulWidget {
   const AccountCard({super.key});
@@ -14,26 +17,7 @@ class _AccountCardState extends State<AccountCard> {
   bool _isLoading = false;
 
   Future<void> _handleLogout() async {
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Keluar',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
+    final shouldLogout = await showLogoutConfirmationDialog(context: context);
 
     if (shouldLogout == true) {
       setState(() {
@@ -47,7 +31,10 @@ class _AccountCardState extends State<AccountCard> {
       });
 
       if (success && mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        NavigationHelper.navigateToAndClear(
+          context,
+          const LoginRouteWrapper(),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Logout gagal. Silakan coba lagi.')),
@@ -58,43 +45,49 @@ class _AccountCardState extends State<AccountCard> {
 
   @override
   Widget build(BuildContext context) {
-    final List<ListTile> accountItems = [
-      ListTile(
-        leading: const Icon(Icons.settings),
-        title: const Text('Pengaturan'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const EditProfilePage()),
-          );
-        },
-      ),
-      ListTile(
-        leading: const Icon(Icons.logout),
-        title: const Text('Keluar'),
-        textColor: Colors.red,
-        iconColor: Colors.red,
-        trailing: const Icon(Icons.chevron_right),
-        onTap: _handleLogout,
-      ),
-    ];
-
     return Stack(
       children: [
-        Card(
-          color: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 8, left: 12),
-            child: ListView(
-              shrinkWrap: true,
-              children: accountItems,
-            ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildModernMenuItem(
+                icon: Icons.settings,
+                title: 'Pengaturan',
+                onTap: () {
+                  NavigationHelper.navigateTo(
+                    context,
+                    const EditProfilePage(),
+                  );
+                },
+              ),
+              _buildModernMenuItem(
+                icon: Icons.logout,
+                title: 'Keluar',
+                textColor: Colors.red,
+                iconColor: Colors.red,
+                onTap: _handleLogout,
+              ),
+            ],
           ),
         ),
         if (_isLoading)
           Container(
-            color: Colors.black.withOpacity(0.3),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -102,6 +95,51 @@ class _AccountCardState extends State<AccountCard> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildModernMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? textColor,
+    Color? iconColor,
+  }) {
+    final defaultTextColor = textColor ?? const Color(0xFF2D3436);
+    final defaultIconColor = iconColor ?? const Color(0xFF6938EF);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: defaultIconColor,
+              size: 24,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: defaultTextColor,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
+              color: Colors.grey,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

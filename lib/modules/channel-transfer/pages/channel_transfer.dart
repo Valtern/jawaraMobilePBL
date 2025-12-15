@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jawarapbl/shared/widgets/data-list/card_list_view.dart';
 import 'package:jawarapbl/shared/widgets/inputs/text_input.dart';
 import 'package:jawarapbl/shared/widgets/page/header.dart';
+import 'package:jawarapbl/shared/widgets/add_data_popup.dart';
 import 'package:jawarapbl/services/channelTransfer_service.dart';
 
 class ChannelTransferPage extends StatefulWidget {
@@ -16,128 +17,100 @@ class _ChannelTransferPageState extends State<ChannelTransferPage> {
   String? _filterBankName;
   String? _filterAccountNumber;
   String? _filterAccountName;
+  late Future<List<dynamic>> _futureChannelTransfer;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  void _fetchData() {
+    setState(() {
+      _futureChannelTransfer = _service.getChannelTransferList(
+        bankName: _filterBankName,
+        accountNumber: _filterAccountNumber,
+        accountName: _filterAccountName,
+      );
+    });
+  }
 
   void _showAddChannelSheet(BuildContext context) {
-    showModalBottomSheet(
+    final bankNameCtl = TextEditingController();
+    final accountNumberCtl = TextEditingController();
+    final accountNameCtl = TextEditingController();
+    bool isLoading = false;
+
+    showAddDataPopup(
       context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        final bankNameCtl = TextEditingController();
-        final accountNumberCtl = TextEditingController();
-        final accountNameCtl = TextEditingController();
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 12,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Tambah Channel Transfer',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                TextInput(
-                  controller: bankNameCtl,
-                  label: 'Nama Bank',
-                  prefixIcon: const Icon(Icons.account_balance),
-                ),
-                TextInput(
-                  controller: accountNumberCtl,
-                  label: 'Nomor Rekening',
-                  prefixIcon: const Icon(Icons.numbers),
-                ),
-                TextInput(
-                  controller: accountNameCtl,
-                  label: 'A/N (Nama Pemilik Rekening)',
-                  prefixIcon: const Icon(Icons.person),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final bankName = bankNameCtl.text.trim();
-                          final accNumber = accountNumberCtl.text.trim();
-                          final accName = accountNameCtl.text.trim();
-                          if (bankName.isEmpty || accNumber.isEmpty || accName.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Semua field wajib diisi')),
-                            );
-                            return;
-                          }
-                          final ok = await _service.createChannelTransfer({
-                            'bank_name': bankName,
-                            'account_number': accNumber,
-                            'account_name': accName,
-                          });
-                          if (ok) {
-                            if (mounted) {
-                              Navigator.of(context).pop();
-                              setState(() {});
-                              ScaffoldMessenger.of(this.context).showSnackBar(
-                                const SnackBar(content: Text('Channel transfer berhasil ditambahkan')),
-                              );
-                            }
-                          } else {
-                            ScaffoldMessenger.of(this.context).showSnackBar(
-                              const SnackBar(content: Text('Gagal menambahkan channel transfer')),
-                            );
-                          }
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.save),
-                            SizedBox(width: 4),
-                            Text('Simpan'),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          bankNameCtl.clear();
-                          accountNumberCtl.clear();
-                          accountNameCtl.clear();
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.refresh),
-                            SizedBox(width: 4),
-                            Text('Reset'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+      title: 'Tambah Channel Transfer',
+      onSave: () async {
+        final bankName = bankNameCtl.text.trim();
+        final accountNumber = accountNumberCtl.text.trim();
+        final accountName = accountNameCtl.text.trim();
+
+        if (bankName.isEmpty || accountNumber.isEmpty || accountName.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Semua field wajib diisi'),
             ),
-          ),
-        );
+          );
+          return;
+        }
+
+        setState(() => isLoading = true);
+        Navigator.of(context).pop();
+
+        final ok = await _service.createChannelTransfer({
+          'bank_name': bankName,
+          'account_number': accountNumber,
+          'account_name': accountName,
+        });
+
+        if (ok) {
+          if (mounted) {
+            _fetchData();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Channel transfer berhasil ditambahkan')),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Gagal menambahkan channel transfer')),
+            );
+          }
+        }
       },
+      onReset: () {
+        bankNameCtl.clear();
+        accountNumberCtl.clear();
+        accountNameCtl.clear();
+      },
+      isLoading: isLoading,
+      formFields: [
+        const SizedBox(height: 8),
+        TextInput(
+          controller: bankNameCtl,
+          label: 'Nama Bank',
+          prefixIcon: const Icon(Icons.account_balance),
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: accountNumberCtl,
+          label: 'Nomor Rekening',
+          prefixIcon: const Icon(Icons.numbers),
+        ),
+        const SizedBox(height: 16),
+        TextInput(
+          controller: accountNameCtl,
+          label: 'A/N (Nama Pemilik Rekening)',
+          prefixIcon: const Icon(Icons.person),
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 
@@ -158,9 +131,15 @@ class _ChannelTransferPageState extends State<ChannelTransferPage> {
                     showModalBottomSheet(
                       context: context,
                       builder: (BuildContext context) {
-                        final bankCtl = TextEditingController(text: _filterBankName ?? '');
-                        final accNumCtl = TextEditingController(text: _filterAccountNumber ?? '');
-                        final accNameCtl = TextEditingController(text: _filterAccountName ?? '');
+                        final bankCtl = TextEditingController(
+                          text: _filterBankName ?? '',
+                        );
+                        final accNumCtl = TextEditingController(
+                          text: _filterAccountNumber ?? '',
+                        );
+                        final accNameCtl = TextEditingController(
+                          text: _filterAccountName ?? '',
+                        );
                         return Container(
                           padding: const EdgeInsets.all(16),
                           width: double.infinity,
@@ -190,14 +169,25 @@ class _ChannelTransferPageState extends State<ChannelTransferPage> {
                                     child: ElevatedButton(
                                       onPressed: () {
                                         setState(() {
-                                          _filterBankName = bankCtl.text.trim().isEmpty ? null : bankCtl.text.trim();
-                                          _filterAccountNumber = accNumCtl.text.trim().isEmpty ? null : accNumCtl.text.trim();
-                                          _filterAccountName = accNameCtl.text.trim().isEmpty ? null : accNameCtl.text.trim();
+                                          _filterBankName =
+                                              bankCtl.text.trim().isEmpty
+                                                  ? null
+                                                  : bankCtl.text.trim();
+                                          _filterAccountNumber =
+                                              accNumCtl.text.trim().isEmpty
+                                                  ? null
+                                                  : accNumCtl.text.trim();
+                                          _filterAccountName =
+                                              accNameCtl.text.trim().isEmpty
+                                                  ? null
+                                                  : accNameCtl.text.trim();
                                         });
+                                        _fetchData();
                                         Navigator.of(context).pop();
                                       },
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: const [
                                           Icon(Icons.check),
                                           SizedBox(width: 4),
@@ -215,10 +205,12 @@ class _ChannelTransferPageState extends State<ChannelTransferPage> {
                                           _filterAccountNumber = null;
                                           _filterAccountName = null;
                                         });
+                                        _fetchData();
                                         Navigator.of(context).pop();
                                       },
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: const [
                                           Icon(Icons.refresh),
                                           SizedBox(width: 4),
@@ -240,21 +232,21 @@ class _ChannelTransferPageState extends State<ChannelTransferPage> {
             ),
             Expanded(
               child: FutureBuilder<List<dynamic>>(
-                future: _service.getChannelTransferList(
-                  bankName: _filterBankName,
-                  accountNumber: _filterAccountNumber,
-                  accountName: _filterAccountName,
-                ),
+                future: _futureChannelTransfer,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (snapshot.hasError) {
-                    return Center(child: Text('Gagal memuat data: ${snapshot.error}'));
+                    return Center(
+                      child: Text('Gagal memuat data: ${snapshot.error}'),
+                    );
                   }
                   final items = snapshot.data ?? [];
                   if (items.isEmpty) {
-                    return const Center(child: Text('Belum ada channel transfer'));
+                    return const Center(
+                      child: Text('Belum ada channel transfer'),
+                    );
                   }
                   return CardListView<dynamic>(
                     shrinkWrap: false,
@@ -263,12 +255,17 @@ class _ChannelTransferPageState extends State<ChannelTransferPage> {
                     itemBuilder: (context, item) {
                       final map = item as Map<String, dynamic>;
                       final bankName = (map['bank_name'] ?? '').toString();
-                      final accountNumber = (map['account_number'] ?? '').toString();
-                      final accountName = (map['account_name'] ?? '').toString();
+                      final accountNumber =
+                          (map['account_number'] ?? '').toString();
+                      final accountName =
+                          (map['account_name'] ?? '').toString();
                       return ListTile(
                         leading: CircleAvatar(
                           backgroundColor: Colors.deepPurple.withOpacity(0.1),
-                          child: const Icon(Icons.credit_card, color: Colors.deepPurple),
+                          child: const Icon(
+                            Icons.credit_card,
+                            color: Colors.deepPurple,
+                          ),
                         ),
                         title: Text(bankName.isEmpty ? '-' : bankName),
                         subtitle: Column(

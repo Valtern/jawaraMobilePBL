@@ -33,6 +33,7 @@ class _MainLayoutState extends State<MainLayout> {
   String? _role;
   final AuthService _authService = AuthService();
   List<_NavigationItem> _visibleItems = [];
+  String? _currentRoute;
 
   // Define roles for clarity
   static const String admin = 'admin';
@@ -77,6 +78,24 @@ class _MainLayoutState extends State<MainLayout> {
     super.initState();
     _updateVisibleItems(); 
     _loadUserRole();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateCurrentRoute();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateCurrentRoute();
+  }
+
+  void _updateCurrentRoute() {
+    final route = ModalRoute.of(context)?.settings.name;
+    if (route != _currentRoute) {
+      setState(() {
+        _currentRoute = route;
+      });
+    }
   }
 
   Future<void> _loadUserRole() async {
@@ -116,7 +135,7 @@ class _MainLayoutState extends State<MainLayout> {
       backgroundColor: widget.backgroundColor,
       extendBody: widget.extendBody,
       body: Container(
-        padding: const EdgeInsets.only(top: 16, bottom: 16, left: 12, right: 12),
+        padding: const EdgeInsets.only(top: 8, bottom: 8, left: 16, right: 16),
         child: content,
       ),
       floatingActionButton: widget.floatingActionButton,
@@ -128,43 +147,86 @@ class _MainLayoutState extends State<MainLayout> {
   }
 
   Widget _buildBottomNavigationBar(BuildContext context) {
-    // Safety check: ensure activeIndex is valid for the current visible list
+    // Use stored current route or get from ModalRoute
+    final currentRoute = _currentRoute ?? ModalRoute.of(context)?.settings.name;
+    
+    // Find the index of current route in visible items
     int activeIndex = 0;
-    if (widget.currentIndex < _visibleItems.length) {
-      activeIndex = widget.currentIndex;
+    if (currentRoute != null && currentRoute.isNotEmpty) {
+      final foundIndex = _visibleItems.indexWhere(
+        (item) => item.route == currentRoute
+      );
+      if (foundIndex >= 0) {
+        activeIndex = foundIndex;
+      } else {
+        // Route not in visible items, try to map from widget.currentIndex
+        // For non-admin users: map index 3 (lainnya) to index 1
+        if (widget.currentIndex == 3 && _visibleItems.length == 2) {
+          // Non-admin: Dashboard (0), Lainnya (1)
+          activeIndex = 1;
+        } else if (widget.currentIndex < _visibleItems.length) {
+          activeIndex = widget.currentIndex;
+        }
+      }
+    } else {
+      // No route found, use widget.currentIndex with mapping
+      if (widget.currentIndex == 3 && _visibleItems.length == 2) {
+        // Non-admin: Dashboard (0), Lainnya (1)
+        activeIndex = 1;
+      } else if (widget.currentIndex < _visibleItems.length) {
+        activeIndex = widget.currentIndex;
+      }
     }
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+            spreadRadius: 0,
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
-          selectedItemColor: Colors.deepPurple,
-          unselectedItemColor: Colors.grey,
+          selectedItemColor: const Color(0xFF6938EF),
+          unselectedItemColor: Colors.grey[400],
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
           currentIndex: activeIndex,
+          elevation: 0,
+          selectedLabelStyle: const TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w500,
+            fontSize: 12,
+          ),
           onTap: (index) {
             widget.onItemSelected?.call(index);
             if (widget.onItemSelected == null) {
               final route = _visibleItems[index].route;
-              Navigator.of(context).pushNamed(route);
+              // Update current route immediately for better UX
+              setState(() {
+                _currentRoute = route;
+              });
+              Navigator.of(context).pushReplacementNamed(route);
             }
           },
           items: _visibleItems

@@ -21,6 +21,10 @@ class _TagihanListViewState extends State<TagihanListView> {
   List<dynamic> _kategoriIuranList = [];
   List<dynamic> _keluargaList = [];
 
+  void _fetchData() {
+    setState(() {});
+  }
+
   String _formatCurrency(num value) => 'Rp ${value.toStringAsFixed(0)}';
 
   String _paymentStatusLabel(String status) {
@@ -247,12 +251,22 @@ class _TagihanListViewState extends State<TagihanListView> {
                             );
                           }
                         },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Icon(Icons.send),
-                            SizedBox(width: 4),
-                            Text('Kirim Tagihan'),
+                            Icon(Icons.send, size: 18),
+                            SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'Kirim Tagihan',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -260,13 +274,31 @@ class _TagihanListViewState extends State<TagihanListView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          setState(() {
+                            selectedKeluargaId = null;
+                            selectedKategoriId = null;
+                            statusLabel = null;
+                            nominalCtl.clear();
+                            periodeCtl.clear();
+                          });
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Icon(Icons.refresh),
-                            SizedBox(width: 4),
-                            Text('Reset'),
+                            Icon(Icons.refresh, size: 18),
+                            SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'Reset',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -292,7 +324,7 @@ class _TagihanListViewState extends State<TagihanListView> {
               title: 'Daftar Tagihan',
               actions: [
                 IconButton(
-                  color: Colors.deepPurple,
+                  color: const Color(0xFF6938EF),
                   icon: const Icon(Icons.filter_list),
                   onPressed: () {
                     showModalBottomSheet(
@@ -325,8 +357,8 @@ class _TagihanListViewState extends State<TagihanListView> {
                                     value: statusVal == null
                                         ? null
                                         : (statusVal == 'paid'
-                                              ? 'Sudah Dibayar'
-                                              : 'Belum Dibayar'),
+                                            ? 'Sudah Dibayar'
+                                            : 'Belum Dibayar'),
                                     items: const [
                                       DropdownMenuItem(
                                         value: 'Sudah Dibayar',
@@ -358,19 +390,35 @@ class _TagihanListViewState extends State<TagihanListView> {
                                             setState(() {
                                               _filterPeriode =
                                                   periodeCtl.text.trim().isEmpty
-                                                  ? null
-                                                  : periodeCtl.text.trim();
+                                                      ? null
+                                                      : periodeCtl.text.trim();
                                               _filterPaymentStatus = statusVal;
                                             });
+                                            _fetchData();
                                             Navigator.of(context).pop();
                                           },
+                                          style: ElevatedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
+                                          ),
                                           child: Row(
+                                            mainAxisSize: MainAxisSize.min,
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: const [
-                                              Icon(Icons.check),
-                                              SizedBox(width: 4),
-                                              Text('Terapkan'),
+                                              Icon(Icons.check, size: 18),
+                                              SizedBox(width: 6),
+                                              Flexible(
+                                                child: Text(
+                                                  'Terapkan',
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -383,15 +431,31 @@ class _TagihanListViewState extends State<TagihanListView> {
                                               _filterPeriode = null;
                                               _filterPaymentStatus = null;
                                             });
+                                            _fetchData();
                                             Navigator.of(context).pop();
                                           },
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
+                                          ),
                                           child: Row(
+                                            mainAxisSize: MainAxisSize.min,
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: const [
-                                              Icon(Icons.refresh),
-                                              SizedBox(width: 4),
-                                              Text('Reset'),
+                                              Icon(Icons.refresh, size: 18),
+                                              SizedBox(width: 6),
+                                              Flexible(
+                                                child: Text(
+                                                  'Reset',
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -442,11 +506,10 @@ class _TagihanListViewState extends State<TagihanListView> {
                       String familyName = '';
                       bool familyActive = true;
                       if (keluarga is Map<String, dynamic>) {
-                        familyName =
-                            (keluarga['nama_keluarga'] ??
-                                    keluarga['name'] ??
-                                    '')
-                                .toString();
+                        familyName = (keluarga['nama_keluarga'] ??
+                                keluarga['name'] ??
+                                '')
+                            .toString();
                         final status = (keluarga['status'] ?? '').toString();
                         if (status.isNotEmpty) {
                           familyActive = !status.toLowerCase().contains('non');
@@ -464,9 +527,9 @@ class _TagihanListViewState extends State<TagihanListView> {
                       final nominal = map['nominal'] is num
                           ? map['nominal'] as num
                           : num.tryParse(map['nominal']?.toString() ?? '0') ??
-                                0;
-                      final paymentStatus = (map['payment_status'] ?? 'unpaid')
-                          .toString();
+                              0;
+                      final paymentStatus =
+                          (map['payment_status'] ?? 'unpaid').toString();
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -509,7 +572,7 @@ class _TagihanListViewState extends State<TagihanListView> {
                                   _formatCurrency(nominal),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.deepPurple,
+                                    color: const Color(0xFF6938EF),
                                   ),
                                 ),
                                 const SizedBox(height: 4),

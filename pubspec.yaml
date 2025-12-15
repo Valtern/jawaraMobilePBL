@@ -1,5 +1,5 @@
 name: jawarapbl
-description: "A new Flutter project."
+description: "Aplikasi Jawara Pintar"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -19,7 +19,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.9.2
+  sdk: "  >=3.2.0 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -46,6 +46,9 @@ dependencies:
   camera: ^0.11.3
   image: ^4.5.4
   path_provider: ^2.1.5
+  flutter_launcher_icons: ^0.13.1
+  # page_transition: ^2.1.1  
+  # lottie: ^2.7.0 
 
 dev_dependencies:
   flutter_test:
@@ -57,21 +60,45 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+  integration_test:
+    sdk: flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/LogoJawara.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: "assets/images/LogoJawara.png"
+  windows:
+    generate: true
+    image_path: "assets/images/LogoJawara.png"
+  macos:
+    generate: true
+    image_path: "assets/images/LogoJawara.png"
+  linux:
+    generate: true
+    image_path: "assets/images/LogoJawara.png"
+
 flutter:
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
   assets:
+    - assets/images/
     - assets/images/school.jpg
     - assets/images/profile-placeholder.png
     - assets/fonts/Poppins-Regular.ttf
     - assets/fonts/Poppins-Bold.ttf
+    - assets/animations/
 
   fonts:
     - family: Poppins

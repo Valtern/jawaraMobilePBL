@@ -20,9 +20,10 @@ class DashboardService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body)['data'];
+      final decoded = json.decode(response.body);
+      return decoded['data'] ?? {};
     } else {
-      throw Exception('Failed to load dashboard stats');
+      throw Exception('Failed to load dashboard stats: ${response.statusCode}');
     }
   }
 }
