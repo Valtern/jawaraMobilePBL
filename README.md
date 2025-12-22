@@ -10,36 +10,36 @@ This project was developed collaboratively, with each member responsible for spe
 
 ### **Anton**
 
-* **Login System** 🔐: Anton developed the authentication system, which includes both login and registration functionalities. This allows users to securely access the application.
+* **Login System** 🔐
 
-* **Dashboard Interface** 🏠: He was responsible for creating the main dashboard, which provides a comprehensive overview of the community's financial, event-related, and demographic data through interactive charts and cards.
+* **Dashboard Interface** 🏠
 
-* **Expense Management (Pengeluaran)** 💸: Anton also handled the expense management module, enabling users to track and manage all community expenses. This includes functionalities for adding new expenses and viewing a list of all recorded expenditures.
+* **Expense Management (Pengeluaran)** 💸
 
 ### **Ridho**
 
-* **Resident & Household Data (Data Warga dan Rumah)** 🧾: 
+* **Resident & Household Data (Data Warga dan Rumah)** 🧾
 
-* **Income Management (Pemasukan)** 💰:.
+* **Income Management (Pemasukan)** 💰
 
-* **Activities and Broadcasts (Kegiatan dan Broadcast)** 📢: Saran nambah notifikasi ke semua user
+* **Activities and Broadcasts (Kegiatan dan Broadcast)** 📢
 
-* **Channel Transfer** 🔄: 
+* **Channel Transfer** 🔄
 
 ### **Majid**
 
 * **Financial Reports (Laporan Keuangan)** 📊: 
 
-* **Resident Messages (Pesan Warga)** 💬: Saran nambah notifikasi ke semua user
+* **Resident Messages (Pesan Warga)** 💬
 
 * **Resident Admissions (Penerimaan Warga)** 🧍‍♂️: 
 
 ### **Hammam**
 
-* **Family Transfers (Mutasi Keluarga)** 👨‍👩‍👧‍👦: 
+* **Family Transfers (Mutasi Keluarga)** 👨‍👩‍👧‍👦
 
-* **Activity Logs (Log Aktivitas)** 🧠: 
+* **Activity Logs (Log Aktivitas)** 🧠
 
-* **User Management (Manajemen Pengguna)** ⚙️:
+* **User Management (Manajemen Pengguna)** ⚙️
 
-# GIF Capture of the app (example showcase):
+# COMPLETE INFORMATION ABOUT THE WORKFLOW OR THE APPLICATION IT SELF CAN BE FOUND IN THE NOTION LINK HERE: https://www.notion.so/PBL-Group-3-Progress-Tracking-2a0f5b3893cf80938bceeafc9996830e?source=copy_link
